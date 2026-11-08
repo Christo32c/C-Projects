@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Character Sculptor</title>
+  <link rel="stylesheet" href="style.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
+        "three-mesh-bvh": "https://cdn.jsdelivr.net/npm/three-mesh-bvh@0.8.3/build/index.module.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="viewport"></div>
+
+  <header class="topbar">
+    <div class="brand">Character Sculptor</div>
+    <div class="top-actions">
+      <button id="undo" title="Undo (Ctrl+Z)">Undo</button>
+      <button id="redo" title="Redo (Ctrl+Shift+Z)">Redo</button>
+      <span class="sep"></span>
+      <button id="new-model" title="Start over from a base shape">New…</button>
+      <button id="toggle-settings" class="mobile-only" aria-expanded="false">Settings</button>
+      <div class="menu">
+        <button id="export-btn">Export ▾</button>
+        <div class="menu-list" id="export-menu" hidden>
+          <button data-export="glb">GLB (with paint)</button>
+          <button data-export="obj">OBJ</button>
+          <button data-export="stl">STL (3D print)</button>
+          <button data-export="png">Screenshot PNG</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <aside class="panel tools" aria-label="Brushes">
+    <div class="tool-grid" id="tools"></div>
+  </aside>
+
+  <aside class="panel settings" id="settings" aria-label="Brush settings">
+    <section>
+      <h3 id="tool-name">Draw</h3>
+      <p class="hint" id="tool-hint"></p>
+      <label class="slider">
+        <span>Radius <output id="radius-out"></output></span>
+        <input id="radius" type="range" min="0.01" max="0.35" step="0.005" value="0.08" />
+      </label>
+      <label class="slider">
+        <span>Strength <output id="strength-out"></output></span>
+        <input id="strength" type="range" min="0.02" max="1" step="0.01" value="0.5" />
+      </label>
+      <div class="toggles">
+        <label class="chk"><input id="symmetry" type="checkbox" checked /> Symmetry X</label>
+        <label class="chk"><input id="invert" type="checkbox" /> Invert</label>
+      </div>
+      <div class="paint-row" id="paint-row">
+        <input id="paint-color" type="color" value="#b5483b" />
+        <div class="swatches" id="swatches"></div>
+        <button id="fill" class="small">Fill all</button>
+      </div>
+    </section>
+
+    <section>
+      <h3>Model</h3>
+      <div class="row">
+        <button id="smooth-all" class="small" title="Relax the whole mesh">Smooth all</button>
+        <button id="mirror" class="small" title="Copy right side onto left side">Mirror R→L</button>
+      </div>
+    </section>
+
+    <section>
+      <h3>View</h3>
+      <label class="select">
+        <span>Material</span>
+        <select id="material">
+          <option value="studio">Studio clay</option>
+          <option value="matcap-clay">Matcap clay</option>
+          <option value="matcap-wax">Red wax</option>
+          <option value="matcap-jade">Jade</option>
+          <option value="matcap-chrome">Chrome</option>
+        </select>
+      </label>
+      <div class="toggles">
+        <label class="chk"><input id="wireframe" type="checkbox" /> Wireframe</label>
+        <label class="chk"><input id="turntable" type="checkbox" /> Turntable</label>
+        <label class="chk"><input id="floor" type="checkbox" checked /> Floor</label>
+      </div>
+      <button id="reset-view" class="small">Reset view</button>
+    </section>
+
+    <p class="stats" id="stats"></p>
+  </aside>
+
+  <footer class="help">
+    <span><kbd>Drag</kbd> on model to sculpt</span>
+    <span><kbd>Drag</kbd> background to orbit · <kbd>Right-drag</kbd> pan · <kbd>Wheel</kbd> zoom</span>
+    <span><kbd>Shift</kbd> smooth · <kbd>Ctrl</kbd>/<kbd>Alt</kbd> invert</span>
+    <span><kbd>[</kbd> <kbd>]</kbd> radius · <kbd>1</kbd>–<kbd>9</kbd> brushes · <kbd>X</kbd> symmetry</span>
+  </footer>
+
+  <dialog id="new-dialog">
+    <form method="dialog">
+      <h2>New sculpt</h2>
+      <p class="hint">Pick a base shape. This replaces the current model (you can't undo it).</p>
+      <div class="preset-grid">
+        <label><input type="radio" name="preset" value="humanoid" checked /><span>Humanoid</span></label>
+        <label><input type="radio" name="preset" value="bust" /><span>Head bust</span></label>
+        <label><input type="radio" name="preset" value="creature" /><span>Creature</span></label>
+        <label><input type="radio" name="preset" value="clayBall" /><span>Clay ball</span></label>
+      </div>
+      <label class="select">
+        <span>Detail</span>
+        <select name="detail">
+          <option value="low">Low (fast)</option>
+          <option value="medium" selected>Medium</option>
+          <option value="high">High (slower)</option>
+        </select>
+      </label>
+      <div class="row end">
+        <button value="cancel" formnovalidate>Cancel</button>
+        <button value="ok" class="primary">Create</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="busy" hidden><div class="spinner"></div><span>Building mesh…</span></div>
+  <div id="error" hidden></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
