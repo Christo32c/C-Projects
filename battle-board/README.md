@@ -24,6 +24,12 @@ The default map is a dungeon (switch maps from the selector at the top left):
 - **A puzzle**: read the inscription, then step on the sun, moon and star plates in the right order to raise the portcullis. The wrong order sets off a dart trap.
 - **Win or lose**: reach the stairs to escape and see your stats, or fall and try again.
 
+### Art
+
+- **The hero** is a sculpted paladin miniature. `assets/paladin.glb` was converted from the paladin STL with `tools/stl2glb.py`. The script splits the sculpt into painted regions (armour, leather, skin, gold, base), keeps the cape and plume as a separate mesh tinted with the character colour, and keeps the blade separate so it can change with the equipped weapon. If the model can't load (for example when the page is opened straight from disk without a web server), a simple figure stands in.
+- **Every figure** has a square, bevelled base and an edge highlight shader for a painted-mini look.
+- **The dungeon** uses procedural brick and flagstone textures with normal maps. It's dressed with runes, banners, chains, skull niches, pillars, bones, candles, puddles, cobwebs, torches and mist.
+
 Maps are plain ASCII grids in `MAPS` with a legend at the top of the script, so new dungeons are easy to add.
 
 ## What's in the first loop

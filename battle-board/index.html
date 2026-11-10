@@ -1074,8 +1074,8 @@ function decorate(i, x, z, ch, p, r) {
       stream(glow, 0.05, dt, () => { const f = flames[Math.floor(Math.random() * flames.length)], w = f.getWorldPosition(new THREE.Vector3());
         return { p: [w.x, w.y + .02, w.z], v: [0, rnd(.2, .5), 0], life: rnd(.4, .8), s: [.04, .01], c0: hdr('#ffd080', 4), c1: hdr('#ff6a20', 1), a: .8 }; }); });
   } else if (q < 0.15) {
-    const m = new THREE.Mesh(new THREE.CircleGeometry(1, 24), new THREE.MeshStandardMaterial({ color: '#0e1316', roughness: 0.03, metalness: 0.3, transparent: true, opacity: 0.85, envMapIntensity: 1.2 }));
-    m.rotation.x = -Math.PI / 2; m.scale.set(0.2 + r() * 0.14, 0.14 + r() * 0.1, 1); m.position.set(p.x + (r() - .5) * .3, p.y + 0.005, p.z + (r() - .5) * .3);
+    const m = new THREE.Mesh(new THREE.CircleGeometry(1, 24), new THREE.MeshStandardMaterial({ color: '#3a4248', roughness: 0.05, metalness: 0.2, transparent: true, opacity: 0.45, envMapIntensity: 1.4 }));
+    m.rotation.x = -Math.PI / 2; m.scale.set(0.16 + r() * 0.12, 0.1 + r() * 0.08, 1); m.position.set(p.x + (r() - .5) * .3, p.y + 0.005, p.z + (r() - .5) * .3);
     m.userData.noShadow = true; addObj(i, m, 'deco', x, z);
   } else if (q < 0.25) {
     const g = new THREE.Group(), ST = stoneSets();
@@ -1179,6 +1179,7 @@ new GLTFLoader().load('assets/paladin.glb', gltf => {
   heroModel.traverse(o => { if (o.isMesh) { heroParts[o.name] = o; o.castShadow = true; o.receiveShadow = true; } });
   paintRim(heroModel, 0.16);
   heroFallback.visible = false; hero.add(heroModel);
+  heroParts.paint?.material.color.setScalar(0.78);   // keep polished steel from blowing out under torchlight
   heroFlashMats = ['paint', 'cloth', 'base'].map(n => heroParts[n]?.material).filter(Boolean);
   dressHero();
 }, undefined, err => console.warn('Hero miniature not loaded; using the simple figure.', err));
