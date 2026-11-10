@@ -1399,7 +1399,7 @@ function dressHuman() {
   H.bow = w === 'shortbow'; H.two = !!wItem && wItem.twoHanded && !H.bow; H.shield = !!eq.shield; H.eel = null;
   const held = weaponModel(w);
   if (held) { const mount = new THREE.Group(); mount.add(held); add(H.handR, mount); H.mount = mount; H.eel = held.userData.eel || null; }
-  if (H.bow) { const mount = new THREE.Group(); mount.add(bowModel()); add(H.handL, mount); H.bowMount = mount;
+  if (H.bow) { const mount = new THREE.Group(), bw = bowModel(); bw.rotation.y = 0.5; mount.add(bw); add(H.handL, mount); H.bowMount = mount;
     const quiver = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.03, 0.24, 10), leather); quiver.position.set(0.06, 0.14, -0.11); quiver.rotation.z = -0.35; add(H.torso, quiver);
     for (let n = 0; n < 4; n++) { const f = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.04, 0.02), mat('#a03a2a')); f.position.set(0.1 + n * 0.008, 0.27, -0.11 + (n % 2) * 0.01); f.rotation.z = -0.35; add(H.torso, f); } }
   if (H.shield) { const sh = shieldModel(c.color); const mount = new THREE.Group(); mount.add(sh); sh.position.set(0.045, 0.07, 0); add(H.elL, mount); H.shieldMount = mount; }
@@ -3511,6 +3511,10 @@ function pick(e) {
   const hit = raycaster.intersectObjects(targets, true).find(h => h.object.userData.kind && h.object.userData.kind !== 'deco' && shown(h.object));
   if (!hit) return null;
   const u = hit.object.userData;
+  if (u.kind === 'tile' || u.kind === 'prop') {   // a lootable body is small: its whole square counts
+    const body = state.creatures.find(c => !c.alive && c.loot && !c.looted && c.x === u.x && c.z === u.z);
+    if (body) return { kind: 'corpse', cid: body.id, x: body.x, z: body.z };
+  }
   if (u.kind === 'creature') { const c = creatureById(u.cid); if (!c) return null; if (!c.alive) return c.loot && !c.looted ? { kind: 'corpse', cid: c.id, x: c.x, z: c.z } : { kind: 'tile', x: c.x, z: c.z }; }
   return u;
 }
