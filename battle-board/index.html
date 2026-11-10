@@ -25,6 +25,7 @@
     --body: "Alegreya Sans", "Segoe UI", system-ui, sans-serif;
     color-scheme: dark;
   }
+  [hidden] { display: none !important; }
   html, body { height: 100%; }
   body { margin: 0; background: var(--table); color: var(--ink); font: 15px/1.45 var(--body); overflow: hidden; }
   button, input, select { font: inherit; color: inherit; }
@@ -171,6 +172,29 @@
   .log b { color: var(--ink); }
   .muted { color: var(--muted); font-size: 13px; }
 
+
+  .hud-chips { display: contents; }
+  select.chip { appearance: none; -webkit-appearance: none; cursor: pointer; padding-right: 26px;
+    background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+    background-position: calc(100% - 14px) 52%, calc(100% - 9px) 52%; background-size: 5px 5px; background-repeat: no-repeat; }
+  .chip.combat { border-color: var(--blood); color: #ffb3a6; }
+  .chip.combat .dot { background: var(--blood); }
+  .chip.explore { border-color: color-mix(in srgb, var(--sky) 60%, var(--line)); }
+  .chip.target { border-color: var(--blood); }
+  .hpbar { position: absolute; width: 46px; height: 6px; transform: translate(-50%, -100%); background: #120e0b;
+           border: 1px solid #000; border-radius: 3px; overflow: hidden; }
+  .hpbar > i { display: block; height: 100%; background: var(--blood); }
+  .hpbar.boss { width: 74px; height: 8px; }
+  .modal { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(8, 6, 4, .62); z-index: 20; padding: 16px; }
+  .modal .card { background: var(--panel); border: 1px solid var(--brass); border-radius: 12px; padding: 20px; max-width: 440px;
+                 width: 100%; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+  .modal h2 { margin: 0; font: 700 26px/1.1 var(--display); color: var(--brass); text-wrap: balance; }
+  .modal p { margin: 0; line-height: 1.5; }
+  .modal .inscription { font: italic 17px/1.55 var(--display); color: var(--ink); border-left: 3px solid var(--brass); padding-left: 12px; }
+  .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; font-variant-numeric: tabular-nums; }
+  .stats div { background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; display: flex; justify-content: space-between; }
+  .tag.curse { color: #c98bff; border-color: #c98bff; }
+  .tag.weird { color: #7fd8ff; border-color: #7fd8ff; }
   @media (max-width: 760px) {
     .app { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; }
     .panel { max-height: 45vh; border-left: 0; border-top: 1px solid var(--line); padding-left: max(16px, env(safe-area-inset-left, 0px)); }
@@ -192,16 +216,18 @@
   <main class="stage" id="stage">
     <canvas id="c" aria-label="3D battle board"></canvas>
     <div id="fx"></div>
-    <div class="hud" id="hud"></div>
+    <div class="hud" id="hud"><select class="chip map" id="mapSel" aria-label="Map"></select><span class="hud-chips" id="hudChips"></span></div>
     <div class="aim" id="aim" hidden></div>
     <div class="toast off" id="toast" role="status" aria-live="polite"></div>
+    <div class="modal" id="modal" hidden><div class="card" role="dialog" aria-modal="true" aria-labelledby="mTitle"><h2 id="mTitle"></h2><div id="mBody"></div><div class="row" id="mBtns"></div></div></div>
     <div class="actions">
       <div class="row" id="spellbar"></div>
       <div class="row">
+        <button class="btn" id="searchBtn" title="Wisdom (Perception) check to find secret doors, traps and hidden caches within 15 ft">Search</button>
         <button class="btn" id="dashBtn" title="Use your action to double your movement this turn">Dash</button>
         <button class="btn primary" id="endBtn">End turn</button>
         <button class="btn" id="viewBtn" title="Reset the camera">Reset view</button>
-        <span class="hint">Click a lit square to move · Click the dummy to attack · 1–4 picks a spell · Drag to orbit</span>
+        <span class="hint">Click to move or interact · Click an enemy to attack · 1–4 casts · Drag to orbit</span>
       </div>
     </div>
   </main>
@@ -236,44 +262,103 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
-/* ================================================================== *
- * DATA — maps, items, spells and characters are plain objects so they
- * can be swapped for user-made content later (map editor, enemies).
- * ================================================================== */
 
-// '.' floor   '#' wall (blocks movement)   '~' brush (difficult terrain, 2x cost)
+/* ================================================================== *
+ * DATA — maps, items, monsters and spells are plain objects so they
+ * can be swapped for user-made content later (map editor, bestiary).
+ *
+ * Map legend
+ *   #  wall            .  floor           ~  rubble/brush (difficult)
+ *   D  closed door     S  secret door     G  portcullis    X  stairs out
+ *   C  chest           F  font            I  inscription   1 2 3  pressure plates
+ *   $  loot on floor   H  hidden cache    T  dart trap     Y  fire trap
+ *   @  hero start      r k a W m  rat, skeleton, goblin archer, Grave Warden, dummy
+ * ================================================================== */
 const MAPS = {
+  crypt: {
+    name: 'Sunken Crypt', dark: true, fog: true, sight: 7,
+    rows: [
+      '##########################',
+      '#############.C.##########',
+      '#.......#..##...###.....X#',
+      '#.r..~~.#.F##...###......#',
+      '#.....~.S..###G####..W...#',
+      '#.$..r..#..#I.....#......#',
+      '#~....r.#H.#..3...#.#..#.#',
+      '#~~.....####......#......#',
+      '###.########.1..2.#......#',
+      '###.########......#....a.#',
+      '###.########......#.....~#',
+      '###.##########D####.#..#.#',
+      '###D#######.......#......#',
+      '#.....#####.~.....#......#',
+      '#...$.#####..k....#.k....#',
+      '#.....D..T........D.Y....#',
+      '#.@...#####....k..#$..~..#',
+      '#.....#####.a.....#......#',
+      '#.....#####~....C.########',
+      '##########################',
+    ],
+    torches: [[0, 15, 1, 0], [4, 1, 0, 1], [14, 19, 0, -1], [18, 7, -1, 0], [25, 13, -1, 0], [22, 1, 0, 1]],
+    loot: { '4,14': { items: ['potion'] }, '2,5': { items: ['whisper'] }, '19,16': { items: ['greater'] } },
+    chests: { '16,18': { items: ['potion', 'potion', 'teeth'], gold: 30 }, '14,1': { items: ['crown', 'sunder', 'potion'], gold: 100 } },
+    stash: { '9,6': { items: ['eel'], gold: 40, dc: 13 } },
+    secrets: { '8,4': { dc: 13 } },
+    puzzle: { order: ['2', '1', '3'], gate: [14, 4] },
+    tablet: `When the Drowned King slept, the <b>moon</b> rose first. The <b>sun</b> followed, hunting her across the sky. Only when both had passed were the <b>stars</b> allowed to shine.`,
+  },
   trainingYard: {
-    name: 'Training Yard',
+    name: 'Training Yard', dark: false, fog: false,
     rows: [
       '..............',
       '..##......~~..',
       '..#.......~~~.',
       '..........~~..',
       '.....##.......',
-      '.....##.......',
+      '.@...##..m....',
       '..............',
       '.~~.......#...',
       '.~~.......#...',
       '..............',
     ],
-    spawns: { hero: { x: 1, z: 5 }, dummy: { x: 9, z: 4 } },
+    torches: [], loot: {}, chests: {}, stash: {}, secrets: {},
   },
 };
+const PLATE_NAMES = { 1: 'sun', 2: 'moon', 3: 'star' };
 
 const ITEMS = {
   longsword: { name: 'Longsword', type: 'weapon', dice: [1, 8], dmgType: 'slashing', ability: 'str', range: 1, weight: 3, note: 'Martial melee' },
   dagger:    { name: 'Dagger', type: 'weapon', dice: [1, 4], dmgType: 'piercing', ability: 'finesse', range: 1, weight: 1, note: 'Finesse, light' },
   shortbow:  { name: 'Shortbow', type: 'weapon', dice: [1, 6], dmgType: 'piercing', ability: 'dex', range: 16, ranged: true, twoHanded: true, weight: 2, note: 'Range 80 ft, two-handed' },
+  whisper:   { name: 'Whispering Blade', type: 'weapon', weird: true, dice: [1, 8], extra: [1, 6, 'psychic'], dmgType: 'slashing', ability: 'str', range: 1, weight: 3,
+               note: '+1d6 psychic on a hit. It never stops talking, and sometimes it turns on you (1 in 6 hits: 1d4 psychic to you).' },
+  eel:       { name: 'Eelblade', type: 'weapon', weird: true, dice: [1, 6], dmgType: 'lightning', ability: 'finesse', range: 2, weight: 2,
+               note: 'Finesse, reach 10 ft. Still wet. Still wriggling.' },
+  sunder:    { name: 'Sunderglass', type: 'weapon', weird: true, dice: [2, 6], dmgType: 'radiant', ability: 'str', range: 1, weight: 1,
+               note: '2d6 radiant. Beautiful, and it shatters for good on a natural 1.' },
   leather:   { name: 'Leather Armor', type: 'armor', ac: 11, maxDex: 99, weight: 10, note: 'Light armor, AC 11 + Dex' },
   chain:     { name: 'Chain Shirt', type: 'armor', ac: 13, maxDex: 2, weight: 20, note: 'Medium armor, AC 13 + Dex (max 2)' },
   shield:    { name: 'Shield', type: 'shield', ac: 2, weight: 6, note: '+2 AC' },
+  crown:     { name: 'Drowned Crown', type: 'head', acBonus: 2, cursed: true, weight: 2,
+               note: '+2 AC. Black iron set with sea-green stones. It wants to be worn.',
+               curseNote: 'Cursed: it won\'t come off, and it drains 1 HP at the end of each of your turns. Something in this crypt might wash the curse away.' },
   potion:    { name: 'Potion of Healing', type: 'consumable', heal: [2, 4, 2], weight: 0.5, note: 'Action: regain 2d4 + 2 HP' },
+  greater:   { name: 'Greater Healing Potion', type: 'consumable', heal: [4, 4, 4], weight: 0.5, note: 'Action: regain 4d4 + 4 HP' },
   rope:      { name: 'Hempen Rope (50 ft)', type: 'gear', weight: 10, note: 'Adventuring gear' },
   torch:     { name: 'Torch', type: 'gear', weight: 1, note: 'Bright light 20 ft' },
   rations:   { name: 'Rations (1 day)', type: 'gear', weight: 2, note: 'Adventuring gear' },
+  teeth:     { name: 'Bag of Mostly Teeth', type: 'gear', weight: 1, note: 'Mostly teeth. One of them is warm.' },
 };
 const UNARMED = { name: 'Unarmed strike', type: 'weapon', dice: [1, 1], dmgType: 'bludgeoning', ability: 'str', range: 1 };
+
+const MONSTERS = {
+  dummy:    { name: 'Training Dummy', hp: 40, ac: 11, xp: 50, speed: 0, ai: 'none', saves: { dex: 0, str: 2 }, respawn: true },
+  rat:      { name: 'Giant Rat', hp: 7, ac: 12, xp: 25, speed: 6, ai: 'melee', atk: 4, dmg: [1, 4, 2], dmgType: 'piercing', range: 1, saves: { dex: 2, str: -2 }, verb: 'bites' },
+  skeleton: { name: 'Skeleton', hp: 13, ac: 13, xp: 50, speed: 6, ai: 'melee', atk: 4, dmg: [1, 6, 2], dmgType: 'slashing', range: 1, saves: { dex: 2, str: 0 }, verb: 'slashes' },
+  archer:   { name: 'Goblin Archer', hp: 7, ac: 13, xp: 50, speed: 6, ai: 'ranged', atk: 4, dmg: [1, 6, 2], dmgType: 'piercing', range: 16, saves: { dex: 2, str: -1 }, verb: 'shoots' },
+  warden:   { name: 'Grave Warden', hp: 45, ac: 16, xp: 450, speed: 5, ai: 'melee', atk: 5, dmg: [2, 6, 3], dmgType: 'slashing', range: 1, saves: { dex: 0, str: 3 }, verb: 'cleaves', boss: true, drop: ['greater'] },
+};
+const CREATURE_CHARS = { r: 'rat', k: 'skeleton', a: 'archer', W: 'warden', m: 'dummy' };
 
 // range and size are in 5 ft squares
 const SPELLS = {
@@ -284,7 +369,7 @@ const SPELLS = {
   icewall:  { key: '3', name: 'Wall of Ice', level: 2, range: 12, shape: 'line', size: 5, duration: 3, damage: [4, 6], dmgType: 'cold', save: 'dex', color: '#7fd8ff',
               area: '25 ft line', desc: 'Ice crystals erupt from the ground for 3 rounds and block movement. Creatures beside the eruption take 4d6 cold (Dex half). The wall shatters when it ends.' },
   vines:    { key: '4', name: 'Vine Growth', level: 1, range: 18, shape: 'square', size: 2, duration: 3, save: 'str', color: '#8fdc5a',
-              area: '25 ft square', desc: 'Grasping vines cover the ground for 3 rounds. The area is difficult terrain, and a creature inside is restrained on a failed Str save, so attacks against it have advantage.' },
+              area: '25 ft square', desc: 'Grasping vines cover the ground for 3 rounds. The area is difficult terrain, and creatures inside are restrained on a failed Str save: they can\'t move, and attacks against them have advantage.' },
 };
 
 const ABILITIES = [['str', 'Strength'], ['dex', 'Dexterity'], ['con', 'Constitution'], ['int', 'Intelligence'], ['wis', 'Wisdom'], ['cha', 'Charisma']];
@@ -295,18 +380,17 @@ function newCharacter() {
   return {
     name: 'Bryn Ashford', species: 'Human', cls: 'Spellblade', level: 1, xp: 0, color: '#3f6f8f',
     abilities: { str: 14, dex: 14, con: 14, int: 16, wis: 10, cha: 8 },
-    hp: 12, speed: 30, gold: 15, castAbility: 'int',
+    hp: 12, speed: 30, gold: 15, castAbility: 'int', curseLifted: false, curseSteps: 0,
     slots: freshSlots(),
     inventory: [
       { key: 'longsword', qty: 1 }, { key: 'shortbow', qty: 1 }, { key: 'dagger', qty: 2 },
       { key: 'chain', qty: 1 }, { key: 'shield', qty: 1 }, { key: 'potion', qty: 2 },
       { key: 'rope', qty: 1 }, { key: 'torch', qty: 3 }, { key: 'rations', qty: 5 },
     ],
-    equipped: { weapon: 'longsword', armor: 'chain', shield: 'shield' },
+    equipped: { weapon: 'longsword', armor: 'chain', shield: 'shield', head: null },
   };
 }
 function freshSlots() { const s = {}; for (const l in SLOT_TABLE) s[l] = { max: SLOT_TABLE[l], left: SLOT_TABLE[l] }; return s; }
-const DUMMY = { name: 'Training Dummy', maxHp: 40, ac: 11, xp: 50, saves: { dex: 0, str: 2 } };
 
 /* ================================================================== *
  * RULES
@@ -316,6 +400,7 @@ const fmt = n => (n >= 0 ? '+' : '') + n;
 const roll = (n, d) => Array.from({ length: n }, () => 1 + Math.floor(Math.random() * d));
 const sum = a => a.reduce((p, c) => p + c, 0);
 const cheb = (a, b) => Math.max(Math.abs(a.x - b.x), Math.abs(a.z - b.z));
+const keyOf = (x, z) => x + ',' + z;
 
 function derived() {
   const c = state.char, m = k => mod(c.abilities[k]);
@@ -324,53 +409,86 @@ function derived() {
   const armor = c.equipped.armor ? ITEMS[c.equipped.armor] : null;
   let ac = armor ? armor.ac + Math.min(m('dex'), armor.maxDex) : 10 + m('dex');
   if (c.equipped.shield) ac += ITEMS.shield.ac;
+  if (c.equipped.head) ac += ITEMS[c.equipped.head].acBonus || 0;
   const weapon = c.equipped.weapon ? ITEMS[c.equipped.weapon] : UNARMED;
   const am = weapon.ability === 'finesse' ? Math.max(m('str'), m('dex')) : m(weapon.ability);
   const weight = c.inventory.reduce((s, i) => s + ITEMS[i.key].weight * i.qty, 0);
   const cm = m(c.castAbility || 'int');
   return { prof, maxHp, ac, weapon, atk: am + prof, dmgMod: am, init: m('dex'),
            speedSq: Math.floor(c.speed / 5), weight, cap: c.abilities.str * 15,
-           spellDc: 8 + prof + cm, spellAtk: prof + cm };
+           spellDc: 8 + prof + cm, spellAtk: prof + cm,
+           perception: m('wis') + prof, passive: 10 + m('wis') + prof };
 }
+const isCursed = () => state.char.equipped.head && ITEMS[state.char.equipped.head].cursed && !state.char.curseLifted;
 
 /* ================================================================== *
  * STATE + PERSISTENCE
  * ================================================================== */
-const SAVE_KEY = 'battleboard.v1', PREF_KEY = 'battleboard.prefs';
-const MAP = MAPS.trainingYard;
-const W = MAP.rows[0].length, H = MAP.rows.length;
+const SAVE_KEY = 'battleboard.v2', OLD_KEY = 'battleboard.v1', PREF_KEY = 'battleboard.prefs';
 
-function freshState() {
-  const char = newCharacter();
+function migrateChar(c) {
+  c.slots ||= freshSlots(); c.castAbility ||= 'int';
+  if (c.cls === 'Fighter') c.cls = 'Spellblade';
+  if (!('head' in c.equipped)) c.equipped.head = null;
+  c.curseLifted ??= false; c.curseSteps ||= 0;
+  return c;
+}
+
+function freshState(mapKey, carryChar) {
+  const map = MAPS[mapKey];
+  const char = carryChar ? migrateChar(JSON.parse(JSON.stringify(carryChar))) : newCharacter();
+  if (carryChar) { char.slots = freshSlots(); }
+  char.hp = Math.max(char.hp, 1);
+  const grid = [], creatures = [], loot = {}, traps = {}, stash = {}, chests = {};
+  let pos = { x: 1, z: 1 }, id = 1;
+  map.rows.forEach((row, z) => {
+    grid.push([...row].map((ch, x) => {
+      const k = keyOf(x, z);
+      if (ch === '@') { pos = { x, z }; return '.'; }
+      if (CREATURE_CHARS[ch]) {
+        const t = CREATURE_CHARS[ch];
+        creatures.push({ id: id++, type: t, x, z, hp: MONSTERS[t].hp, alive: true, aware: false, restrained: false });
+        return '.';
+      }
+      if (ch === '$') { loot[k] = { items: [...map.loot[k].items], gold: map.loot[k].gold || 0 }; return '.'; }
+      if (ch === 'H') { stash[k] = { ...map.stash[k], items: [...map.stash[k].items], found: false }; return '.'; }
+      if (ch === 'T' || ch === 'Y') { traps[k] = { kind: ch === 'T' ? 'darts' : 'fire', dc: 13, found: false }; return '.'; }
+      if (ch === 'C') chests[k] = { ...map.chests[k], items: [...map.chests[k].items], opened: false };
+      return ch;
+    }));
+  });
+  const w = map.rows[0].length, h = map.rows.length;
   return {
-    char, nextId: 1, effects: [],
-    pos: { ...MAP.spawns.hero },
-    dummy: { ...MAP.spawns.dummy, hp: DUMMY.maxHp, alive: true, restrained: false },
+    v: 2, mapKey, char, grid, creatures, loot, traps, stash, chests,
+    explored: new Array(w * h).fill(map.fog ? 0 : 1),
+    puzzle: { seq: [], solved: false }, fontUsed: false,
+    stats: { kills: 0, gold: 0, secrets: 0 },
+    startChar: JSON.parse(JSON.stringify(char)),
+    nextId: 1, effects: [], pos,
     turn: { round: 1, move: 6, action: true },
-    log: [{ kind: 'sys', html: `Round 1. <b>${char.name}</b> steps into the ${MAP.name}.` }],
+    log: [{ kind: 'sys', html: `<b>${char.name}</b> enters the ${map.name}.` }],
   };
 }
 function load() {
   try {
     const s = JSON.parse(localStorage.getItem(SAVE_KEY));
-    if (!s || !s.char || !s.pos) return null;
-    // migrate saves from before spells existed
-    s.effects ||= []; s.nextId ||= 1;
-    s.char.slots ||= freshSlots(); s.char.castAbility ||= 'int';
-    if (s.char.cls === 'Fighter') s.char.cls = 'Spellblade';
-    return s;
-  } catch (e) { return null; }
+    if (s && s.v === 2 && MAPS[s.mapKey]) { migrateChar(s.char); return s; }
+    const old = JSON.parse(localStorage.getItem(OLD_KEY));
+    if (old && old.char) return freshState('crypt', old.char);
+  } catch (e) {}
+  return null;
 }
 function save() {
-  try { state.log = state.log.slice(-80); localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) {}
+  try { state.log = state.log.slice(-90); localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) {}
 }
 function loadPrefs() { try { return JSON.parse(localStorage.getItem(PREF_KEY)) || {}; } catch (e) { return {}; } }
 function savePrefs() { try { localStorage.setItem(PREF_KEY, JSON.stringify({ sandbox: ui.sandbox, quality: qName })); } catch (e) {} }
 
-let state = load() || freshState();
+let state = load() || freshState('crypt');
+let MAP = MAPS[state.mapKey], W = MAP.rows[0].length, H = MAP.rows.length;
 const prefs = loadPrefs();
-const ui = { tab: 'sheet', editScores: false, spell: null, aim: null, sandbox: prefs.sandbox ?? true };
-let busy = false;   // a spell is mid-animation
+const ui = { tab: 'sheet', editScores: false, spell: null, aim: null, sandbox: prefs.sandbox ?? true, hover: null };
+let busy = false;   // a spell or the enemy turn is playing out
 
 /* ================================================================== *
  * RENDERER — HDR pipeline: scene → bloom → ACES tone map
@@ -404,9 +522,7 @@ const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.maxPolarAngle = Math.PI * 0.45;
 controls.minDistance = 4;
-controls.maxDistance = 28;
-function resetView() { camera.position.set(0, 13, 12); controls.target.set(0, 0, 0); controls.update(); }
-resetView();
+controls.maxDistance = 30;
 
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
@@ -415,19 +531,22 @@ bloom.enabled = Q.bloom;
 composer.addPass(bloom);
 composer.addPass(new OutputPass());
 
-scene.add(new THREE.HemisphereLight('#ffe9c7', '#2a1f14', 0.75));
+const hemi = new THREE.HemisphereLight('#ffe9c7', '#2a1f14', 0.75);
+scene.add(hemi);
 const sun = new THREE.DirectionalLight('#ffd9a0', 2.0);
 sun.position.set(-6, 12, 5);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
-Object.assign(sun.shadow.camera, { left: -10, right: 10, top: 10, bottom: -10, near: 1, far: 40 });
 sun.shadow.bias = -0.0005;
 scene.add(sun);
 const lantern = new THREE.PointLight('#ff9a4a', 16, 14, 2);
 lantern.position.set(5, 3, -3);
 scene.add(lantern);
+const heroLight = new THREE.PointLight('#ffb36b', 0, 9, 1.6);
+scene.add(heroLight);
 
-// Lights are pooled: adding/removing lights at runtime forces every shader to recompile (a visible hitch).
+// Every light exists from the start: adding lights at runtime makes every shader recompile (a visible hitch).
+const torchLights = Array.from({ length: 6 }, () => { const l = new THREE.PointLight('#ff8a3a', 0, 7.5, 1.7); scene.add(l); return l; });
 const lightPool = Array.from({ length: 6 }, () => { const l = new THREE.PointLight('#ffffff', 0, 0, 2); scene.add(l); return { l, owner: null }; });
 function takeLight(owner, color) {
   const s = lightPool.find(s => !s.owner); if (!s) return null;
@@ -447,66 +566,330 @@ const rndDir = () => { const u = Math.random() * 2 - 1, a = Math.random() * Math
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ================================================================== *
- * BOARD
+ * TILES
  * ================================================================== */
+const WALKABLE = new Set(['.', '~', 'd', 'g', 'X', '1', '2', '3']);
+const SIGHT_BLOCK = new Set(['#', 'D', 'S']);
+const tileAt = (x, z) => (x < 0 || z < 0 || x >= W || z >= H) ? '#' : state.grid[z][x];
+const isWall = ch => ch === '#' || ch === 'S';
+const worldOf = (x, z) => {
+  const ch = tileAt(x, z);
+  return new THREE.Vector3(x - W / 2 + 0.5, isWall(ch) ? 1.1 : ch === '~' ? 0.14 : 0.2, z - H / 2 + 0.5);
+};
 function seeded(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
-const rand = seeded(7);
 
-const tileAt = (x, z) => (x < 0 || z < 0 || x >= W || z >= H) ? '#' : MAP.rows[z][x];
-const TOP = { '.': 0.2, '~': 0.14, '#': 1.1 };
-const worldOf = (x, z) => new THREE.Vector3(x - W / 2 + 0.5, TOP[tileAt(x, z)] ?? 0.2, z - H / 2 + 0.5);
+/* ================================================================== *
+ * VISIBILITY — line of sight from the hero; explored tiles stay dim
+ * ================================================================== */
+let vis = new Uint8Array(0);
+function los(x0, z0, x1, z1) {
+  const dx = x1 - x0, dz = z1 - z0, n = Math.ceil(Math.max(Math.abs(dx), Math.abs(dz)) * 2);
+  for (let s = 1; s < n; s++) {
+    const t = s / n, x = Math.round(x0 + dx * t), z = Math.round(z0 + dz * t);
+    if ((x !== x1 || z !== z1) && (x !== x0 || z !== z0) && SIGHT_BLOCK.has(tileAt(x, z))) return false;
+  }
+  return true;
+}
+function computeVisibility() {
+  vis = new Uint8Array(W * H);
+  if (!MAP.fog) { vis.fill(1); return; }
+  const R = MAP.sight || 7, hx = state.pos.x, hz = state.pos.z;
+  for (let z = Math.max(0, hz - R); z <= Math.min(H - 1, hz + R); z++)
+    for (let x = Math.max(0, hx - R); x <= Math.min(W - 1, hx + R); x++) {
+      const dx = x - hx, dz = z - hz;
+      if (dx * dx + dz * dz > (R + 0.5) * (R + 0.5)) continue;
+      if (los(hx, hz, x, z)) { vis[z * W + x] = 1; state.explored[z * W + x] = 1; }
+    }
+}
 
-const table = new THREE.Mesh(new THREE.BoxGeometry(W + 6, 0.5, H + 6), mat('#3a2919', { roughness: 0.7 }));
-table.position.y = -0.3; table.receiveShadow = true; scene.add(table);
-const frame = new THREE.Mesh(new THREE.BoxGeometry(W + 0.5, 0.12, H + 0.5), mat('#1e1712'));
-frame.receiveShadow = true; scene.add(frame);
-
-const tileMeshes = [];
-const overlays = new Array(W * H).fill(null);
+/* ================================================================== *
+ * BOARD — tiles, props (doors, chests, plates...) and torches
+ * ================================================================== */
+let board = null, tileMeshes = [], overlays = [], tileObjs = [], props = [];
 const floorGeo = new THREE.BoxGeometry(0.96, 0.2, 0.96);
 const brushGeo = new THREE.BoxGeometry(0.96, 0.14, 0.96);
 const wallGeo = new THREE.BoxGeometry(0.98, 1.1, 0.98);
 const tuftGeo = new THREE.ConeGeometry(0.05, 0.22, 5);
 const overlayGeo = new THREE.PlaneGeometry(0.88, 0.88);
+const unitBox = new THREE.BoxGeometry(1, 1, 1);
+const unitCyl = new THREE.CylinderGeometry(1, 1, 1, 16);
 
-for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) {
-  const t = tileAt(x, z), p = worldOf(x, z), j = (rand() - 0.5) * 0.08;
-  let mesh;
-  if (t === '#') {
-    mesh = new THREE.Mesh(wallGeo, mat(new THREE.Color('#6b6358').offsetHSL(0, 0, j)));
-    mesh.position.set(p.x, 0.55, p.z);
-  } else if (t === '~') {
-    mesh = new THREE.Mesh(brushGeo, mat(new THREE.Color('#3d5636').offsetHSL(0, 0, j)));
-    mesh.position.set(p.x, 0.07, p.z);
-    for (let k = 0; k < 5; k++) {
-      const tuft = new THREE.Mesh(tuftGeo, mat('#5d7a43'));
-      tuft.position.set(p.x + (rand() - 0.5) * 0.7, 0.24, p.z + (rand() - 0.5) * 0.7);
-      tuft.castShadow = true; scene.add(tuft);
+function canvasTex(size, draw) {
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  draw(c.getContext('2d'), size);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+function plateTex(kind) {
+  return canvasTex(256, (g, s) => {
+    g.fillStyle = '#6d655a'; g.fillRect(0, 0, s, s);
+    for (let i = 0; i < 400; i++) { g.fillStyle = `rgba(0,0,0,${Math.random() * 0.12})`; g.fillRect(Math.random() * s, Math.random() * s, 3, 3); }
+    g.translate(s / 2, s / 2); g.strokeStyle = g.fillStyle = '#f2e4c4'; g.lineWidth = 9; g.lineCap = 'round';
+    g.beginPath(); g.arc(0, 0, s * 0.44, 0, 6.283); g.stroke();
+    if (kind === 'sun') {
+      g.beginPath(); g.arc(0, 0, s * 0.14, 0, 6.283); g.fill();
+      for (let i = 0; i < 12; i++) { g.save(); g.rotate(i / 12 * 6.283); g.beginPath(); g.moveTo(0, s * 0.2); g.lineTo(0, s * (i % 2 ? 0.3 : 0.36)); g.stroke(); g.restore(); }
+    } else if (kind === 'moon') {
+      g.beginPath(); g.arc(0, 0, s * 0.26, 0, 6.283); g.fill();
+      g.globalCompositeOperation = 'destination-out'; g.beginPath(); g.arc(s * 0.11, -s * 0.06, s * 0.23, 0, 6.283); g.fill();
+      g.globalCompositeOperation = 'source-over';
+    } else {
+      g.beginPath();
+      for (let i = 0; i < 10; i++) { const r = (i % 2 ? 0.12 : 0.3) * s, a = i / 10 * 6.283 - Math.PI / 2; i ? g.lineTo(Math.cos(a) * r, Math.sin(a) * r) : g.moveTo(Math.cos(a) * r, Math.sin(a) * r); }
+      g.closePath(); g.fill();
     }
-  } else {
-    mesh = new THREE.Mesh(floorGeo, mat(new THREE.Color('#7d705e').offsetHSL(0, 0, j), { envMapIntensity: 0.2 }));
-    mesh.position.set(p.x, 0.1, p.z);
-  }
-  mesh.castShadow = t === '#'; mesh.receiveShadow = true;
-  mesh.userData = { kind: 'tile', x, z };
-  scene.add(mesh); tileMeshes.push(mesh);
-  if (t !== '#') {
-    const o = new THREE.Mesh(overlayGeo, new THREE.MeshBasicMaterial({ color: '#7aa7cb', transparent: true, opacity: 0.32, depthWrite: false, toneMapped: false }));
-    o.rotation.x = -Math.PI / 2; o.position.set(p.x, p.y + 0.006, p.z); o.visible = false; o.renderOrder = 1;
-    scene.add(o); overlays[z * W + x] = o;
-  }
+  });
+}
+const PTEX = { sun: plateTex('sun'), moon: plateTex('moon'), star: plateTex('star'),
+  trap: canvasTex(128, (g, s) => {
+    g.strokeStyle = '#ff5a3a'; g.lineWidth = 10; g.lineJoin = 'round';
+    g.beginPath(); g.moveTo(s / 2, 14); g.lineTo(s - 12, s - 18); g.lineTo(12, s - 18); g.closePath(); g.stroke();
+    g.fillStyle = '#ff5a3a'; g.fillRect(s / 2 - 5, 46, 10, 34); g.fillRect(s / 2 - 5, 88, 10, 10);
+  }),
+};
+
+function addObj(i, o, kind, x, z) {
+  o.traverse(c => { c.userData.kind = kind; c.userData.x = x; c.userData.z = z; if (c.isMesh && !c.userData.noShadow) { c.castShadow = true; c.receiveShadow = true; } });
+  board.add(o); tileObjs[i].push(o);
+  return o;
+}
+function addProp(i, o, update) { const p = { i, o, update }; props.push(p); return p; }
+
+function buildBoard() {
+  if (board) { board.traverse(o => { if (o.isMesh && o.material && !o.userData.sharedMat) [].concat(o.material).forEach(m => m.dispose()); }); board.removeFromParent(); }
+  board = new THREE.Group(); scene.add(board);
+  tileMeshes = new Array(W * H).fill(null); overlays = new Array(W * H).fill(null);
+  tileObjs = Array.from({ length: W * H }, () => []); props = [];
+  const dark = MAP.dark;
+  const table = new THREE.Mesh(new THREE.BoxGeometry(W + 6, 0.5, H + 6), mat(dark ? '#20170f' : '#3a2919', { roughness: 0.7 }));
+  table.position.y = -0.3; table.receiveShadow = true; board.add(table);
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(W + 0.5, 0.12, H + 0.5), mat('#1e1712'));
+  frame.receiveShadow = true; board.add(frame);
+  for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) buildTile(x, z);
+
+  // torches
+  torchLights.forEach(l => l.intensity = 0);
+  (MAP.torches || []).forEach(([x, z, dx, dz], n) => {
+    const w = worldOf(x, z), g = new THREE.Group();
+    const bx = w.x + dx * 0.52, bz = w.z + dz * 0.52;
+    const bracket = new THREE.Mesh(unitBox, mat('#2a2622', { metalness: 0.6, roughness: 0.5 })); bracket.scale.set(0.08, 0.22, 0.08);
+    bracket.position.set(bx, 0.85, bz);
+    const stick = new THREE.Mesh(unitCyl, mat('#4a3020')); stick.scale.set(0.035, 0.28, 0.035); stick.position.set(bx + dx * 0.08, 1.0, bz + dz * 0.08);
+    stick.rotation.set(dz * 0.4, 0, -dx * 0.4);
+    const flame = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.18, 8), new THREE.MeshBasicMaterial({ color: hdrColor('#ff9a3a', 4) }));
+    flame.position.set(bx + dx * 0.14, 1.2, bz + dz * 0.14); flame.userData.noShadow = true;
+    g.add(bracket, stick, flame);
+    const i = z * W + x;
+    addObj(i, g, 'deco', x, z);
+    const light = torchLights[n];
+    const fp = flame.position.clone();
+    if (light) light.position.copy(fp).add(new THREE.Vector3(dx * 0.4, 0.1, dz * 0.4));
+    addProp(i, g, (dt, t) => {
+      if (!g.visible) { if (light) light.intensity = 0; return; }
+      flame.scale.y = 1 + Math.sin(t * 17 + n) * 0.15; flame.scale.x = flame.scale.z = 1 + Math.sin(t * 11 + n * 2) * 0.1;
+      if (light) light.intensity = 9 + Math.sin(t * 9 + n) * 1.5 + Math.sin(t * 23 + n * 3) * 1;
+      stream(glow, .35, dt, () => ({ p: [fp.x + rnd(-.03, .03), fp.y + .08, fp.z + rnd(-.03, .03)], v: [rnd(-.1, .1), rnd(.5, 1), rnd(-.1, .1)],
+        life: rnd(.3, .7), s: [.09, .02], c0: hdr('#ffc070', 5), c1: hdr('#ff3000', 1.5), a: .9, turb: 1 }));
+    });
+  });
+
+  // lighting mood per map
+  hemi.intensity = dark ? 0.12 : 0.75;
+  sun.intensity = dark ? 0.35 : 2.0; sun.color.set(dark ? '#8fa3c8' : '#ffd9a0');
+  lantern.intensity = dark ? 0 : 16;
+  heroLight.intensity = dark ? 7 : 0;
+  scene.background.set(dark ? '#0b0907' : '#120e0b'); scene.fog.color.set(dark ? '#0b0907' : '#120e0b');
+  renderer.toneMappingExposure = dark ? 1.15 : 0.9;
+  const ext = Math.max(W, H) / 2 + 2;
+  Object.assign(sun.shadow.camera, { left: -ext, right: ext, top: ext, bottom: -ext, near: 1, far: 50 });
+  sun.shadow.camera.updateProjectionMatrix();
 }
 
-const hoverBox = new THREE.LineLoop(
-  new THREE.BufferGeometry().setFromPoints([[-.46, -.46], [.46, -.46], [.46, .46], [-.46, .46]].map(([a, b]) => new THREE.Vector3(a, 0, b))),
-  new THREE.LineBasicMaterial({ color: '#d3aa55', toneMapped: false }));
-hoverBox.visible = false; scene.add(hoverBox);
-const dotGeo = new THREE.SphereGeometry(0.06, 10, 8);
-const dotMat = new THREE.MeshBasicMaterial({ color: '#d3aa55', toneMapped: false });
-const pathDots = Array.from({ length: 40 }, () => { const d = new THREE.Mesh(dotGeo, dotMat); d.visible = false; scene.add(d); return d; });
+function clearTile(i) {
+  for (const o of tileObjs[i]) { o.traverse(c => { if (c.isMesh && c.material && !c.userData.sharedMat) [].concat(c.material).forEach(m => m.dispose()); }); o.removeFromParent(); }
+  tileObjs[i] = []; props = props.filter(p => p.i !== i);
+  tileMeshes[i] = null;
+  if (overlays[i]) { overlays[i].material.dispose(); overlays[i].removeFromParent(); overlays[i] = null; }
+}
 
-/* --- miniatures --- */
-function tagAll(group, kind) { group.traverse(o => { o.userData.kind = kind; if (o.isMesh && !o.userData.noShadow) { o.castShadow = true; o.receiveShadow = true; } }); }
+function buildTile(x, z) {
+  const i = z * W + x, ch = tileAt(x, z), k = keyOf(x, z);
+  clearTile(i);
+  const r = seeded(i * 7919 + 13), j = (r() - 0.5) * 0.08, p = worldOf(x, z);
+  const dark = MAP.dark;
+  let mesh;
+  if (isWall(ch)) {
+    mesh = new THREE.Mesh(wallGeo, mat(new THREE.Color(dark ? '#57514a' : '#6b6358').offsetHSL(0, 0, j)));
+    mesh.position.set(p.x, 0.55, p.z); mesh.castShadow = true;
+  } else if (ch === '~') {
+    mesh = new THREE.Mesh(brushGeo, mat(new THREE.Color(dark ? '#4a4239' : '#3d5636').offsetHSL(0, 0, j)));
+    mesh.position.set(p.x, 0.07, p.z);
+    for (let n = 0; n < 5; n++) {
+      const bit = dark ? new THREE.Mesh(new THREE.DodecahedronGeometry(rnd(.06, .12), 0), mat('#5e564c'))
+                       : new THREE.Mesh(tuftGeo, mat('#5d7a43'));
+      bit.position.set(p.x + (r() - 0.5) * 0.7, dark ? 0.18 : 0.24, p.z + (r() - 0.5) * 0.7); bit.rotation.set(r() * 3, r() * 3, 0);
+      addObj(i, bit, 'tile', x, z);
+    }
+  } else {
+    mesh = new THREE.Mesh(floorGeo, mat(new THREE.Color(ch === 'X' ? '#141210' : dark ? '#6b6153' : '#7d705e').offsetHSL(0, 0, j), { envMapIntensity: 0.2 }));
+    mesh.position.set(p.x, 0.1, p.z);
+  }
+  mesh.receiveShadow = true;
+  mesh.userData.base = mesh.material.color.clone();
+  addObj(i, mesh, 'tile', x, z); tileMeshes[i] = mesh;
+
+  if (!isWall(ch)) {
+    const o = new THREE.Mesh(overlayGeo, new THREE.MeshBasicMaterial({ color: '#7aa7cb', transparent: true, opacity: 0.32, depthWrite: false, toneMapped: false }));
+    o.rotation.x = -Math.PI / 2; o.position.set(p.x, p.y + 0.006, p.z); o.visible = false; o.renderOrder = 1;
+    board.add(o); overlays[i] = o;
+  }
+
+  const along = isWall(tileAt(x - 1, z)) || isWall(tileAt(x + 1, z));   // which way a door/gate spans
+  const wood = () => mat('#5a3b22', { roughness: 0.75 }), iron = () => mat('#2c2b2a', { metalness: 0.7, roughness: 0.45, envMapIntensity: 0.8 });
+  if (ch === 'D' || ch === 'd') {
+    const g = new THREE.Group(); g.position.set(p.x, 0.2, p.z); g.rotation.y = along ? 0 : Math.PI / 2;
+    for (const s of [-1, 1]) { const post = new THREE.Mesh(unitBox, mat('#4b4540')); post.scale.set(0.14, 1.0, 0.24); post.position.set(s * 0.47, 0.5, 0); g.add(post); }
+    const lintel = new THREE.Mesh(unitBox, mat('#4b4540')); lintel.scale.set(1.08, 0.14, 0.24); lintel.position.y = 1.0; g.add(lintel);
+    const hinge = new THREE.Group(); hinge.position.set(-0.4, 0, 0); g.add(hinge);
+    const leaf = new THREE.Mesh(unitBox, wood()); leaf.scale.set(0.8, 0.92, 0.07); leaf.position.set(0.4, 0.47, 0); hinge.add(leaf);
+    for (const yy of [0.22, 0.72]) { const band = new THREE.Mesh(unitBox, iron()); band.scale.set(0.82, 0.05, 0.09); band.position.set(0.4, yy, 0); hinge.add(band); }
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.012, 6, 12), iron()); ring.position.set(0.68, 0.45, 0.06); hinge.add(ring);
+    addObj(i, g, ch === 'D' ? 'prop' : 'tile', x, z);
+    hinge.rotation.y = ch === 'd' ? -1.75 : 0;
+    addProp(i, g, dt => { const target = tileAt(x, z) === 'd' ? -1.75 : 0; hinge.rotation.y += (target - hinge.rotation.y) * Math.min(1, dt * 5); });
+  }
+  if (ch === 'G' || ch === 'g') {
+    const g = new THREE.Group(); g.position.set(p.x, 0.2, p.z); g.rotation.y = along ? 0 : Math.PI / 2;
+    const bars = new THREE.Group(); g.add(bars);
+    for (let n = 0; n < 6; n++) { const b = new THREE.Mesh(unitCyl, iron()); b.scale.set(0.025, 1.0, 0.025); b.position.set(-0.4 + n * 0.16, 0.5, 0); bars.add(b);
+      const tip = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.08, 6), iron()); tip.position.set(-0.4 + n * 0.16, -0.02, 0); tip.rotation.x = Math.PI; bars.add(tip); }
+    for (const yy of [0.25, 0.7]) { const b = new THREE.Mesh(unitBox, iron()); b.scale.set(0.9, 0.04, 0.04); b.position.y = yy; bars.add(b); }
+    bars.position.y = ch === 'g' ? 1.0 : 0;
+    addObj(i, g, ch === 'G' ? 'prop' : 'tile', x, z);
+    addProp(i, g, dt => { const target = tileAt(x, z) === 'g' ? 1.0 : 0; bars.position.y += (target - bars.position.y) * Math.min(1, dt * 1.6); });
+  }
+  if (ch === 'C') {
+    const c = state.chests[k], g = new THREE.Group(); g.position.set(p.x, 0.2, p.z);
+    const base = new THREE.Mesh(unitBox, wood()); base.scale.set(0.62, 0.32, 0.42); base.position.y = 0.16; g.add(base);
+    for (const s of [-1, 1]) { const band = new THREE.Mesh(unitBox, mat('#8a6a2f', { metalness: 0.7, roughness: 0.35 })); band.scale.set(0.05, 0.34, 0.44); band.position.set(s * 0.22, 0.16, 0); g.add(band); }
+    const hinge = new THREE.Group(); hinge.position.set(0, 0.32, -0.21); g.add(hinge);
+    const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.21, 0.21, 0.62, 16, 1, false, 0, Math.PI), wood());
+    lid.rotation.z = Math.PI / 2; lid.position.set(0, 0, 0.21); hinge.add(lid);
+    const lock = new THREE.Mesh(unitBox, mat('#c9a24a', { metalness: 0.8, roughness: 0.3 })); lock.scale.set(0.08, 0.1, 0.03); lock.position.set(0, 0.28, 0.22); g.add(lock);
+    const gold = new THREE.Group();
+    for (let n = 0; n < 12; n++) { const coin = new THREE.Mesh(unitCyl, new THREE.MeshStandardMaterial({ color: '#ffcc55', metalness: 1, roughness: 0.25, emissive: '#5a3a00' }));
+      coin.scale.set(0.045, 0.012, 0.045); coin.position.set(rnd(-.22, .22), 0.3 + rnd(0, .03), rnd(-.13, .13)); coin.rotation.set(rnd(-.4, .4), 0, rnd(-.4, .4)); gold.add(coin); }
+    g.add(gold);
+    // face the chest toward open floor
+    const dirs = [[0, 1, 0], [1, 0, Math.PI / 2], [0, -1, Math.PI], [-1, 0, -Math.PI / 2]];
+    const open = dirs.find(([dx, dz]) => WALKABLE.has(tileAt(x + dx, z + dz))); if (open) g.rotation.y = open[2];
+    addObj(i, g, 'prop', x, z);
+    hinge.rotation.x = c.opened ? -1.9 : 0; gold.visible = c.opened;
+    addProp(i, g, dt => { const target = state.chests[k].opened ? -1.9 : 0; hinge.rotation.x += (target - hinge.rotation.x) * Math.min(1, dt * 4); gold.visible = state.chests[k].opened; });
+  }
+  if (ch === 'F') {
+    const g = new THREE.Group(); g.position.set(p.x, 0.2, p.z);
+    const basin = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.34, 0.34, 24, 1, true), mat('#7a7468', { side: THREE.DoubleSide })); basin.position.y = 0.17;
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.04, 8, 32), mat('#8a8478')); rim.rotation.x = Math.PI / 2; rim.position.y = 0.34;
+    const water = new THREE.Mesh(new THREE.CircleGeometry(0.4, 32), new THREE.MeshBasicMaterial({ color: hdrColor('#6fe0ff', 1.6) })); water.rotation.x = -Math.PI / 2; water.position.y = 0.3; water.userData.noShadow = true;
+    const spire = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.09, 0.6, 8), mat('#8a8478')); spire.position.y = 0.55;
+    g.add(basin, rim, water, spire);
+    addObj(i, g, 'prop', x, z);
+    addProp(i, g, (dt, t) => {
+      if (!g.visible) return;
+      water.material.color.copy(hdrColor('#6fe0ff', 1.3 + Math.sin(t * 2) * 0.3));
+      stream(glow, .4, dt, () => ({ p: [p.x + rnd(-.3, .3), 0.52, p.z + rnd(-.3, .3)], v: [0, rnd(.2, .5), 0], life: rnd(1, 2), s: [.05, .01],
+        c0: hdr('#c8f6ff', 4), c1: hdr('#4fb8ff', 1.5), a: 1, turb: .4 }));
+    });
+  }
+  if (ch === 'I') {
+    const g = new THREE.Group(); g.position.set(p.x, 0.2, p.z);
+    const slab = new THREE.Mesh(unitBox, mat('#5f5a52')); slab.scale.set(0.72, 0.95, 0.16); slab.position.y = 0.48; slab.rotation.x = -0.08;
+    const runes = new THREE.Mesh(GEO_PLANE_TMP, new THREE.MeshBasicMaterial({ map: TEXR(), color: hdrColor('#7fd8ff', 1.4), transparent: true, depthWrite: false }));
+    runes.scale.set(0.55, 0.55, 1); runes.position.set(0, 0.52, 0.09); runes.rotation.x = -0.08; runes.userData.noShadow = true;
+    g.add(slab, runes);
+    const dirs = [[0, 1, 0], [1, 0, Math.PI / 2], [0, -1, Math.PI], [-1, 0, -Math.PI / 2]];
+    const open = dirs.find(([dx, dz]) => WALKABLE.has(tileAt(x + dx, z + dz))); if (open) g.rotation.y = open[2];
+    addObj(i, g, 'prop', x, z);
+  }
+  if (ch === 'X') {
+    const g = new THREE.Group(); g.position.set(p.x, 0, p.z);
+    for (let n = 0; n < 4; n++) { const s = new THREE.Mesh(unitBox, mat('#4a443c')); s.scale.set(0.86, 0.05, 0.2); s.position.set(0, 0.2 - n * 0.05, -0.33 + n * 0.21); g.add(s); }
+    const glowRing = new THREE.Mesh(new THREE.RingGeometry(0.36, 0.44, 32), new THREE.MeshBasicMaterial({ color: hdrColor('#9fd0ff', 1.5), transparent: true, side: THREE.DoubleSide }));
+    glowRing.rotation.x = -Math.PI / 2; glowRing.position.y = 0.21; glowRing.userData.noShadow = true; g.add(glowRing);
+    addObj(i, g, 'tile', x, z);
+    addProp(i, g, (dt, t) => { glowRing.material.opacity = 0.5 + Math.sin(t * 2.5) * 0.3; });
+  }
+  if (ch === '1' || ch === '2' || ch === '3') {
+    const name = PLATE_NAMES[ch];
+    const top = new THREE.MeshStandardMaterial({ map: PTEX[name], emissiveMap: PTEX[name], emissive: '#ffcf6b', emissiveIntensity: 0, roughness: 0.8 });
+    const side = mat('#5d564c');
+    const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.4, 0.06, 32), [side, top, side]);
+    plate.position.set(p.x, 0.23, p.z);
+    addObj(i, plate, 'tile', x, z);
+    addProp(i, plate, dt => {
+      const pressed = state.puzzle.solved || state.puzzle.seq.includes(ch);
+      plate.position.y += ((pressed ? 0.19 : 0.23) - plate.position.y) * Math.min(1, dt * 8);
+      top.emissiveIntensity += ((pressed ? 2.2 : 0) - top.emissiveIntensity) * Math.min(1, dt * 5);
+    });
+  }
+  // floor loot
+  const lt = state.loot[k];
+  if (lt && !lt.taken) {
+    const g = lootModel(lt.items[0]); g.position.set(p.x, p.y + 0.25, p.z);
+    addObj(i, g, 'tile', x, z);
+    const y0 = g.position.y;
+    addProp(i, g, (dt, t) => {
+      g.rotation.y += dt * 1.2; g.position.y = y0 + Math.sin(t * 2.4 + i) * 0.05;
+      if (g.visible) stream(glow, .25, dt, () => ({ p: [p.x + rnd(-.25, .25), y0 + rnd(-.1, .3), p.z + rnd(-.25, .25)], v: [0, rnd(.1, .3), 0],
+        life: rnd(.4, .8), s: [.0, .08], c0: hdr('#fff3c0', 6), c1: hdr('#ffc04a', 2), a: 1, fi: .5 }));
+    });
+  }
+  const tr = state.traps[k];
+  if (tr && tr.found) {
+    const m = new THREE.Mesh(GEO_PLANE_TMP, new THREE.MeshBasicMaterial({ map: PTEX.trap, color: hdrColor('#ffffff', 1.4), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4 }));
+    m.rotation.x = -Math.PI / 2; m.scale.setScalar(0.62); m.position.set(p.x, p.y + 0.012, p.z); m.userData.noShadow = true;
+    addObj(i, m, 'tile', x, z);
+  }
+}
+const GEO_PLANE_TMP = new THREE.PlaneGeometry(1, 1);
+let _runeTex = null;
+const TEXR = () => (_runeTex ||= TEX.rune);
+
+function lootModel(key) {
+  const it = ITEMS[key], g = new THREE.Group();
+  if (it.type === 'consumable') {
+    const glass = new THREE.MeshStandardMaterial({ color: key === 'greater' ? '#c02a6a' : '#c0302a', emissive: key === 'greater' ? '#7a1040' : '#6a1010', emissiveIntensity: 1.2, roughness: 0.15, transparent: true, opacity: 0.9 });
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 12), glass); body.scale.y = key === 'greater' ? 1.25 : 1;
+    const neck = new THREE.Mesh(unitCyl, glass); neck.scale.set(0.035, 0.1, 0.035); neck.position.y = 0.12;
+    const cork = new THREE.Mesh(unitCyl, mat('#8a6a42')); cork.scale.set(0.04, 0.04, 0.04); cork.position.y = 0.18;
+    g.add(body, neck, cork);
+  } else if (it.type === 'weapon') {
+    const col = key === 'whisper' ? '#5a3a7a' : key === 'eel' ? '#3aa0a0' : key === 'sunder' ? '#d8f0ff' : '#c9ccd1';
+    const blade = new THREE.Mesh(unitBox, new THREE.MeshStandardMaterial({ color: col, metalness: 0.7, roughness: 0.25, emissive: col, emissiveIntensity: 0.4 }));
+    blade.scale.set(0.04, 0.5, 0.08); blade.position.y = 0.12;
+    const guard = new THREE.Mesh(unitBox, mat('#8a6a2f', { metalness: 0.6 })); guard.scale.set(0.05, 0.03, 0.2); guard.position.y = -0.14;
+    g.add(blade, guard); g.rotation.z = 0.5;
+  } else {
+    const bag = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 10), mat('#7a5a3a')); bag.scale.y = 0.85; g.add(bag);
+  }
+  return g;
+}
+
+let fogDirty = true;
+function applyFog() {
+  for (let i = 0; i < W * H; i++) {
+    const shown = !!state.explored[i], lit = !!vis[i];
+    for (const o of tileObjs[i]) o.visible = shown;
+    const m = tileMeshes[i];
+    if (m && shown) m.material.color.copy(m.userData.base).multiplyScalar(lit || !MAP.fog ? 1 : 0.32);
+  }
+  for (const c of state.creatures) { const v = views.get(c.id); if (v) v.g.visible = !!state.explored[c.z * W + c.x] && (!c.alive || !!vis[c.z * W + c.x]); }
+}
+
+/* ================================================================== *
+ * MINIATURES
+ * ================================================================== */
+function tagAll(group, kind, extra = {}) { group.traverse(o => { o.userData.kind = kind; Object.assign(o.userData, extra); if (o.isMesh && !o.userData.noShadow) { o.castShadow = true; o.receiveShadow = true; } }); }
 
 const hero = new THREE.Group();
 const heroBodyMat = mat(state.char.color, { roughness: 0.6 });
@@ -528,13 +911,21 @@ scene.add(hero);
 function dressHero() {
   gearGroup.clear();
   const eq = state.char.equipped, steel = mat('#c9ccd1', { metalness: 0.8, roughness: 0.3, envMapIntensity: 1 }), wood = mat('#6b4a2b');
-  if (eq.weapon === 'longsword' || eq.weapon === 'dagger') {
-    const len = eq.weapon === 'longsword' ? 0.5 : 0.24;
-    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.035, len, 0.07), steel);
+  const sword = (len, m) => {
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.035, len, 0.07), m);
     blade.position.set(0.27, 0.3 + len / 2, 0.06); blade.rotation.z = -0.15;
     const guard = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.03, 0.18), mat('#8a6a2f', { metalness: 0.6 }));
     guard.position.set(0.25, 0.3, 0.06);
     gearGroup.add(blade, guard);
+  };
+  if (eq.weapon === 'longsword') sword(0.5, steel);
+  else if (eq.weapon === 'dagger') sword(0.24, steel);
+  else if (eq.weapon === 'whisper') sword(0.52, new THREE.MeshStandardMaterial({ color: '#3a2450', emissive: '#8a4fd0', emissiveIntensity: 1.6, metalness: 0.6, roughness: 0.3 }));
+  else if (eq.weapon === 'sunder') sword(0.5, new THREE.MeshBasicMaterial({ color: hdrColor('#e8fbff', 2.4), transparent: true, opacity: 0.85 }));
+  else if (eq.weapon === 'eel') {
+    const pts = []; for (let n = 0; n <= 10; n++) pts.push(new THREE.Vector3(0.27 + Math.sin(n * 1.1) * 0.04, 0.3 + n * 0.06, 0.06));
+    const eel = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 30, 0.025, 6), new THREE.MeshStandardMaterial({ color: '#2f6f6a', emissive: '#4fe0ff', emissiveIntensity: 0.9, roughness: 0.2, metalness: 0.2 }));
+    gearGroup.add(eel);
   } else if (eq.weapon === 'shortbow') {
     const bow = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.018, 6, 20, Math.PI), wood);
     bow.position.set(0.27, 0.42, 0.04); bow.rotation.z = -Math.PI / 2;
@@ -554,36 +945,117 @@ function dressHero() {
     const belt = new THREE.Mesh(new THREE.TorusGeometry(0.205, 0.025, 6, 20), mat('#5b3b22'));
     belt.rotation.x = Math.PI / 2; belt.position.y = 0.3; gearGroup.add(belt);
   }
+  if (eq.head === 'crown') {
+    const cursed = isCursed();
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.125, 0.06, 20, 1, true), mat('#1f2224', { metalness: 0.9, roughness: 0.3, side: THREE.DoubleSide }));
+    band.position.y = 0.81; gearGroup.add(band);
+    for (let n = 0; n < 6; n++) {
+      const a = n / 6 * 6.283, spike = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.09, 5), mat('#1f2224', { metalness: 0.9, roughness: 0.3 }));
+      spike.position.set(Math.cos(a) * 0.12, 0.87, Math.sin(a) * 0.12); gearGroup.add(spike);
+      if (n % 2 === 0) { const gem = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6), new THREE.MeshBasicMaterial({ color: hdrColor(cursed ? '#b05cff' : '#ffd36a', 3) }));
+        gem.position.set(Math.cos(a) * 0.13, 0.81, Math.sin(a) * 0.13); gem.userData.noShadow = true; gearGroup.add(gem); }
+    }
+  }
   heroBodyMat.color.set(state.char.color);
   tagAll(hero, 'hero');
 }
 
-const dummy = new THREE.Group();
-const dummyPivot = new THREE.Group();
-{
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.4, 0.08, 28), mat('#1b1510', { roughness: 0.5 }));
-  base.position.y = 0.04; dummy.add(base);
-  const straw = mat('#c9a65a'), wood = mat('#6b4a2b');
-  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.85, 8), wood); post.position.y = 0.48;
-  const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.13, 0.36, 12), straw); torso.position.y = 0.5;
-  const arms = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.06, 0.06), wood); arms.position.y = 0.6;
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.12, 14, 10), straw); head.position.y = 0.82;
-  const mark = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.015, 6, 16), mat('#a0352a')); mark.position.set(0, 0.52, 0.16);
-  dummyPivot.add(post, torso, arms, head, mark);
-  dummy.add(dummyPivot);
-}
-const targetRing = new THREE.Mesh(new THREE.RingGeometry(0.43, 0.5, 40), new THREE.MeshBasicMaterial({ color: '#d0604b', transparent: true, opacity: 0.9, side: THREE.DoubleSide, toneMapped: false }));
-targetRing.rotation.x = -Math.PI / 2; targetRing.position.y = 0.01; targetRing.userData.noShadow = true;
-dummy.add(targetRing);
-tagAll(dummy, 'dummy');
-scene.add(dummy);
+/* --- creatures --- */
+const views = new Map();   // creature id → { g, pivot, ring, bar, mats, ... }
+const MODELS = {
+  dummy(p) {
+    const straw = mat('#c9a65a'), wood = mat('#6b4a2b');
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.85, 8), wood); post.position.y = 0.48;
+    const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.13, 0.36, 12), straw); torso.position.y = 0.5;
+    const arms = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.06, 0.06), wood); arms.position.y = 0.6;
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.12, 14, 10), straw); head.position.y = 0.82;
+    const mark = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.015, 6, 16), mat('#a0352a')); mark.position.set(0, 0.52, 0.16);
+    p.add(post, torso, arms, head, mark); return 0.95;
+  },
+  rat(p) {
+    const fur = mat('#5f5249', { roughness: 0.95 }), pink = mat('#c98a86');
+    const body = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), fur); body.scale.set(0.15, 0.12, 0.27); body.position.y = 0.2;
+    const head = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.2, 12), fur); head.rotation.x = Math.PI / 2; head.position.set(0, 0.22, 0.33);
+    const eyes = new THREE.MeshBasicMaterial({ color: hdrColor('#ff3a2a', 2.5) });
+    for (const s of [-1, 1]) {
+      const ear = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 6), pink); ear.scale.z = 0.4; ear.position.set(s * 0.06, 0.3, 0.27); p.add(ear);
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.014, 6, 4), eyes); eye.position.set(s * 0.045, 0.26, 0.35); eye.userData.noShadow = true; p.add(eye);
+    }
+    const tail = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0, .18, -.25), new THREE.Vector3(.08, .12, -.42), new THREE.Vector3(-.05, .1, -.58)]), 12, 0.015, 5), pink);
+    p.add(body, head, tail); return 0.55;
+  },
+  skeleton(p) {
+    const bone = mat('#e3d6b8', { roughness: 0.7 }), rust = mat('#7a4a2a', { metalness: 0.5, roughness: 0.6 });
+    const limb = (x, y, z, h, rz = 0, rx = 0) => { const m = new THREE.Mesh(unitCyl, bone); m.scale.set(0.022, h, 0.022); m.position.set(x, y, z); m.rotation.set(rx, 0, rz); p.add(m); };
+    limb(-0.07, 0.24, 0, 0.32); limb(0.07, 0.24, 0, 0.32);
+    const pelvis = new THREE.Mesh(unitBox, bone); pelvis.scale.set(0.18, 0.05, 0.08); pelvis.position.y = 0.41; p.add(pelvis);
+    limb(0, 0.55, 0, 0.26);
+    for (let n = 0; n < 3; n++) { const rib = new THREE.Mesh(new THREE.TorusGeometry(0.085 - n * 0.008, 0.012, 6, 14), bone); rib.rotation.x = Math.PI / 2; rib.position.y = 0.5 + n * 0.06; rib.scale.z = 0.7; p.add(rib); }
+    limb(-0.14, 0.52, 0.04, 0.26, 0.25, -0.4); limb(0.14, 0.52, 0.06, 0.26, -0.25, -0.7);
+    const skull = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 12), bone); skull.position.y = 0.78; skull.scale.y = 1.1; p.add(skull);
+    const jaw = new THREE.Mesh(unitBox, bone); jaw.scale.set(0.11, 0.04, 0.08); jaw.position.set(0, 0.7, 0.03); p.add(jaw);
+    const glowM = new THREE.MeshBasicMaterial({ color: hdrColor('#ff5a3a', 3) });
+    for (const s of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.02, 6, 4), glowM); e.position.set(s * 0.04, 0.79, 0.085); e.userData.noShadow = true; p.add(e); }
+    const blade = new THREE.Mesh(unitBox, rust); blade.scale.set(0.03, 0.38, 0.06); blade.position.set(0.2, 0.55, 0.22); blade.rotation.x = 0.9; p.add(blade);
+    return 1.0;
+  },
+  archer(p) {
+    const skin = mat('#6f8f3a'), cloth = mat('#4a3a2a'), wood = mat('#6b4a2b');
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.2, 0.36, 12), cloth); body.position.y = 0.26; p.add(body);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 12), skin); head.position.y = 0.55; p.add(head);
+    const hood = new THREE.Mesh(new THREE.SphereGeometry(0.145, 14, 10, 0, 6.283, 0, 1.6), mat('#3a2e22')); hood.position.y = 0.57; hood.rotation.x = -0.3; p.add(hood);
+    for (const s of [-1, 1]) {
+      const ear = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.18, 6), skin); ear.rotation.z = -s * 1.35; ear.position.set(s * 0.18, 0.58, 0); p.add(ear);
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.018, 6, 4), new THREE.MeshBasicMaterial({ color: hdrColor('#ffe04a', 3) })); eye.position.set(s * 0.05, 0.57, 0.115); eye.userData.noShadow = true; p.add(eye);
+    }
+    const bow = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.015, 6, 20, Math.PI), wood); bow.position.set(-0.22, 0.38, 0.08); bow.rotation.z = Math.PI / 2; p.add(bow);
+    const quiver = new THREE.Mesh(unitCyl, mat('#5a3a22')); quiver.scale.set(0.05, 0.3, 0.05); quiver.position.set(0.08, 0.42, -0.15); quiver.rotation.x = 0.3; p.add(quiver);
+    return 0.8;
+  },
+  warden(p) {
+    const iron = mat('#3a3f45', { metalness: 0.85, roughness: 0.35, envMapIntensity: 1 }), dark = mat('#1a1c1f', { metalness: 0.6, roughness: 0.5 });
+    const legs = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.22, 0.4, 14), dark); legs.position.y = 0.28; p.add(legs);
+    const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.19, 0.48, 14), iron); torso.position.y = 0.7; p.add(torso);
+    for (const s of [-1, 1]) { const pad = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 8, 0, 6.283, 0, 1.5), iron); pad.position.set(s * 0.3, 0.9, 0); p.add(pad); }
+    const helm = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.15, 0.26, 14), iron); helm.position.y = 1.08; p.add(helm);
+    const crest = new THREE.Mesh(unitBox, dark); crest.scale.set(0.03, 0.12, 0.24); crest.position.y = 1.25; p.add(crest);
+    const eyes = new THREE.MeshBasicMaterial({ color: hdrColor('#6fe8ff', 5) });
+    for (const s of [-1, 1]) { const e = new THREE.Mesh(unitBox, eyes); e.scale.set(0.05, 0.02, 0.02); e.position.set(s * 0.05, 1.1, 0.145); e.userData.noShadow = true; p.add(e); }
+    const cape = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.75), mat('#4a1416', { side: THREE.DoubleSide })); cape.position.set(0, 0.58, -0.22); cape.rotation.x = 0.12; p.add(cape);
+    const blade = new THREE.Mesh(unitBox, new THREE.MeshStandardMaterial({ color: '#9fb4c0', metalness: 0.8, roughness: 0.25, emissive: '#2a6c80', emissiveIntensity: 0.8 }));
+    blade.scale.set(0.06, 1.0, 0.12); blade.position.set(0.36, 0.75, 0.15); blade.rotation.z = -0.12; p.add(blade);
+    const hilt = new THREE.Mesh(unitBox, dark); hilt.scale.set(0.08, 0.05, 0.32); hilt.position.set(0.34, 0.25, 0.15); p.add(hilt);
+    return 1.45;
+  },
+};
 
-function placeMinis() {
-  hero.position.copy(worldOf(state.pos.x, state.pos.z));
-  dummy.position.copy(worldOf(state.dummy.x, state.dummy.z));
-  dummy.rotation.y = Math.atan2(hero.position.x - dummy.position.x, hero.position.z - dummy.position.z);
+function buildCreature(c) {
+  const g = new THREE.Group(), pivot = new THREE.Group(); g.add(pivot);
+  const m = MONSTERS[c.type];
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(m.boss ? 0.46 : 0.36, m.boss ? 0.49 : 0.4, 0.08, 28), mat('#1b1510', { roughness: 0.5 }));
+  base.position.y = 0.04; g.add(base);
+  const height = MODELS[c.type](pivot);
+  if (m.boss) g.scale.setScalar(1.12);
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.43, 0.5, 40), new THREE.MeshBasicMaterial({ color: '#d0604b', transparent: true, opacity: 0.9, side: THREE.DoubleSide, toneMapped: false }));
+  ring.rotation.x = -Math.PI / 2; ring.position.y = 0.01; ring.userData.noShadow = true; ring.visible = false; g.add(ring);
+  tagAll(g, 'creature', { cid: c.id });
+  const mats = []; pivot.traverse(o => { if (o.isMesh && o.material.emissive) mats.push(o.material); });
+  const bar = document.createElement('div'); bar.className = 'hpbar' + (m.boss ? ' boss' : ''); bar.innerHTML = '<i></i>'; bar.hidden = true;
+  $('fx').appendChild(bar);
+  scene.add(g);
+  const v = { g, pivot, ring, bar, mats, height, anim: null, lunge: 0, lungeDir: new THREE.Vector3(), shake: 0, flash: 0 };
+  views.set(c.id, v);
+  g.position.copy(worldOf(c.x, c.z));
+  if (!c.alive) pivot.rotation.x = -1.35;
+  return v;
 }
-
+function rebuildCreatures() {
+  for (const v of views.values()) { v.g.traverse(o => { if (o.isMesh) o.material.dispose?.(); }); v.g.removeFromParent(); v.bar.remove(); }
+  views.clear();
+  for (const c of state.creatures) buildCreature(c);
+}
+const creatureById = id => state.creatures.find(c => c.id === id);
+const creatureAt = (x, z) => state.creatures.find(c => c.alive && c.x === x && c.z === z);
 /* ================================================================== *
  * VFX TOOLKIT
  * ================================================================== */
@@ -1195,14 +1667,14 @@ class VinesFx {
     this.budMat = new THREE.MeshBasicMaterial({ color: hdrColor('#ffe46a', 3) });
     this.vines = [];
     const n = Math.round(20 * Math.max(0.55, Q.mult));
-    const inArea = (x, z) => tileAt(Math.floor(x + W / 2), Math.floor(z + H / 2)) !== '#';
+    const inArea = (x, z) => WALKABLE.has(tileAt(Math.floor(x + W / 2), Math.floor(z + H / 2)));
     for (let i = 0; i < n; i++) {
       let x = c.x + rnd(-R, R), z = c.z + rnd(-R, R), tries = 0;
       while (!inArea(x, z) && tries++ < 10) { x = c.x + rnd(-R, R); z = c.z + rnd(-R, R); }
       this.addVine(this.groundVine(x, z, c, R, Math.random() < 0.38), instant ? 0 : rnd(0, .55), rnd(.9, 1.6), rnd(.03, .05));
     }
-    if (e.wrap) {
-      const d = worldOf(state.dummy.x, state.dummy.z);
+    for (const wr of (e.wraps || [])) {
+      const d = worldOf(wr.x, wr.z);
       for (let k = 0; k < 3; k++) {
         const pts = [], ph = k * 2.1;
         for (let s = 0; s <= 24; s++) { const t = s / 24, a = ph + t * 6.283 * 2.2, rr = 0.2 - t * 0.04;
@@ -1320,94 +1792,418 @@ function clearVisuals() {
  * BOARD STATE FROM EFFECTS
  * ================================================================== */
 const FIRE = 1, ICE = 2, VINE = 4;
-let fxGrid = new Uint8Array(W * H);
+let fxGrid = new Uint8Array(0);
 function rebuildFxGrid() {
   fxGrid = new Uint8Array(W * H);
   const bit = { firewall: FIRE, icewall: ICE, vines: VINE };
   for (const e of state.effects) for (const t of e.tiles) fxGrid[t.z * W + t.x] |= bit[e.type] || 0;
 }
+function setTile(x, z, ch, rebuild = false) { state.grid[z][x] = ch; if (rebuild) buildTile(x, z); }
 
 /* ================================================================== *
- * MOVEMENT — Dijkstra over 8 directions, 5 ft per square. Brush and
- * vines cost double; ice blocks; fire is passable but avoided on ties.
+ * MOVEMENT — Dijkstra over 8 directions, 5 ft per square. Rubble and
+ * vines cost double; ice blocks; fire and known traps are avoided.
+ * mover: 'hero', a creature, or 'field' (distance map that ignores occupants)
  * ================================================================== */
 const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
-const solid = (x, z) => tileAt(x, z) === '#' || (fxGrid[z * W + x] & ICE);
-const blocked = (x, z) => solid(x, z) || (x === state.dummy.x && z === state.dummy.z);
-let reach = null;
-function computeReach() {
-  const dist = new Array(W * H).fill(Infinity), key = new Array(W * H).fill(Infinity), prev = new Array(W * H).fill(-1);
-  const s = state.pos.z * W + state.pos.x; dist[s] = 0; key[s] = 0;
+const solidAt = (x, z) => !WALKABLE.has(tileAt(x, z)) || !!(fxGrid[z * W + x] & ICE);
+function occupied(x, z, mover) {
+  if (mover !== 'hero' && state.pos.x === x && state.pos.z === z) return true;
+  return state.creatures.some(c => c.alive && c !== mover && c.x === x && c.z === z);
+}
+function dijkstra(sx, sz, budget, mover) {
+  const N = W * H, dist = new Float64Array(N).fill(Infinity), key = new Float64Array(N).fill(Infinity), prev = new Int32Array(N).fill(-1);
+  const s = sz * W + sx; dist[s] = 0; key[s] = 0;
   const open = [s];
   while (open.length) {
     let bi = 0; for (let i = 1; i < open.length; i++) if (key[open[i]] < key[open[bi]]) bi = i;
     const cur = open.splice(bi, 1)[0], cx = cur % W, cz = (cur / W) | 0;
     for (const [dx, dz] of DIRS) {
-      const nx = cx + dx, nz = cz + dz;
-      if (blocked(nx, nz)) continue;
-      if (dx && dz && (solid(cx + dx, cz) || solid(cx, cz + dz))) continue;
-      const ni = nz * W + nx;
-      const nd = dist[cur] + ((tileAt(nx, nz) === '~' || (fxGrid[ni] & VINE)) ? 2 : 1);
-      const nk = key[cur] + (nd - dist[cur]) + ((fxGrid[ni] & FIRE) ? 0.5 : 0);
-      if (nd <= state.turn.move && nk < key[ni]) { dist[ni] = nd; key[ni] = nk; prev[ni] = cur; open.push(ni); }
+      const nx = cx + dx, nz = cz + dz, ni = nz * W + nx;
+      if (solidAt(nx, nz)) continue;
+      if (mover !== 'field' && occupied(nx, nz, mover)) continue;
+      if (mover === 'hero' && MAP.fog && !state.explored[ni]) continue;
+      if (dx && dz && (solidAt(cx + dx, cz) || solidAt(cx, cz + dz))) continue;
+      const step = (tileAt(nx, nz) === '~' || (fxGrid[ni] & VINE)) ? 2 : 1, nd = dist[cur] + step;
+      const tr = state.traps[keyOf(nx, nz)];
+      const hazard = ((fxGrid[ni] & FIRE) ? 0.5 : 0) + (tr && (mover !== 'hero' || tr.found) ? 6 : 0);
+      const nk = key[cur] + step + hazard;
+      if (nd <= budget && nk < key[ni]) { dist[ni] = nd; key[ni] = nk; prev[ni] = cur; open.push(ni); }
     }
   }
   return { dist, prev };
 }
-function pathTo(x, z) {
+function pathFrom(r, x, z) {
   const path = []; let i = z * W + x;
-  while (i !== -1) { path.unshift({ x: i % W, z: (i / W) | 0 }); i = reach.prev[i]; }
+  while (i !== -1) { path.unshift({ x: i % W, z: (i / W) | 0 }); i = r.prev[i]; }
   return path;
 }
+const exploring = () => !state.creatures.some(c => c.alive && c.aware && MONSTERS[c.type].ai !== 'none');
+const heroBudget = () => exploring() ? 40 : state.turn.move;
+let reach = null;
 
-let anim = null, lunge = 0, faceAt = null;
-function moveTo(x, z) {
-  const path = pathTo(x, z);
-  state.turn.move -= reach.dist[z * W + x];
-  anim = { path, i: 0, t: 0 }; faceAt = null;
-  clearPath(); refresh();
+let anim = null, lunge = 0, faceAt = null, heroFlash = 0;
+const lungeDir = new THREE.Vector3();
+function moveTo(x, z, then) {
+  const i = z * W + x, path = pathFrom(reach, x, z);
+  const combat = !exploring();
+  if (combat) state.turn.move -= reach.dist[i];
+  anim = { path, i: 0, t: 0, costs: path.map(p => reach.dist[p.z * W + p.x]), total: reach.dist[i], then, combat };
+  faceAt = null; clearPath(); refresh();
+}
+function placeHero() { hero.position.copy(worldOf(state.pos.x, state.pos.z)); }
+
+function finishMove(stopped) {
+  const a = anim; anim = null;
+  if (stopped && a.combat && !exploring()) state.turn.move += a.total - a.costs[a.i];
+  placeHero(); refresh(); save();
+  if (!stopped && a.then) a.then();
+}
+
+function onHeroStep(cell) {
+  const k = keyOf(cell.x, cell.z), i = cell.z * W + cell.x, ch = tileAt(cell.x, cell.z);
+  let stop = false;
+  computeVisibility(); applyFog();
+  const wasExploring = exploring();
+  if (wakeCreatures() && wasExploring) { startCombat(); stop = true; }
+  if (fxGrid[i] & FIRE) {
+    hurtHero(sum(roll(2, 6)), 'Walking through the wall of fire', 'dmg');
+    burst(glow, 30, () => ({ p: [hero.position.x, hero.position.y + .3, hero.position.z], v: [rnd(-2, 2), rnd(1, 4), rnd(-2, 2)], life: rnd(.4, .8),
+      s: [.07, .02], c0: hdr('#ffd080', 7), c1: hdr('#ff3000', 2), a: 1, g: -5 }));
+  }
+  if (state.traps[k]) { triggerTrap(k, cell.x, cell.z); stop = true; }
+  if (PLATE_NAMES[ch] && pressPlate(ch, cell.x, cell.z)) stop = true;
+  pickupLoot(k, cell.x, cell.z);
+  if (ch === 'X') { after(0.35, victory); stop = true; }
+  if (exploring() && isCursed() && ++state.char.curseSteps % 6 === 0) curseDrain();
+  if (state.char.hp <= 0) stop = true;
+  return stop;
 }
 
 /* ================================================================== *
- * ACTIONS
+ * AWARENESS + COMBAT FLOW
  * ================================================================== */
-function addLog(kind, html) { state.log.push({ kind, html }); }
-const above = (obj, h) => obj.position.clone().add(new THREE.Vector3(0, h, 0));
-
-function damageDummy(dmg, cls) {
-  const du = state.dummy;
-  du.hp = Math.max(0, du.hp - dmg); dummy.userData.shake = 1;
-  floatText(`-${dmg}`, above(dummy, 1.1 + Math.random() * 0.2), cls);
-  if (du.hp === 0 && du.alive) {
-    du.alive = false; du.restrained = false;
-    addLog('sys', `The training dummy is destroyed. +${DUMMY.xp} XP.`);
-    gainXp(DUMMY.xp);
+function wakeCreatures() {
+  const woke = [];
+  for (const c of state.creatures) {
+    if (!c.alive || c.aware || MONSTERS[c.type].ai === 'none') continue;
+    if (cheb(c, state.pos) <= 8 && los(c.x, c.z, state.pos.x, state.pos.z)) { c.aware = true; woke.push(c); }
+  }
+  for (const w of [...woke]) for (const c of state.creatures)   // the noise wakes their friends
+    if (c.alive && !c.aware && MONSTERS[c.type].ai !== 'none' && cheb(c, w) <= 4 && los(c.x, c.z, w.x, w.z)) { c.aware = true; woke.push(c); }
+  if (woke.length) {
+    const names = [...new Set(woke.map(c => MONSTERS[c.type].name))].join(', ');
+    addLog('hit', `<b>${names}</b> ${woke.length > 1 ? 'spot' : 'spots'} you!`);
+  }
+  return woke.length > 0;
+}
+function startCombat() {
+  state.turn = { round: state.turn.round, move: derived().speedSq, action: state.turn.action };
+  addLog('sys', '<b>Combat!</b> Your turn: move up to 30 ft and take one action, then end your turn.');
+  toast('Combat! Your turn.');
+}
+function checkFightOver(wasCombat) {
+  if (wasCombat && exploring()) {
+    addLog('sys', 'The fight is over. You can move freely again.');
+    toast('The fight is over.');
   }
 }
 
-function attack() {
-  const d = derived(), w = d.weapon, du = state.dummy;
-  if (!du.alive) return toast('The dummy is down. It is set back up at the end of your turn.');
+/* ================================================================== *
+ * INTERACTIONS — doors, chests, the font, the inscription, traps
+ * ================================================================== */
+function approach(x, z, fn) {
+  if (cheb(state.pos, { x, z }) <= 1) return fn();
+  let best = -1;
+  for (let i = 0; i < W * H; i++) {
+    const d = reach.dist[i]; if (!(d > 0) || d > heroBudget()) continue;
+    if (cheb({ x: i % W, z: (i / W) | 0 }, { x, z }) <= 1 && (best < 0 || d < reach.dist[best])) best = i;
+  }
+  if (best < 0) return toast(exploring() ? 'You can\'t reach that from here.' : 'That\'s too far to reach this turn.');
+  moveTo(best % W, (best / W) | 0, fn);
+}
+function interact(x, z) {
+  const ch = tileAt(x, z), k = keyOf(x, z), tr = state.traps[k];
+  if (ch === 'I') return readTablet();
+  if (ch === 'G') return toast('The portcullis won\'t budge. Something in this chamber must raise it.');
+  if (ch === 'D') return approach(x, z, () => openDoor(x, z));
+  if (ch === 'C') return state.chests[k].opened ? toast('The chest is empty.') : approach(x, z, () => openChest(k, x, z));
+  if (ch === 'F') return approach(x, z, () => useFont(x, z));
+  if (tr && tr.found) return approach(x, z, () => disarm(k, x, z));
+}
+function openDoor(x, z) {
+  setTile(x, z, 'd');
+  addLog('', 'You push the door open.');
+  const was = exploring();
+  computeVisibility();
+  if (wakeCreatures() && was) startCombat();
+  refresh(); save();
+}
+function grant(items, gold, at) {
+  const names = [];
+  items.forEach((key, n) => { addItem(key, true); names.push(ITEMS[key].name); after(n * 0.35, () => floatText(`+ ${ITEMS[key].name}`, at.clone().add(new THREE.Vector3(0, 0.6 + n * 0.05, 0)), ITEMS[key].weird ? 'cold' : 'xp')); });
+  if (gold) { state.char.gold += gold; state.stats.gold += gold; names.push(`${gold} gp`); after(items.length * 0.35, () => floatText(`+${gold} gp`, at.clone().add(new THREE.Vector3(0, 0.6, 0)), 'xp')); }
+  return names.join(', ');
+}
+function openChest(k, x, z) {
+  const c = state.chests[k]; c.opened = true;
+  const p = worldOf(x, z).add(new THREE.Vector3(0, 0.3, 0));
+  after(0.25, () => {
+    burst(glow, 70, () => ({ p: [p.x + rnd(-.2, .2), p.y, p.z + rnd(-.1, .1)], v: [rnd(-1.2, 1.2), rnd(2, 4.5), rnd(-1.2, 1.2)], life: rnd(.6, 1.3),
+      s: [.07, .02], c0: hdr('#fff0b0', 8), c1: hdr('#ffb020', 2), a: 1, g: -6, bounce: true }));
+    const l = takeLight(c, '#ffcf6b'); if (l) { l.position.copy(p).setY(1); let t = 0; fxList.push({ update(dt) { t += dt; l.intensity = 14 * Math.exp(-t * 2.5); if (t > 2) { freeLight(c); return false; } return true; } }); }
+  });
+  addLog('heal', `You open the chest: <b>${grant(c.items, c.gold, p)}</b>.`);
+  refresh(); save();
+}
+function pickupLoot(k, x, z) {
+  const lt = state.loot[k]; if (!lt || lt.taken) return;
+  lt.taken = true;
+  addLog('heal', `You pick up <b>${grant(lt.items, lt.gold, worldOf(x, z))}</b>.`);
+  buildTile(x, z); applyFog();
+}
+function useFont(x, z) {
+  const p = worldOf(x, z).add(new THREE.Vector3(0, 0.5, 0)), msgs = [];
+  burst(glow, 120, () => { const d = rndDir().multiplyScalar(rnd(1, 3)); return { p: [p.x, p.y, p.z], v: [d.x, Math.abs(d.y) + 1, d.z], life: rnd(.8, 1.6),
+    s: [.08, .01], c0: hdr('#e8fbff', 7), c1: hdr('#4fb8ff', 1.5), a: 1, drag: 1 }; });
+  if (isCursed()) {
+    state.char.curseLifted = true; dressHero();
+    msgs.push('The water burns cold against the Drowned Crown. Its stones flicker from violet to gold: <b>the curse is broken</b>. The crown keeps its +2 AC and comes off whenever you like.');
+  }
+  if (!state.fontUsed) {
+    state.fontUsed = true; const max = derived().maxHp, before = state.char.hp; state.char.hp = max;
+    if (max > before) { floatText(`+${max - before}`, above(hero, 1.2), 'heal'); msgs.push('You drink. Your wounds close.'); }
+  }
+  if (!msgs.length) msgs.push('The water is still. You feel clear-headed, and nothing more.');
+  msgs.forEach(m => addLog('heal', `<b>Font of Clarity.</b> ${m}`));
+  showModal('Font of Clarity', msgs.map(m => `<p>${m}</p>`).join(''), [{ label: 'Step back', primary: true }]);
+  refresh(); save();
+}
+function readTablet() {
+  addLog('', 'You read the weathered inscription.');
+  showModal('A Weathered Inscription', `<p class="inscription">${MAP.tablet}</p><p class="muted">Three pressure plates are set into the floor of this chamber, carved with a sun, a moon and a star.</p>`, [{ label: 'Close', primary: true }]);
+}
+
+/* --- traps --- */
+const sleep = s => new Promise(r => after(s, r));
+function shootProjectile(from, to, kind) {
+  const len = kind === 'arrow' ? 0.4 : 0.2;
+  const g = new THREE.Group();
+  const shaft = new THREE.Mesh(unitBox, mat(kind === 'arrow' ? '#7a5a3a' : '#3a3a3a', { metalness: kind === 'arrow' ? 0 : 0.6 })); shaft.scale.set(0.02, 0.02, len);
+  const tip = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.07, 6), mat('#9a9a9a', { metalness: 0.8, roughness: 0.3 })); tip.rotation.x = Math.PI / 2; tip.position.z = len / 2 + 0.03;
+  g.add(shaft, tip); scene.add(g);
+  const d = from.distanceTo(to), dur = 0.12 + d * 0.035, arc = kind === 'arrow' ? d * 0.06 : 0, prev = from.clone(), p = new THREE.Vector3();
+  let t = 0;
+  return new Promise(res => fxList.push({ update(dt) {
+    t += dt; const k = clamp01(t / dur);
+    p.lerpVectors(from, to, k); p.y += Math.sin(Math.PI * k) * arc;
+    g.position.copy(p); if (p.distanceToSquared(prev) > 1e-6) g.lookAt(p.clone().add(p.clone().sub(prev))); prev.copy(p);
+    if (k >= 1) {
+      g.removeFromParent();
+      burst(glow, 8, () => ({ p: [to.x, to.y, to.z], v: [rnd(-1, 1), rnd(0, 1.5), rnd(-1, 1)], life: .3, s: [.04, .01], c0: hdr('#ffe0a0', 4), a: 1 }));
+      res(); return false;
+    }
+    return true;
+  } }));
+}
+function dartVolley(x, z) {
+  const target = worldOf(x, z).add(new THREE.Vector3(0, 0.45, 0));
+  [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dz], n) => {
+    let sx = x, sz = z, steps = 0;
+    while (!isWall(tileAt(sx + dx, sz + dz)) && steps++ < 12) { sx += dx; sz += dz; }
+    const w = worldOf(sx, sz); const from = new THREE.Vector3(w.x + dx * 0.48, 0.65, w.z + dz * 0.48);
+    for (let m = 0; m < 2; m++) after(n * 0.05 + m * 0.08, () => shootProjectile(from.clone().add(new THREE.Vector3(rnd(-.1, .1), rnd(-.1, .1), rnd(-.1, .1))), target.clone().add(new THREE.Vector3(rnd(-.15, .15), rnd(-.1, .2), rnd(-.15, .15))), 'dart'));
+  });
+}
+function fireJet(x, z) {
+  const p = worldOf(x, z); let t = 0; const owner = {}, l = takeLight(owner, '#ff7a2a');
+  shakeCam(0.2);
+  fadeDecal(addDecal(TEX.scorch, p.x, p.y, p.z, 1.3, 1.3), 0.9, 0.1, 20, 4);
+  fxList.push({ update(dt) {
+    t += dt;
+    if (t < 0.8) stream(glow, 22, dt, () => ({ p: [p.x + rnd(-.15, .15), p.y + .05, p.z + rnd(-.15, .15)], v: [rnd(-.4, .4), rnd(4, 7), rnd(-.4, .4)], life: rnd(.3, .6),
+      s: [.5, .08], c0: hdr('#ffe0a0', 4), c1: hdr('#ff2a00', 1), a: .85, drag: 1.5 }));
+    if (t < 1.2) stream(smoke, 3, dt, () => ({ p: [p.x, p.y + 1.6, p.z], v: [rnd(-.3, .3), rnd(.8, 1.4), rnd(-.3, .3)], life: rnd(1.4, 2.2), s: [.5, 1.6], c0: hdr('#3a302a'), c1: hdr('#141110'), a: .4, turb: 1 }));
+    if (l) { l.position.set(p.x, 1.2, p.z); l.intensity = t < 0.8 ? 30 : 30 * Math.exp(-(t - 0.8) * 5); }
+    if (t > 1.5) { freeLight(owner); return false; }
+    return true;
+  } });
+}
+function triggerTrap(k, x, z) {
+  const tr = state.traps[k]; tr.found = true; buildTile(x, z); applyFog();
+  const r = roll(1, 20)[0], dex = mod(state.char.abilities.dex), saved = r + dex >= tr.dc;
+  const dice = roll(2, 6), dmg = saved ? Math.floor(sum(dice) / 2) : sum(dice);
+  if (tr.kind === 'darts') dartVolley(x, z); else fireJet(x, z);
+  const what = tr.kind === 'darts' ? 'Click! Darts hiss out of the walls' : 'Click! A jet of fire roars up from the floor';
+  after(0.3, () => {
+    hurtHero(dmg, `${what}${saved ? ' (Dex save, half)' : ''}`, tr.kind === 'fire' ? 'dmg' : 'dmg');
+    addLog('', `<span class="r">Dex save ${r}${fmt(dex)} = ${r + dex} vs DC ${tr.dc}. The trap is marked now: click it from an adjacent square to try disarming it.</span>`);
+    refresh(); save();
+  });
+  toast(tr.kind === 'darts' ? 'Trap! Darts fly from the walls.' : 'Trap! Fire erupts under your feet.');
+}
+function disarm(k, x, z) {
+  const tr = state.traps[k]; if (!tr) return;
+  if (!exploring()) { if (!state.turn.action) return toast('Disarming a trap uses your action, and it is already spent.'); state.turn.action = false; }
+  const d = derived(), r = roll(1, 20)[0], total = r + mod(state.char.abilities.dex) + d.prof;
+  const txt = `<span class="r">Dex (tools) ${r}${fmt(total - r)} = ${total} vs DC ${tr.dc}</span>`;
+  if (total >= tr.dc) {
+    delete state.traps[k]; buildTile(x, z); applyFog();
+    addLog('heal', `You jam the mechanism. <b>Trap disarmed.</b> ${txt}`); gainXp(25);
+  } else if (total <= tr.dc - 5) {
+    addLog('hit', `Your tools slip and the trap goes off! ${txt}`);
+    const dice = roll(2, 6); if (tr.kind === 'darts') dartVolley(x, z); else fireJet(x, z);
+    after(0.3, () => { hurtHero(sum(dice), 'The trap you were disarming'); refresh(); save(); });
+  } else addLog('', `You can't find the right spring. The trap stays armed. ${txt}`);
+  refresh(); save();
+}
+
+/* --- the plate puzzle --- */
+function pressPlate(ch, x, z) {
+  const pz = state.puzzle, name = PLATE_NAMES[ch];
+  if (pz.solved || pz.seq.includes(ch)) return false;
+  const p = worldOf(x, z);
+  if (MAP.puzzle.order[pz.seq.length] === ch) {
+    pz.seq.push(ch);
+    addLog('', `The <b>${name}</b> plate sinks with a heavy click and begins to glow.`);
+    burst(glow, 40, () => { const a = Math.random() * 6.283; return { p: [p.x + Math.cos(a) * .38, p.y + .05, p.z + Math.sin(a) * .38], v: [0, rnd(.6, 1.6), 0], life: rnd(.5, 1),
+      s: [.06, .01], c0: hdr('#fff0b0', 6), c1: hdr('#ffb020', 1.5), a: 1 }; });
+    if (pz.seq.length === MAP.puzzle.order.length) after(0.6, solvePuzzle);
+    return false;
+  }
+  pz.seq = [];
+  const r = roll(1, 20)[0], dex = mod(state.char.abilities.dex), saved = r + dex >= 13;
+  const dice = roll(2, 4), dmg = saved ? Math.floor(sum(dice) / 2) : sum(dice);
+  addLog('hit', `The <b>${name}</b> plate sinks... wrong. Something clicks inside the walls. <span class="r">Dex save ${r + dex} vs DC 13</span>`);
+  dartVolley(x, z);
+  after(0.3, () => { hurtHero(dmg, `Darts from the walls${saved ? ' (half)' : ''}`); refresh(); save(); });
+  toast('Wrong order! Darts hiss from the walls and the plates grind back up.');
+  return true;
+}
+function solvePuzzle() {
+  const pz = state.puzzle; pz.solved = true;
+  const [gx, gz] = MAP.puzzle.gate; setTile(gx, gz, 'g');
+  state.stats.secrets++;
+  shakeCam(0.35);
+  const p = worldOf(gx, gz);
+  burst(smoke, 40, () => ({ p: [p.x + rnd(-.5, .5), rnd(.3, 1.2), p.z + rnd(-.2, .2)], v: [rnd(-.6, .6), rnd(-.2, .4), rnd(-.6, .6)], life: rnd(1.5, 2.5),
+    s: [.4, 1.4], c0: hdr('#7a6a58'), c1: hdr('#3a3028'), a: .45, drag: 1.2 }));
+  addLog('sys', '<b>Puzzle solved!</b> With a groan of chains, the portcullis rises.');
+  toast('The portcullis grinds open!');
+  gainXp(100);
+  computeVisibility(); refresh(); save();
+}
+
+/* --- search --- */
+function search() {
+  if (busy || anim || state.over) return;
+  if (!exploring()) { if (!state.turn.action) return toast('Searching uses your action, and it is already spent.'); state.turn.action = false; }
+  const d = derived(), r = roll(1, 20)[0], total = r + d.perception, found = [];
+  const near = (x, z) => cheb(state.pos, { x, z }) <= 3 && state.explored[z * W + x];
+  const sparkle = (x, z) => { const p = worldOf(x, z); burst(glow, 40, () => ({ p: [p.x + rnd(-.45, .45), rnd(.25, 1.1), p.z + rnd(-.45, .45)], v: [0, rnd(.2, .6), 0], life: rnd(.6, 1.2),
+    s: [.0, .1], c0: hdr('#fff3c0', 7), c1: hdr('#d3aa55', 2), a: 1, fi: .5 })); };
+  for (const [k, s] of Object.entries(MAP.secrets || {})) {
+    const [x, z] = k.split(',').map(Number);
+    if (tileAt(x, z) === 'S' && near(x, z) && total >= s.dc) { setTile(x, z, 'D', true); state.explored[z * W + x] = 1; sparkle(x, z); found.push('a secret door'); state.stats.secrets++; }
+  }
+  for (const [k, tr] of Object.entries(state.traps)) {
+    const [x, z] = k.split(',').map(Number);
+    if (!tr.found && near(x, z) && total >= tr.dc) { tr.found = true; buildTile(x, z); sparkle(x, z); found.push(`a ${tr.kind === 'darts' ? 'dart' : 'fire'} trap`); }
+  }
+  for (const [k, st] of Object.entries(state.stash)) {
+    const [x, z] = k.split(',').map(Number);
+    if (!st.found && near(x, z) && total >= st.dc) {
+      st.found = true; state.loot[k] = { items: st.items, gold: st.gold }; buildTile(x, z); sparkle(x, z);
+      found.push('a loose flagstone hiding a cache'); state.stats.secrets++;
+    }
+  }
+  // a pulse ring so the search reads on the board
+  const ring = new THREE.Mesh(GEO.ring, new THREE.MeshBasicMaterial({ color: hdrColor('#d3aa55', 2), transparent: true, depthWrite: false, side: THREE.DoubleSide }));
+  ring.rotation.x = -Math.PI / 2; ring.position.copy(worldOf(state.pos.x, state.pos.z)).add(new THREE.Vector3(0, 0.03, 0)); scene.add(ring);
+  let t = 0; fxList.push({ update(dt) { t += dt; ring.scale.setScalar(0.3 + easeOut(clamp01(t / 0.9)) * 3.5); ring.material.opacity = 1 - clamp01(t / 0.9); if (t > 0.9) { killMesh(ring); return false; } return true; } });
+  const rollTxt = `<span class="r">Perception ${r}${fmt(d.perception)} = ${total}</span>`;
+  if (found.length) { addLog('sys', `<b>Search:</b> you find ${found.join(', ')}! ${rollTxt}`); toast(`You find ${found.join(', ')}!`); }
+  else { addLog('', `<b>Search:</b> you find nothing unusual nearby. ${rollTxt}`); toast('You find nothing unusual within 15 ft.'); }
+  applyFog(); refresh(); save();
+}
+
+/* ================================================================== *
+ * COMBAT
+ * ================================================================== */
+function addLog(kind, html) { state.log.push({ kind, html }); }
+const above = (obj, h) => obj.position.clone().add(new THREE.Vector3(0, h, 0));
+const creatureTop = c => { const v = views.get(c.id); return v.g.position.clone().add(new THREE.Vector3(0, v.height * v.g.scale.y + 0.25, 0)); };
+
+function damageCreature(c, dmg, cls) {
+  const v = views.get(c.id), m = MONSTERS[c.type];
+  c.hp = Math.max(0, c.hp - dmg); v.shake = 1; v.flash = 1;
+  floatText(`-${dmg}`, creatureTop(c).add(new THREE.Vector3(0, Math.random() * 0.2, 0)), cls);
+  if (m.ai !== 'none' && !c.aware) { const was = exploring(); c.aware = true; if (was) startCombat(); }
+  if (c.hp === 0 && c.alive) killCreature(c);
+}
+function killCreature(c) {
+  const m = MONSTERS[c.type], wasCombat = !exploring();
+  c.alive = false; c.restrained = false;
+  addLog('sys', `The ${m.name.toLowerCase()} ${m.ai === 'none' ? 'is destroyed' : 'falls'}. +${m.xp} XP.`);
+  if (m.ai !== 'none') state.stats.kills++;
+  if (m.boss) { toast(`The ${m.name} falls!`); shakeCam(0.3); }
+  if (m.drop) { const k = keyOf(c.x, c.z); state.loot[k] = { items: [...m.drop], gold: 0 }; after(0.6, () => { buildTile(c.x, c.z); applyFog(); }); }
+  gainXp(m.xp);
+  views.get(c.id).bar.hidden = true;
+  checkFightOver(wasCombat);
+}
+
+function attack(c) {
+  if (state.over) return;
+  const d = derived(), w = d.weapon, m = MONSTERS[c.type];
+  if (!c.alive) return;
   if (!state.turn.action) return toast('You have already used your action. End your turn to act again.');
-  const dist = cheb(state.pos, du);
-  if (dist > w.range) return toast(`Your ${w.name.toLowerCase()} reaches ${w.range * 5} ft. The dummy is ${dist * 5} ft away.`);
-  const disadv = w.ranged && dist <= 1, adv = du.restrained;
+  const dist = cheb(state.pos, c);
+  if (dist > w.range) {
+    if (w.ranged) return toast(`Your ${w.name.toLowerCase()} reaches ${w.range * 5} ft. The ${m.name.toLowerCase()} is ${dist * 5} ft away.`);
+    let best = -1;
+    for (let i = 0; i < W * H; i++) { const dd = reach.dist[i]; if (!(dd > 0) || dd > heroBudget()) continue;
+      if (cheb({ x: i % W, z: (i / W) | 0 }, c) <= w.range && (best < 0 || dd < reach.dist[best])) best = i; }
+    if (best < 0) return toast(`You can't reach the ${m.name.toLowerCase()} this turn.`);
+    return moveTo(best % W, (best / W) | 0, () => attack(c));
+  }
+  if (w.ranged && !los(state.pos.x, state.pos.z, c.x, c.z)) return toast('You don\'t have a clear shot.');
+  const disadv = w.ranged && dist <= 1, adv = c.restrained;
   const n = adv !== disadv ? 2 : 1, r = roll(n, 20);
   const nat = n === 1 ? r[0] : adv ? Math.max(...r) : Math.min(...r), total = nat + d.atk;
-  const crit = nat === 20, hit = crit || (nat !== 1 && total >= DUMMY.ac);
-  state.turn.action = false; lunge = 1; faceAt = null;
+  const crit = nat === 20, hit = crit || (nat !== 1 && total >= m.ac);
+  state.turn.action = false; faceAt = worldOf(c.x, c.z);
+  lungeDir.subVectors(worldOf(c.x, c.z), worldOf(state.pos.x, state.pos.z)).setY(0).normalize();
+  if (!w.ranged) lunge = 1;
   const tag = n === 2 ? ` (${adv ? 'adv.' : 'disadv.'} ${r.join(', ')})` : '';
-  const rollTxt = `<span class="r">d20${tag} ${nat} ${fmt(d.atk)} = ${total}</span>`;
-  if (!hit) {
-    addLog('', `<b>${w.name}</b> misses the dummy. ${rollTxt}${nat === 1 ? ' Natural 1.' : ''}`);
-    floatText('Miss', above(dummy, 1.1), 'miss');
-  } else {
-    const dice = roll(w.dice[0] * (crit ? 2 : 1), w.dice[1]);
-    const dmg = Math.max(1, sum(dice) + d.dmgMod);
-    addLog(crit ? 'crit' : 'hit', `<b>${crit ? 'Critical hit!' : 'Hit.'}</b> ${w.name} deals <b>${dmg}</b> ${w.dmgType}. ${rollTxt} <span class="r">dmg [${dice.join(', ')}] ${fmt(d.dmgMod)}</span>`);
-    damageDummy(dmg, crit ? 'crit' : 'dmg');
-  }
-  refresh(); save();
+  const rollTxt = `<span class="r">d20${tag} ${nat} ${fmt(d.atk)} = ${total} vs AC ${m.ac}</span>`;
+  const resolve = () => {
+    if (!hit) {
+      addLog('', `<b>${w.name}</b> misses the ${m.name.toLowerCase()}. ${rollTxt}${nat === 1 ? ' Natural 1.' : ''}`);
+      floatText('Miss', creatureTop(c), 'miss');
+    } else {
+      const dice = roll(w.dice[0] * (crit ? 2 : 1), w.dice[1]);
+      let dmg = Math.max(1, sum(dice) + d.dmgMod), extraTxt = '';
+      if (w.extra) { const ex = roll(w.extra[0] * (crit ? 2 : 1), w.extra[1]); dmg += sum(ex); extraTxt = ` + [${ex.join(', ')}] ${w.extra[2]}`; }
+      addLog(crit ? 'crit' : 'hit', `<b>${crit ? 'Critical hit!' : 'Hit.'}</b> ${w.name} deals <b>${dmg}</b> to the ${m.name.toLowerCase()}. ${rollTxt} <span class="r">dmg [${dice.join(', ')}] ${fmt(d.dmgMod)}${extraTxt}</span>`);
+      if (state.char.equipped.weapon === 'eel') { const p = creatureTop(c); burst(glow, 30, () => ({ p: [p.x, p.y - .3, p.z], v: [rnd(-2, 2), rnd(-1, 2), rnd(-2, 2)], life: rnd(.15, .35), s: [.06, .01], c0: hdr('#bff8ff', 9), c1: hdr('#4fe0ff', 2), a: 1 })); }
+      damageCreature(c, dmg, crit ? 'crit' : 'dmg');
+      if (state.char.equipped.weapon === 'whisper' && Math.random() < 1 / 6) {
+        const self = roll(1, 4)[0];
+        after(0.4, () => { hurtHero(self, 'The Whispering Blade hisses your secrets and bites your hand', 'dmg'); refresh(); });
+      }
+    }
+    if (state.char.equipped.weapon === 'sunder' && nat === 1) {
+      const p = above(hero, 0.6);
+      burst(glow, 60, () => { const v = rndDir().multiplyScalar(rnd(1, 4)); return { p: [p.x, p.y, p.z], v: [v.x, Math.abs(v.y) + .5, v.z], life: rnd(.5, 1), s: [.06, .01], c0: hdr('#ffffff', 9), c1: hdr('#9fe4ff', 2), a: 1, g: -8, bounce: true }; });
+      removeOne('sunder'); dressHero();
+      addLog('hit', '<b>Sunderglass shatters</b> into a thousand glittering pieces. It is gone.');
+      toast('Sunderglass shatters!');
+    }
+    refresh(); save();
+  };
+  if (w.ranged) shootProjectile(above(hero, 0.5), creatureTop(c).add(new THREE.Vector3(0, -0.3, 0)), 'arrow').then(resolve);
+  else resolve();
 }
 
 function gainXp(n) {
@@ -1421,6 +2217,74 @@ function gainXp(n) {
   }
 }
 
+/* --- enemy turns --- */
+function pickTile(c, scoreFn) {
+  const m = MONSTERS[c.type], r = dijkstra(c.x, c.z, m.speed, c), field = dijkstra(state.pos.x, state.pos.z, Infinity, 'field').dist;
+  let best = -1, bestS = Infinity;
+  for (let i = 0; i < W * H; i++) {
+    if (!(r.dist[i] <= m.speed)) continue;
+    const x = i % W, z = (i / W) | 0, s = scoreFn(x, z, r.dist[i], field[i]);
+    if (s < bestS) { bestS = s; best = i; }
+  }
+  if (best < 0) return null;
+  return { x: best % W, z: (best / W) | 0, path: pathFrom(r, best % W, (best / W) | 0) };
+}
+function walkCreature(c, path) {
+  const v = views.get(c.id);
+  return new Promise(res => { v.anim = { path, i: 0, t: 0, res }; });
+}
+async function creatureTurn(c) {
+  const m = MONSTERS[c.type];
+  const inReach = () => cheb(c, state.pos) <= m.range && (m.range === 1 || los(c.x, c.z, state.pos.x, state.pos.z));
+  if (!c.restrained) {
+    let goal = null;
+    if (m.ai === 'ranged') {
+      if (cheb(c, state.pos) <= 1 || !inReach()) goal = pickTile(c, (x, z, cost, f) => {
+        const dd = cheb({ x, z }, state.pos);
+        if (dd > m.range || !los(x, z, state.pos.x, state.pos.z)) return 1e6 + f;
+        return (dd <= 1 ? 50 : 0) - Math.min(dd, 6) * 2 + cost * 0.3;
+      });
+    } else if (!inReach()) {
+      goal = pickTile(c, (x, z, cost, f) => (cheb({ x, z }, state.pos) <= 1 ? 0 : 1000) + f + cost * 0.01);
+    }
+    if (goal && goal.path.length > 1) await walkCreature(c, goal.path);
+  } else addLog('', `The ${m.name.toLowerCase()} strains against the vines.`);
+  if (c.alive && !state.over && inReach()) await creatureAttack(c);
+  else await sleep(0.1);
+}
+async function creatureAttack(c) {
+  const m = MONSTERS[c.type], v = views.get(c.id), d = derived();
+  v.lungeDir.subVectors(worldOf(state.pos.x, state.pos.z), worldOf(c.x, c.z)).setY(0).normalize();
+  if (m.ai === 'ranged') await shootProjectile(creatureTop(c).add(new THREE.Vector3(0, -0.35, 0)), above(hero, 0.5), 'arrow');
+  else { v.lunge = 1; await sleep(0.14); }
+  const dist = cheb(c, state.pos), disadv = c.restrained || (m.ai === 'ranged' && dist <= 1);
+  const r = roll(disadv ? 2 : 1, 20), nat = disadv ? Math.min(...r) : r[0], total = nat + m.atk;
+  const crit = nat === 20, hit = crit || (nat !== 1 && total >= d.ac);
+  const rollTxt = `<span class="r">d20${disadv ? ` (disadv. ${r.join(', ')})` : ''} ${nat} ${fmt(m.atk)} = ${total} vs AC ${d.ac}</span>`;
+  if (hit) {
+    const dice = roll(m.dmg[0] * (crit ? 2 : 1), m.dmg[1]), dmg = sum(dice) + m.dmg[2];
+    heroFlash = 1; shakeCam(m.boss ? 0.2 : 0.08);
+    hurtHero(dmg, `The ${m.name.toLowerCase()} ${m.verb}${crit ? ' (critical!)' : ''}`);
+    addLog('', rollTxt);
+  } else {
+    floatText('Miss', above(hero, 1.2), 'miss');
+    addLog('', `The ${m.name.toLowerCase()} ${m.verb} and misses. ${rollTxt}`);
+  }
+  refresh();
+  await sleep(0.35);
+}
+async function enemyPhase() {
+  busy = true; refresh();
+  const actors = state.creatures.filter(c => c.alive && c.aware && MONSTERS[c.type].ai !== 'none');
+  if (actors.length) { $('aim').hidden = false; $('aim').style.setProperty('--c', '#d0604b'); $('aim').textContent = 'Enemy turn'; }
+  for (const c of actors) {
+    if (!c.alive || state.char.hp <= 0 || state.over) continue;
+    await creatureTurn(c);
+  }
+  $('aim').hidden = true;
+  busy = false;
+}
+
 function dash() {
   if (!state.turn.action) return toast('Dash uses your action, and it is already spent.');
   state.turn.action = false; state.turn.move += derived().speedSq;
@@ -1428,28 +2292,36 @@ function dash() {
   refresh(); save();
 }
 
-function endTurn() {
-  if (anim || busy) return;
+function curseDrain() {
+  hurtHero(1, 'The Drowned Crown feeds on you', 'dmg');
+  const p = above(hero, 0.85);
+  burst(glow, 16, () => ({ p: [p.x, p.y, p.z], v: [rnd(-.5, .5), rnd(.5, 1.2), rnd(-.5, .5)], life: rnd(.5, .9), s: [.06, .01], c0: hdr('#d8a0ff', 5), c1: hdr('#7a2acc', 1.5), a: 1 }));
+}
+
+async function endTurn() {
+  if (anim || busy || state.over) return;
   cancelSpell();
-  // lingering spell effects act at the end of the round
+  // lingering spells act at the end of the round
   for (const e of state.effects) if (e.type === 'firewall') {
-    const near = state.dummy.alive && e.tiles.some(t => cheb(t, state.dummy) <= 1);
-    if (near) spellSave(SPELLS.firewall, 'The wall of fire scorches the dummy');
+    const dice = roll(4, 8);
+    for (const c of state.creatures) if (c.alive && e.tiles.some(t => cheb(t, c) <= 1)) spellHit(SPELLS.firewall, c, 'The wall of fire scorches', dice);
   }
   for (const e of [...state.effects]) {
     if (--e.rounds > 0) continue;
     state.effects.splice(state.effects.indexOf(e), 1);
     visuals.get(e.id)?.expire(); visuals.delete(e.id);
-    if (e.type === 'vines') state.dummy.restrained = false;
+    if (e.type === 'vines') for (const w of e.wraps || []) { const c = creatureById(w.id); if (c) c.restrained = false; }
     addLog('spell', `${SPELLS[e.type].name} ends.`);
   }
+  if (isCursed()) curseDrain();
+  if (!exploring() && state.char.hp > 0) await enemyPhase();
+  if (state.over) return;
   const t = state.turn; t.round++; t.move = derived().speedSq; t.action = true;
-  if (!state.dummy.alive) {
-    state.dummy.alive = true; state.dummy.hp = DUMMY.maxHp;
-    state.dummy.restrained = state.effects.some(e => e.type === 'vines' && e.tiles.some(tl => tl.x === state.dummy.x && tl.z === state.dummy.z));
-    addLog('sys', 'The dummy is propped back up.');
+  for (const c of state.creatures) if (!c.alive && MONSTERS[c.type].respawn) {
+    c.alive = true; c.hp = MONSTERS[c.type].hp; c.restrained = false;
+    addLog('sys', `The ${MONSTERS[c.type].name.toLowerCase()} is propped back up.`);
   }
-  addLog('sys', `Round ${t.round}.`);
+  if (!exploring()) addLog('sys', `Round ${t.round}. Your turn.`);
   refresh(); save();
 }
 
@@ -1474,52 +2346,90 @@ function heal(amount, source) {
 }
 function hurtHero(n, what, cls = 'dmg') {
   const c = state.char;
-  c.hp = Math.max(0, c.hp - n);
+  c.hp = Math.max(0, c.hp - n); heroFlash = 1;
   floatText(`-${n}`, above(hero, 1.2), cls);
   addLog('hit', `${what}: ${c.name} takes <b>${n}</b> (${c.hp}/${derived().maxHp}).`);
-  if (c.hp === 0) toast(`${c.name} is at 0 HP and falls unconscious. Heal or take a long rest from the sheet.`);
+  if (c.hp === 0) {
+    if (state.creatures.some(cr => MONSTERS[cr.type].ai !== 'none') || state.mapKey === 'crypt') after(0.6, defeat);
+    else toast(`${c.name} is at 0 HP. Heal or take a long rest from the sheet.`);
+  }
+}
+
+/* --- endings --- */
+function defeat() {
+  if (state.over) return;
+  state.over = 'defeat'; busy = false; save();
+  showModal('You have fallen', `<p>${state.char.name} collapses on the cold stones of the ${MAP.name}. Somewhere in the dark, something laughs.</p>`, [
+    { label: 'Try again', primary: true, fn: () => restartMap(state.mapKey, state.startChar) },
+    { label: 'New character', fn: () => restartMap(state.mapKey, null) },
+  ]);
+}
+function victory() {
+  const s = state.stats, foes = state.creatures.filter(c => MONSTERS[c.type].ai !== 'none').length;
+  addLog('sys', `<b>${state.char.name} escapes the ${MAP.name}!</b>`);
+  save();
+  showModal(`You escape the ${MAP.name}`, `
+    <p>The stairs spiral down into fresh air and grey morning light. You made it out.</p>
+    <div class="stats">
+      <div><span>Enemies defeated</span><b>${s.kills} / ${foes}</b></div>
+      <div><span>Secrets found</span><b>${s.secrets} / 3</b></div>
+      <div><span>Gold found</span><b>${s.gold} gp</b></div>
+      <div><span>Level</span><b>${state.char.level} (${state.char.xp} XP)</b></div>
+    </div>`, [
+    { label: 'Play again with this character', primary: true, fn: () => restartMap(state.mapKey, state.char) },
+    { label: 'Keep exploring' },
+  ]);
+}
+function restartMap(key, char) {
+  cancelSpell(); clearVisuals(); anim = null; busy = false;
+  state = freshState(key, char);
+  MAP = MAPS[key]; W = MAP.rows[0].length; H = MAP.rows.length;
+  state.char.hp = derived().maxHp;
+  $('mapSel').value = key;
+  bootBoard();
+  addLog('sys', `${MAP.name}: ${state.char.name} starts fresh.`);
+  refresh(); save();
 }
 
 /* --- spells --- */
 function templateTiles(key, x, z) {
   const sp = SPELLS[key], out = [];
-  const ok = (tx, tz) => tileAt(tx, tz) !== '#';
-  if (sp.shape === 'sphere') {
+  const open = (tx, tz) => !isWall(tileAt(tx, tz)) && tx >= 0 && tz >= 0 && tx < W && tz < H;
+  if (sp.shape === 'sphere' || sp.shape === 'square') {
     for (let dz = -sp.size; dz <= sp.size; dz++) for (let dx = -sp.size; dx <= sp.size; dx++)
-      if (dx * dx + dz * dz <= sp.size * sp.size + 1 && ok(x + dx, z + dz)) out.push({ x: x + dx, z: z + dz });
+      if ((sp.shape === 'square' || dx * dx + dz * dz <= sp.size * sp.size + 1) && open(x + dx, z + dz)) out.push({ x: x + dx, z: z + dz });
     return { tiles: out };
   }
-  if (sp.shape === 'square') {
-    for (let dz = -sp.size; dz <= sp.size; dz++) for (let dx = -sp.size; dx <= sp.size; dx++)
-      if (ok(x + dx, z + dz)) out.push({ x: x + dx, z: z + dz });
-    return { tiles: out };
-  }
-  // line: runs across the caster's line of sight
   const axis = Math.abs(x - state.pos.x) >= Math.abs(z - state.pos.z) ? 'z' : 'x';
   const half = (sp.size - 1) / 2;
   for (let i = -half; i <= half; i++) {
     const tx = axis === 'x' ? x + i : x, tz = axis === 'z' ? z + i : z;
-    if (!ok(tx, tz) || (tx === state.pos.x && tz === state.pos.z)) continue;
-    if (key === 'icewall' && tx === state.dummy.x && tz === state.dummy.z) continue;
+    if (!WALKABLE.has(tileAt(tx, tz)) || (tx === state.pos.x && tz === state.pos.z)) continue;
+    if (key === 'icewall' && creatureAt(tx, tz)) continue;
     out.push({ x: tx, z: tz });
   }
   return { tiles: out, axis };
 }
 
-function spellSave(sp, what) {
-  const du = state.dummy; if (!du.alive) return null;
-  const d = derived(), bonus = DUMMY.saves[sp.save] ?? 0, r = roll(1, 20)[0], saved = r + bonus >= d.spellDc;
+function spellHit(sp, c, what, dice) {
+  if (!c.alive) return null;
+  const d = derived(), bonus = MONSTERS[c.type].saves?.[sp.save] ?? 0, r = roll(1, 20)[0], saved = r + bonus >= d.spellDc;
   const saveTxt = `<span class="r">${sp.save.toUpperCase()} save ${r}${fmt(bonus)} = ${r + bonus} vs DC ${d.spellDc}: ${saved ? 'success' : 'fail'}</span>`;
+  const name = MONSTERS[c.type].name.toLowerCase();
   if (sp.damage) {
-    const dice = roll(sp.damage[0], sp.damage[1]), full = sum(dice), dmg = saved ? Math.floor(full / 2) : full;
-    addLog('hit', `${what} for <b>${dmg}</b> ${sp.dmgType}${saved ? ' (half)' : ''}. ${saveTxt} <span class="r">[${dice.join(', ')}]</span>`);
-    damageDummy(dmg, sp.dmgType === 'cold' ? 'cold' : 'dmg');
+    const full = sum(dice), dmg = saved ? Math.floor(full / 2) : full;
+    addLog('hit', `${what} the ${name} for <b>${dmg}</b> ${sp.dmgType}${saved ? ' (half)' : ''}. ${saveTxt}`);
+    damageCreature(c, dmg, sp.dmgType === 'cold' ? 'cold' : 'dmg');
+  } else {
+    if (MONSTERS[c.type].ai !== 'none' && !c.aware) { const was = exploring(); c.aware = true; if (was) startCombat(); }
+    if (!saved) { c.restrained = true; addLog('spell', `Vines seize the ${name}. It is <b>restrained</b>. ${saveTxt}`); floatText('Restrained', creatureTop(c), 'vine'); }
+    else addLog('spell', `The ${name} tears free of the vines. ${saveTxt}`);
   }
   return saved;
 }
 
 function selectSpell(key) {
-  if (busy || anim) return;
+  if (busy || anim || state.over) return;
   if (ui.spell === key) return cancelSpell();
   const sp = SPELLS[key];
   if (!ui.sandbox) {
@@ -1540,10 +2450,10 @@ function previewSpell(t) {
   const sp = SPELLS[ui.spell], inRange = cheb(state.pos, t) <= sp.range;
   const { tiles } = templateTiles(ui.spell, t.x, t.z);
   for (const tl of tiles) {
-    const o = overlays[tl.z * W + tl.x]; if (!o) continue;
+    const o = overlays[tl.z * W + tl.x]; if (!o || !state.explored[tl.z * W + tl.x]) continue;
     o.visible = true; o.material.color.set(inRange ? sp.color : '#a33a2a'); o.material.opacity = 0.42;
   }
-  const p = worldOf(t.x, t.z); hoverBox.position.set(p.x, p.y + 0.01, p.z); hoverBox.visible = true;
+  const p = worldOf(t.x, t.z); hoverBox.position.set(p.x, Math.max(p.y, 0.2) + 0.01, p.z); hoverBox.visible = true;
 }
 
 function cast(key, x, z) {
@@ -1561,15 +2471,16 @@ function cast(key, x, z) {
   busy = true; faceAt = worldOf(x, z);
   castCircle(worldOf(state.pos.x, state.pos.z), sp.color, key === 'fireball' ? (reduceMotion ? 0.3 : 1.0) : 0.7);
   addLog('spell', `<b>${state.char.name}</b> casts <b>${sp.name}</b>${ui.sandbox ? '' : ` using a level ${sp.level} slot`}.`);
-  const inTiles = (p) => tiles.some(t => t.x === p.x && t.z === p.z);
+  const inTiles = p => tiles.some(t => t.x === p.x && t.z === p.z);
   const finish = () => { busy = false; refresh(); save(); };
 
   if (key === 'fireball') {
     castFireball({ x, z }, () => {
-      if (inTiles(state.dummy)) spellSave(sp, 'The fireball engulfs the dummy');
+      const dice = roll(8, 6);
+      for (const c of state.creatures) if (c.alive && inTiles(c)) spellHit(sp, c, 'The fireball engulfs', dice);
       if (inTiles(state.pos)) {
         const r = roll(1, 20)[0] + mod(state.char.abilities.dex), saved = r >= derived().spellDc;
-        const full = sum(roll(8, 6)); hurtHero(saved ? Math.floor(full / 2) : full, `Caught in your own fireball${saved ? ' (Dex save, half)' : ''}`);
+        hurtHero(saved ? Math.floor(sum(dice) / 2) : sum(dice), `Caught in your own fireball${saved ? ' (Dex save, half)' : ''}`);
       }
       finish();
     });
@@ -1577,18 +2488,17 @@ function cast(key, x, z) {
   }
 
   after(reduceMotion ? 0.25 : 0.7, () => {
-    const e = { id: state.nextId++, type: key, tiles, axis, center: { x, z }, rounds: sp.duration };
-    if (key === 'vines' && state.dummy.alive && inTiles(state.dummy)) {
-      const saved = spellSave(sp, '');
-      e.wrap = !saved;
-      if (!saved) { state.dummy.restrained = true; addLog('spell', 'Vines seize the dummy. It is <b>restrained</b>: your attacks have advantage.'); floatText('Restrained', above(dummy, 1.2), 'vine'); }
-      else addLog('spell', `The dummy tears free of the vines. <span class="r">Str save succeeded vs DC ${derived().spellDc}</span>`);
+    const e = { id: state.nextId++, type: key, tiles, axis, center: { x, z }, rounds: sp.duration, wraps: [] };
+    if (key === 'vines') {
+      for (const c of state.creatures) if (c.alive && inTiles(c)) { const saved = spellHit(sp, c, ''); if (!saved) e.wraps.push({ x: c.x, z: c.z, id: c.id }); }
     }
     state.effects.push(e);
+    rebuildFxGrid();
     spawnVisual(e, false);
     if (key !== 'vines') after(0.35, () => {
-      if (state.dummy.alive && tiles.some(t => cheb(t, state.dummy) <= 1))
-        spellSave(sp, key === 'firewall' ? 'Flames lash the dummy' : 'Erupting ice batters the dummy');
+      const dice = roll(sp.damage[0], sp.damage[1]);
+      for (const c of state.creatures) if (c.alive && tiles.some(t => cheb(t, c) <= 1))
+        spellHit(sp, c, key === 'firewall' ? 'Flames lash' : 'Erupting ice batters', dice);
       finish();
     });
     else after(0.3, finish);
@@ -1604,7 +2514,7 @@ function removeOne(key) {
   it.qty--;
   if (it.qty <= 0) {
     c.inventory = c.inventory.filter(i => i !== it);
-    for (const slot of ['weapon', 'armor', 'shield']) if (c.equipped[slot] === key) c.equipped[slot] = null;
+    for (const slot of ['weapon', 'armor', 'shield', 'head']) if (c.equipped[slot] === key) c.equipped[slot] = null;
   }
 }
 function equip(key) {
@@ -1613,27 +2523,39 @@ function equip(key) {
     eq.weapon = key;
     if (item.twoHanded && eq.shield) { eq.shield = null; toast(`${item.name} needs both hands, so you sling your shield.`); }
   } else if (item.type === 'armor') eq.armor = key;
-  else if (item.type === 'shield') {
+  else if (item.type === 'head') {
+    eq.head = key;
+    if (item.cursed && !c.curseLifted) {
+      c.curseKnown = true;
+      addLog('hit', `The <b>${item.name}</b> tightens around your skull. Cold water seems to fill your lungs for a heartbeat. <b>It's cursed</b>: it won't come off, and it will drain you.`);
+      showModal(`The ${item.name} is cursed`, `<p>The moment it touches your brow, the black iron tightens. The stones glow violet, and you hear the sea.</p><p>${item.curseNote}</p>`, [{ label: 'Uh oh', primary: true }]);
+      return;
+    }
+  } else if (item.type === 'shield') {
     eq.shield = key;
     if (eq.weapon && ITEMS[eq.weapon].twoHanded) { toast(`You stow the ${ITEMS[eq.weapon].name.toLowerCase()} to take up the shield.`); eq.weapon = null; }
   }
   addLog('', `Equipped <b>${item.name}</b>.`);
 }
-function unequip(slot) { const k = state.char.equipped[slot]; state.char.equipped[slot] = null; if (k) addLog('', `Unequipped <b>${ITEMS[k].name}</b>.`); }
+function unequip(slot) {
+  const k = state.char.equipped[slot];
+  if (slot === 'head' && isCursed()) return toast('The crown won\'t come off. It\'s cursed.');
+  state.char.equipped[slot] = null; if (k) addLog('', `Unequipped <b>${ITEMS[k].name}</b>.`);
+}
 function useItem(key) {
   const item = ITEMS[key];
   if (item.type !== 'consumable') return;
-  if (!state.turn.action) return toast('Drinking a potion takes your action, and it is already spent.');
+  if (!exploring() && !state.turn.action) return toast('Drinking a potion takes your action, and it is already spent.');
   if (state.char.hp >= derived().maxHp) return toast('You are already at full health.');
-  state.turn.action = false;
+  if (!exploring()) state.turn.action = false;
   const [n, d, b] = item.heal, dice = roll(n, d);
   heal(sum(dice) + b, `${item.name} [${dice.join(', ')}] +${b}`);
   removeOne(key);
 }
-function addItem(key) {
+function addItem(key, silent) {
   const it = invEntry(key);
   if (it) it.qty++; else state.char.inventory.push({ key, qty: 1 });
-  addLog('', `Added <b>${ITEMS[key].name}</b> to the pack.`);
+  if (!silent) addLog('', `Added <b>${ITEMS[key].name}</b> to the pack.`);
 }
 
 /* ================================================================== *
@@ -1645,26 +2567,41 @@ function toast(msg) {
   const t = $('toast'); t.textContent = msg; t.classList.remove('off');
   clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.add('off'), 2800);
 }
-
 const floats = [];
 function floatText(text, pos, cls) {
   const el = document.createElement('div'); el.className = 'float ' + cls; el.textContent = text;
   $('fx').appendChild(el); floats.push({ el, pos, t: 0 });
 }
+function showModal(title, html, buttons) {
+  $('mTitle').innerHTML = title; $('mBody').innerHTML = html;
+  const b = $('mBtns'); b.innerHTML = '';
+  for (const bt of buttons) {
+    const el = document.createElement('button'); el.className = 'btn' + (bt.primary ? ' primary' : ''); el.textContent = bt.label;
+    el.onclick = () => { hideModal(); bt.fn?.(); }; b.appendChild(el);
+  }
+  $('modal').hidden = false; b.firstChild?.focus();
+}
+function hideModal() { $('modal').hidden = true; }
 
 function renderHud() {
-  const t = state.turn, du = state.dummy;
-  $('hud').innerHTML = `
-    <span class="chip map">${MAP.name}</span>
-    <span class="chip">Round <b>${t.round}</b></span>
-    <span class="chip move">Move <b>${t.move * 5} ft</b></span>
-    <span class="chip"><i class="dot ${t.action ? '' : 'spent'}"></i>Action ${t.action ? 'ready' : 'used'}</span>
-    <span class="chip">Dummy <b>${du.hp}/${DUMMY.maxHp}</b> HP · AC ${DUMMY.ac}${du.restrained ? ' · <b style="color:#a6e07a">Restrained</b>' : ''}</span>`;
-  $('dashBtn').disabled = !t.action || busy;
+  const t = state.turn, ex = exploring();
+  const foes = state.creatures.filter(c => c.alive && c.aware && MONSTERS[c.type].ai !== 'none').length;
+  const hc = ui.hover && creatureById(ui.hover);
+  $('hudChips').innerHTML = ex
+    ? `<span class="chip explore">Exploring</span><span class="chip">Gold <b>${state.char.gold}</b></span>`
+    : `<span class="chip combat"><i class="dot"></i>Combat · ${foes} ${foes === 1 ? 'foe' : 'foes'}</span>
+       <span class="chip">Round <b>${t.round}</b></span>
+       <span class="chip move">Move <b>${t.move * 5} ft</b></span>
+       <span class="chip"><i class="dot ${t.action ? '' : 'spent'}"></i>Action ${t.action ? 'ready' : 'used'}</span>`;
+  if (hc && hc.alive) { const m = MONSTERS[hc.type];
+    $('hudChips').innerHTML += `<span class="chip target">${m.name} <b>${hc.hp}/${m.hp}</b> HP · AC ${m.ac}${hc.restrained ? ' · <b style="color:#a6e07a">Restrained</b>' : ''}</span>`; }
+  $('dashBtn').disabled = ex || !t.action || busy;
   $('endBtn').disabled = busy;
+  $('endBtn').textContent = ex ? 'Wait a round' : 'End turn';
+  $('searchBtn').disabled = busy || (!ex && !t.action);
   $('spellbar').innerHTML = Object.entries(SPELLS).map(([k, sp]) => {
     const left = state.char.slots[sp.level]?.left ?? 0;
-    const off = busy || (!ui.sandbox && (!t.action || left <= 0));
+    const off = busy || (!ui.sandbox && ((!ex && !t.action) || left <= 0));
     return `<button class="spell" style="--c:${sp.color}" data-spell="${k}" aria-pressed="${ui.spell === k}" ${off ? 'disabled' : ''}
       title="${sp.name}: ${sp.area}, range ${sp.range * 5} ft"><span class="k">${sp.key}</span>${sp.name}<span class="lv">L${sp.level}</span></button>`;
   }).join('');
@@ -1675,11 +2612,11 @@ function renderSheet() {
   const nextXp = XP_TABLE[c.level] ?? c.xp, prevXp = XP_TABLE[c.level - 1];
   const xpPct = c.level >= 20 ? 100 : ((c.xp - prevXp) / (nextXp - prevXp)) * 100;
   const hpPct = (c.hp / d.maxHp) * 100;
-  const dmgTxt = w === UNARMED ? `${1 + d.dmgMod}` : `${w.dice[0]}d${w.dice[1]} ${fmt(d.dmgMod)}`;
+  const dmgTxt = w === UNARMED ? `${1 + d.dmgMod}` : `${w.dice[0]}d${w.dice[1]} ${fmt(d.dmgMod)}${w.extra ? ` + ${w.extra[0]}d${w.extra[1]} ${w.extra[2]}` : ''}`;
   $('tab-sheet').innerHTML = `
     <div class="section">
       <div class="hp">
-        <div class="hp-top"><span class="label">Hit points</span><span><span class="v">${c.hp}</span> <span class="muted">/ ${d.maxHp}</span></span></div>
+        <div class="hp-top"><span class="label">Hit points${isCursed() ? ' · <span style="color:#c98bff">cursed</span>' : ''}</span><span><span class="v">${c.hp}</span> <span class="muted">/ ${d.maxHp}</span></span></div>
         <div class="bar"><i style="width:${hpPct}%;background:${hpPct <= 25 ? 'var(--blood)' : 'var(--moss)'}"></i></div>
         <div class="hp-row">
           <input id="hpAmt" type="number" min="1" value="5" aria-label="Amount">
@@ -1692,7 +2629,7 @@ function renderSheet() {
         <div class="vital"><div class="v">${d.ac}</div><div class="label">AC</div></div>
         <div class="vital"><div class="v">${c.speed}</div><div class="label">Speed ft</div></div>
         <div class="vital"><div class="v">${fmt(d.init)}</div><div class="label">Init</div></div>
-        <div class="vital"><div class="v">${fmt(d.prof)}</div><div class="label">Prof</div></div>
+        <div class="vital"><div class="v">${d.passive}</div><div class="label">Passive Per.</div></div>
       </div>
       <div>
         <div class="row between"><span class="label">Experience</span><span class="muted">${c.xp} / ${c.level >= 20 ? 'max' : nextXp} XP</span></div>
@@ -1714,14 +2651,14 @@ function renderSheet() {
       <h3>Attack</h3>
       <div class="attack">
         <span class="n">${w.name}</span><span>${fmt(d.atk)} to hit</span><span>${dmgTxt} ${w.dmgType}</span>
-        <span class="muted">${w.ranged ? `Range ${w.range * 5} ft · disadvantage when adjacent` : 'Reach 5 ft'}</span>
+        <span class="muted" style="grid-column:1/-1">${w.ranged ? `Range ${w.range * 5} ft · disadvantage when adjacent` : `Reach ${w.range * 5} ft`}</span>
       </div>
     </div>
     <div class="section">
       <h3>Dice tray</h3>
       <div class="dice">${[4, 6, 8, 10, 12, 20, 100].map(s => `<button data-act="die" data-s="${s}">d${s}</button>`).join('')}</div>
     </div>
-    <div class="section"><button class="btn small" data-act="reset" style="align-self:flex-start">${ui.confirmReset ? 'Click again to reset everything' : 'New character'}</button></div>`;
+    <div class="section"><button class="btn small" data-act="reset" style="align-self:flex-start">${ui.confirmReset ? 'Click again to start over' : 'New character'}</button></div>`;
 }
 
 function renderSpells() {
@@ -1739,7 +2676,7 @@ function renderSpells() {
           <span class="muted">${s.left}/${s.max}</span></div>`).join('')}
       </div>
       <label class="toggle"><input type="checkbox" id="sandbox" ${ui.sandbox ? 'checked' : ''}>
-        <span><b>Free casting</b><br><span class="muted">Spells don't use your action or slots, so you can watch the effects back to back. Turn off to play by the rules.</span></span></label>
+        <span><b>Free casting</b><br><span class="muted">Spells don't use your action or slots. Handy for watching effects; turn it off for a real fight.</span></span></label>
     </div>
     <div class="section">
       <h3>Spellbook</h3>
@@ -1761,25 +2698,33 @@ function renderSpells() {
 
 function renderInv() {
   const c = state.char, d = derived(), eq = c.equipped;
-  const slot = (s, label) => `<div class="slot"><span class="label">${label}</span>
-      ${eq[s] ? `<span>${ITEMS[eq[s]].name}</span><button class="btn small" data-act="unequip" data-k="${s}">Remove</button>` : `<span class="empty">Empty</span><span></span>`}</div>`;
+  const slot = (s, label) => {
+    const k = eq[s], locked = s === 'head' && isCursed();
+    return `<div class="slot"><span class="label">${label}</span>
+      ${k ? `<span>${ITEMS[k].name}${locked ? '<span class="tag curse">Cursed</span>' : ''}</span><button class="btn small" data-act="unequip" data-k="${s}" ${locked ? 'disabled title="It won\'t come off"' : ''}>Remove</button>` : `<span class="empty">Empty</span><span></span>`}</div>`;
+  };
   const isEq = k => Object.values(eq).includes(k);
+  const noteOf = (key, it) => {
+    let n = it.note;
+    if (it.cursed && (c.curseKnown || c.curseLifted)) n += c.curseLifted ? ' The curse is broken.' : ` <span style="color:#c98bff">${it.curseNote}</span>`;
+    return n;
+  };
   $('tab-inv').innerHTML = `
     <div class="section">
       <h3>Equipped</h3>
-      <div class="slots">${slot('weapon', 'Weapon')}${slot('armor', 'Armor')}${slot('shield', 'Off-hand')}</div>
+      <div class="slots">${slot('weapon', 'Weapon')}${slot('armor', 'Armor')}${slot('shield', 'Off-hand')}${slot('head', 'Head')}</div>
     </div>
     <div class="section">
       <div class="row between"><h3>Pack</h3><span class="muted">${d.weight} / ${d.cap} lb · ${c.gold} gp</span></div>
       <ul class="items">
-        ${c.inventory.map(({ key, qty }) => { const it = ITEMS[key]; return `
+        ${c.inventory.map(({ key, qty }) => { const it = ITEMS[key]; const locked = isEq(key) && it.cursed && isCursed(); return `
           <li class="item">
-            <span class="nm">${it.name}${qty > 1 ? ` <span class="q">×${qty}</span>` : ''}${isEq(key) ? '<span class="tag">Equipped</span>' : ''}</span>
-            <span class="meta">${it.note}${it.dice ? ` · ${it.dice[0]}d${it.dice[1]} ${it.dmgType}` : ''} · ${it.weight} lb</span>
+            <span class="nm">${it.name}${qty > 1 ? ` <span class="q">×${qty}</span>` : ''}${isEq(key) ? '<span class="tag">Equipped</span>' : ''}${it.weird ? '<span class="tag weird">Weird</span>' : ''}</span>
+            <span class="meta">${noteOf(key, it)}${it.dice ? ` · ${it.dice[0]}d${it.dice[1]} ${it.dmgType}` : ''} · ${it.weight} lb</span>
             <span class="ctl">
-              ${['weapon', 'armor', 'shield'].includes(it.type) && !isEq(key) ? `<button class="btn small" data-act="equip" data-k="${key}">Equip</button>` : ''}
+              ${['weapon', 'armor', 'shield', 'head'].includes(it.type) && !isEq(key) ? `<button class="btn small" data-act="equip" data-k="${key}">Equip</button>` : ''}
               ${it.type === 'consumable' ? `<button class="btn small" data-act="use" data-k="${key}">Drink</button>` : ''}
-              <button class="btn small" data-act="drop" data-k="${key}" aria-label="Drop one ${it.name}">Drop</button>
+              <button class="btn small" data-act="drop" data-k="${key}" aria-label="Drop one ${it.name}" ${locked ? 'disabled' : ''}>Drop</button>
             </span>
           </li>`; }).join('') || '<li class="muted">Your pack is empty.</li>'}
       </ul>
@@ -1806,19 +2751,24 @@ function renderPanel() {
 
 function refreshBoard() {
   rebuildFxGrid();
-  reach = computeReach();
-  if (ui.spell) { previewSpell(ui.aim); targetRing.visible = false; return; }
+  computeVisibility(); applyFog();
+  if (exploring()) { state.turn.move = 40; state.turn.action = true; }
+  reach = dijkstra(state.pos.x, state.pos.z, heroBudget(), 'hero');
+  if (ui.spell) { previewSpell(ui.aim); return; }
+  const showRange = !exploring() && !anim && !busy;
   for (let i = 0; i < W * H; i++) {
     const o = overlays[i]; if (!o) continue;
     const dd = reach.dist[i];
-    o.visible = !anim && !busy && dd > 0 && dd <= state.turn.move;
+    o.visible = showRange && dd > 0 && dd <= state.turn.move && !!vis[i];
     if (o.visible) {
-      o.material.opacity = 0.32;
+      o.material.opacity = 0.3;
       o.material.color.set((fxGrid[i] & FIRE) ? '#ff7a3a' : (tileAt(i % W, (i / W) | 0) === '~' || (fxGrid[i] & VINE)) ? '#a7c27a' : '#7aa7cb');
     }
   }
+}
+function canAttack(c) {
   const w = derived().weapon;
-  targetRing.visible = !busy && state.dummy.alive && state.turn.action && cheb(state.pos, state.dummy) <= w.range;
+  return !busy && c.alive && state.turn.action && cheb(state.pos, c) <= w.range && (!w.ranged || los(state.pos.x, state.pos.z, c.x, c.z));
 }
 
 function refresh() { refreshBoard(); renderHud(); renderPanel(); }
@@ -1832,6 +2782,13 @@ $('charName').addEventListener('input', e => { state.char.name = e.target.value 
 $('charName').addEventListener('change', () => renderPanel());
 $('charColor').addEventListener('input', e => { state.char.color = e.target.value; heroBodyMat.color.set(e.target.value); save(); });
 $('spellbar').addEventListener('click', e => { const b = e.target.closest('[data-spell]'); if (b) selectSpell(b.dataset.spell); });
+$('mapSel').innerHTML = Object.entries(MAPS).map(([k, m]) => `<option value="${k}">${m.name}</option>`).join('');
+$('mapSel').addEventListener('change', e => {
+  const key = e.target.value; e.target.value = state.mapKey;
+  if (busy || anim) return;
+  showModal(`Travel to the ${MAPS[key].name}?`, `<p>Progress on this map resets. ${state.char.name} keeps their level, gear and gold.</p>`, [
+    { label: 'Travel', primary: true, fn: () => restartMap(key, state.char) }, { label: 'Stay here' }]);
+});
 
 $('panel').addEventListener('change', e => {
   if (e.target.id === 'sandbox') { ui.sandbox = e.target.checked; savePrefs(); refresh(); }
@@ -1858,26 +2815,29 @@ $('panel').addEventListener('click', e => {
       break;
     }
     case 'rest':
+      if (!exploring()) { toast('You can\'t rest with enemies hunting you.'); return; }
       c.hp = derived().maxHp; c.slots = freshSlots();
       addLog('heal', `${c.name} takes a long rest: full HP and spell slots.`); break;
     case 'equip': equip(k); dressHero(); break;
     case 'unequip': unequip(k); dressHero(); break;
     case 'use': useItem(k); break;
-    case 'drop': addLog('', `Dropped one <b>${ITEMS[k].name}</b>.`); removeOne(k); dressHero(); break;
+    case 'drop':
+      if (ITEMS[k].cursed && Object.values(c.equipped).includes(k) && isCursed()) return toast('It won\'t come off.');
+      addLog('', `Dropped one <b>${ITEMS[k].name}</b>.`); removeOne(k); dressHero(); break;
     case 'add': addItem($('addSel').value); break;
     case 'reset':
       if (!ui.confirmReset) { ui.confirmReset = true; break; }
-      ui.confirmReset = false; cancelSpell(); clearVisuals(); state = freshState(); anim = null; busy = false;
-      dressHero(); placeMinis(); resetView(); break;
+      ui.confirmReset = false; restartMap(state.mapKey, null); return;
   }
   refresh(); save();
 });
 
+$('searchBtn').addEventListener('click', search);
 $('dashBtn').addEventListener('click', dash);
 $('endBtn').addEventListener('click', endTurn);
 $('viewBtn').addEventListener('click', resetView);
 window.addEventListener('keydown', e => {
-  if (e.target.closest('input, select, textarea')) return;
+  if (e.target.closest('input, select, textarea') || !$('modal').hidden) return;
   const k = Object.keys(SPELLS).find(k => SPELLS[k].key === e.key);
   if (k) { selectSpell(k); e.preventDefault(); }
   else if (e.key === 'Escape') cancelSpell();
@@ -1894,38 +2854,55 @@ function setQuality(name) {
 
 /* --- board picking --- */
 const raycaster = new THREE.Raycaster(), ndc = new THREE.Vector2();
+const shown = o => { while (o) { if (!o.visible) return false; o = o.parent; } return true; };
 function pick(e) {
   const r = canvas.getBoundingClientRect();
   ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
   raycaster.setFromCamera(ndc, camera);
-  const hit = raycaster.intersectObjects([dummy, hero, ...tileMeshes], true).find(h => h.object.visible && h.object.userData.kind);
-  return hit ? hit.object.userData : null;
+  const targets = [hero];
+  for (const v of views.values()) if (v.g.visible) targets.push(v.g);
+  for (const m of tileMeshes) if (m && m.visible) targets.push(m);
+  for (const p of props) if (p.o.visible) targets.push(p.o);
+  const hit = raycaster.intersectObjects(targets, true).find(h => h.object.userData.kind && h.object.userData.kind !== 'deco' && shown(h.object));
+  if (!hit) return null;
+  const u = hit.object.userData;
+  if (u.kind === 'creature') { const c = creatureById(u.cid); if (!c || !c.alive) { const p = c ? { kind: 'tile', x: c.x, z: c.z } : null; return p; } }
+  return u;
 }
-const tileOf = p => !p ? null : p.kind === 'tile' ? { x: p.x, z: p.z } : p.kind === 'dummy' ? { x: state.dummy.x, z: state.dummy.z } : { ...state.pos };
+const tileOf = p => !p ? null : p.kind === 'creature' ? (c => ({ x: c.x, z: c.z }))(creatureById(p.cid)) : p.kind === 'hero' ? { ...state.pos } : { x: p.x, z: p.z };
+const hoverBox = new THREE.LineLoop(
+  new THREE.BufferGeometry().setFromPoints([[-.46, -.46], [.46, -.46], [.46, .46], [-.46, .46]].map(([a, b]) => new THREE.Vector3(a, 0, b))),
+  new THREE.LineBasicMaterial({ color: '#d3aa55', toneMapped: false }));
+hoverBox.visible = false; scene.add(hoverBox);
+const dotGeo = new THREE.SphereGeometry(0.06, 10, 8);
+const dotMat = new THREE.MeshBasicMaterial({ color: '#d3aa55', toneMapped: false });
+const pathDots = Array.from({ length: 60 }, () => { const d = new THREE.Mesh(dotGeo, dotMat); d.visible = false; scene.add(d); return d; });
 function clearPath() { pathDots.forEach(d => d.visible = false); hoverBox.visible = false; }
 function showPath(x, z) {
   clearPath();
   const p = worldOf(x, z); hoverBox.position.set(p.x, p.y + 0.01, p.z); hoverBox.visible = true;
-  pathTo(x, z).slice(1).forEach((c, i) => { if (pathDots[i]) { pathDots[i].position.copy(worldOf(c.x, c.z)).add(new THREE.Vector3(0, 0.08, 0)); pathDots[i].visible = true; } });
+  pathFrom(reach, x, z).slice(1).forEach((c, i) => { if (pathDots[i]) { pathDots[i].position.copy(worldOf(c.x, c.z)).add(new THREE.Vector3(0, 0.08, 0)); pathDots[i].visible = true; } });
 }
+const reachable = (x, z) => { const d = reach && reach.dist[z * W + x]; return d > 0 && d <= heroBudget(); };
 
 let down = null;
 canvas.addEventListener('contextmenu', e => { if (ui.spell) { e.preventDefault(); cancelSpell(); } });
 canvas.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY, b: e.button }; });
 canvas.addEventListener('pointermove', e => {
-  if (anim || busy || e.pointerType === 'touch') return;
+  if (anim || busy || e.pointerType === 'touch' || state.over) return;
   const p = pick(e);
+  const hov = p && p.kind === 'creature' ? p.cid : null;
+  if (hov !== ui.hover) { ui.hover = hov; renderHud(); }
   if (ui.spell) { previewSpell(tileOf(p)); canvas.style.cursor = 'crosshair'; return; }
-  canvas.style.cursor = 'grab';
-  if (p && p.kind === 'tile' && reach && reach.dist[p.z * W + p.x] > 0 && reach.dist[p.z * W + p.x] <= state.turn.move) {
-    showPath(p.x, p.z); canvas.style.cursor = 'pointer';
-  } else {
-    clearPath();
-    if (p && p.kind === 'dummy') canvas.style.cursor = targetRing.visible ? 'crosshair' : 'not-allowed';
-  }
+  canvas.style.cursor = 'grab'; clearPath();
+  if (!p) return;
+  if (p.kind === 'creature') { canvas.style.cursor = canAttack(creatureById(p.cid)) ? 'crosshair' : 'pointer'; return; }
+  const ch = tileAt(p.x, p.z), tr = state.traps[keyOf(p.x, p.z)];
+  if (p.kind === 'prop' && !WALKABLE.has(ch) || (tr && tr.found)) { canvas.style.cursor = 'pointer'; return; }
+  if ((p.kind === 'tile' || p.kind === 'prop') && reachable(p.x, p.z)) { showPath(p.x, p.z); canvas.style.cursor = 'pointer'; }
 });
 canvas.addEventListener('pointerup', e => {
-  if (!down || down.b !== 0 || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6 || anim || busy) { down = null; return; }
+  if (!down || down.b !== 0 || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6 || anim || busy || state.over) { down = null; return; }
   down = null;
   const p = pick(e);
   if (ui.spell) {
@@ -1934,19 +2911,25 @@ canvas.addEventListener('pointerup', e => {
     return cast(ui.spell, t.x, t.z);
   }
   if (!p) return;
-  if (p.kind === 'dummy') return attack();
+  if (p.kind === 'creature') return attack(creatureById(p.cid));
   if (p.kind === 'hero') { ui.tab = 'sheet'; return renderPanel(); }
-  if (p.kind === 'tile') {
-    const dd = reach.dist[p.z * W + p.x];
-    if (dd > 0 && dd <= state.turn.move) moveTo(p.x, p.z);
-    else if (solid(p.x, p.z)) toast(tileAt(p.x, p.z) === '#' ? 'Walls block movement.' : 'The wall of ice blocks your way.');
-    else if (dd !== 0) toast(state.turn.move ? `Out of reach. You have ${state.turn.move * 5} ft of movement left.` : 'No movement left. Dash or end your turn.');
-  }
+  const ch = tileAt(p.x, p.z), tr = state.traps[keyOf(p.x, p.z)];
+  if ((p.kind === 'prop' || !WALKABLE.has(ch)) && !isWall(ch) && !WALKABLE.has(ch) || (tr && tr.found)) return interact(p.x, p.z);
+  if (isWall(ch)) return toast('Solid stone. Try searching nearby walls for secrets.');
+  if (reachable(p.x, p.z)) moveTo(p.x, p.z);
+  else if (solidAt(p.x, p.z)) toast('The wall of ice blocks your way.');
+  else if (!(p.x === state.pos.x && p.z === state.pos.z)) toast(exploring() ? 'You can\'t get there from here.' : state.turn.move ? `Out of reach. You have ${state.turn.move * 5} ft of movement left.` : 'No movement left. Dash or end your turn.');
 });
 
 /* ================================================================== *
  * LOOP
  * ================================================================== */
+function resetView() {
+  const t = MAP.fog ? worldOf(state.pos.x, state.pos.z).setY(0) : new THREE.Vector3();
+  controls.target.copy(t);
+  camera.position.copy(t).add(MAP.fog ? new THREE.Vector3(0, 10.5, 8.5) : new THREE.Vector3(0, 13, 12));
+  controls.update();
+}
 function resize() {
   const r = stage.getBoundingClientRect();
   renderer.setSize(r.width, r.height, false);
@@ -1956,7 +2939,15 @@ function resize() {
 }
 new ResizeObserver(resize).observe(stage);
 
-const clock = new THREE.Clock(), tmp = new THREE.Vector3(), shakeOff = new THREE.Vector3();
+function bootBoard() {
+  buildBoard(); rebuildCreatures(); dressHero(); placeHero();
+  rebuildFxGrid();
+  for (const e of state.effects) spawnVisual(e, true);
+  computeVisibility(); applyFog(); resetView();
+}
+
+const clock = new THREE.Clock(), tmp = new THREE.Vector3(), shakeOff = new THREE.Vector3(), follow = new THREE.Vector3();
+const RED = new THREE.Color('#ff2a10');
 let moteT = 0;
 function tick() {
   const dt = Math.min(clock.getDelta(), 0.05), time = clock.elapsedTime;
@@ -1964,26 +2955,21 @@ function tick() {
 
   for (let i = timers.length - 1; i >= 0; i--) { timers[i].t -= dt; if (timers[i].t <= 0) { const f = timers[i].fn; timers.splice(i, 1); f(); } }
   for (let i = fxList.length - 1; i >= 0; i--) if (fxList[i].update(dt) === false) fxList.splice(i, 1);
+  for (const p of props) p.update(dt, time);
 
-  // dust motes drifting through the lantern light
   moteT += dt;
-  if (moteT > 0.12) { moteT = 0; glow.emit({ p: [rnd(-7, 7), rnd(.4, 3), rnd(-5, 5)], v: [rnd(-.05, .05), rnd(-.02, .05), rnd(-.05, .05)],
+  if (moteT > 0.12) { moteT = 0; const c = hero.position; glow.emit({ p: [c.x + rnd(-7, 7), rnd(.4, 3), c.z + rnd(-5, 5)], v: [rnd(-.05, .05), rnd(-.02, .05), rnd(-.05, .05)],
     life: rnd(4, 7), s: [.025, .025], c0: hdr('#ffd9a0', .7), a: .8, turb: .15, fi: .3 }); }
 
+  // hero
   if (anim) {
-    anim.t += dt / (reduceMotion ? 0.06 : 0.2);
+    anim.t += dt / (reduceMotion ? 0.06 : 0.18);
     while (anim && anim.t >= 1) {
       anim.t -= 1; anim.i++;
       const cell = anim.path[anim.i];
-      if (fxGrid[cell.z * W + cell.x] & FIRE) {
-        const dice = roll(2, 6); hurtHero(sum(dice), 'Walking through the wall of fire');
-        burst(glow, 30, () => ({ p: [hero.position.x, hero.position.y + .3, hero.position.z], v: [rnd(-2, 2), rnd(1, 4), rnd(-2, 2)], life: rnd(.4, .8),
-          s: [.07, .02], c0: hdr('#ffd080', 7), c1: hdr('#ff3000', 2), a: 1, g: -5 }));
-      }
-      if (anim.i >= anim.path.length - 1) {
-        state.pos = { ...anim.path[anim.path.length - 1] };
-        anim = null; placeMinis(); refresh(); save();
-      }
+      state.pos = { ...cell };
+      const stop = onHeroStep(cell);
+      if (stop || anim.i >= anim.path.length - 1) finishMove(stop);
     }
     if (anim) {
       const a = worldOf(anim.path[anim.i].x, anim.path[anim.i].z), b = worldOf(anim.path[anim.i + 1].x, anim.path[anim.i + 1].z);
@@ -1992,33 +2978,65 @@ function tick() {
       hero.rotation.y = Math.atan2(b.x - a.x, b.z - a.z);
     }
   } else {
-    const look = faceAt || dummy.position;
-    const face = Math.atan2(look.x - hero.position.x, look.z - hero.position.z);
-    let diff = face - hero.rotation.y; diff = Math.atan2(Math.sin(diff), Math.cos(diff));
-    hero.rotation.y += diff * Math.min(1, dt * 8);
+    if (faceAt) {
+      const face = Math.atan2(faceAt.x - hero.position.x, faceAt.z - hero.position.z);
+      let diff = face - hero.rotation.y; diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+      hero.rotation.y += diff * Math.min(1, dt * 8);
+    }
     const base = worldOf(state.pos.x, state.pos.z);
-    if (lunge > 0) {
-      lunge = Math.max(0, lunge - dt * 4);
-      tmp.subVectors(dummy.position, base).setY(0).normalize().multiplyScalar(Math.sin(Math.PI * lunge) * 0.18);
-      hero.position.copy(base).add(tmp);
+    hero.position.copy(base);
+    if (lunge > 0) { lunge = Math.max(0, lunge - dt * 4); hero.position.addScaledVector(lungeDir, Math.sin(Math.PI * lunge) * 0.2); }
+  }
+  heroFlash = Math.max(0, heroFlash - dt * 3);
+  heroBodyMat.emissive.copy(RED).multiplyScalar(heroFlash * 0.8);
+  heroRing.material.opacity = 0.55 + Math.sin(time * 3) * 0.3;
+  heroLight.position.copy(hero.position).add(tmp.set(0, 1.6, 0));
+
+  // creatures
+  const r = stage.getBoundingClientRect();
+  for (const c of state.creatures) {
+    const v = views.get(c.id); if (!v) continue;
+    if (v.anim) {
+      const a = v.anim; a.t += dt / (reduceMotion ? 0.06 : 0.16);
+      while (v.anim && a.t >= 1) {
+        a.t -= 1; a.i++;
+        const cell = a.path[a.i]; c.x = cell.x; c.z = cell.z;
+        if (fxGrid[cell.z * W + cell.x] & FIRE) damageCreature(c, sum(roll(2, 6)), 'dmg');
+        if (a.i >= a.path.length - 1 || !c.alive) { v.anim = null; applyFog(); a.res(); }
+      }
+      if (v.anim) {
+        const p0 = worldOf(a.path[a.i].x, a.path[a.i].z), p1 = worldOf(a.path[a.i + 1].x, a.path[a.i + 1].z);
+        v.g.position.lerpVectors(p0, p1, a.t); v.g.position.y += Math.sin(Math.PI * a.t) * 0.1;
+        v.g.rotation.y = Math.atan2(p1.x - p0.x, p1.z - p0.z);
+        const lit = !!vis[a.path[a.i + 1].z * W + a.path[a.i + 1].x] || !!vis[a.path[a.i].z * W + a.path[a.i].x];
+        v.g.visible = lit;
+      }
     } else {
-      hero.position.copy(base);
-      if (busy) hero.position.y += 0.06 + Math.sin(time * 6) * 0.03;   // levitate while casting
+      v.g.position.copy(worldOf(c.x, c.z));
+      if (v.lunge > 0) { v.lunge = Math.max(0, v.lunge - dt * 4); v.g.position.addScaledVector(v.lungeDir, Math.sin(Math.PI * v.lunge) * 0.22); }
+      if (c.alive && (c.aware || c.type === 'dummy')) {
+        const face = Math.atan2(hero.position.x - v.g.position.x, hero.position.z - v.g.position.z);
+        let diff = face - v.g.rotation.y; diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+        v.g.rotation.y += diff * Math.min(1, dt * 6);
+      }
+    }
+    v.pivot.rotation.z = Math.sin(time * 40) * v.shake * 0.12; v.shake = Math.max(0, v.shake - dt * 2.5);
+    v.pivot.rotation.x += ((c.alive ? 0 : -1.35) - v.pivot.rotation.x) * Math.min(1, dt * 6);
+    if (v.flash > 0) { v.flash = Math.max(0, v.flash - dt * 3); for (const m of v.mats) m.emissive.copy(RED).multiplyScalar(v.flash); }
+    const attackable = c.alive && canAttack(c);
+    v.ring.visible = c.alive && v.g.visible && (c.aware || c.type === 'dummy' || ui.hover === c.id);
+    v.ring.material.opacity = attackable ? 0.6 + Math.sin(time * 5) * 0.35 : 0.35;
+    const showBar = c.alive && v.g.visible && (c.aware || c.hp < MONSTERS[c.type].hp || ui.hover === c.id);
+    v.bar.hidden = !showBar;
+    if (showBar) {
+      tmp.copy(v.g.position); tmp.y += v.height * v.g.scale.y + 0.35; tmp.project(camera);
+      v.bar.style.left = ((tmp.x + 1) / 2) * r.width + 'px'; v.bar.style.top = ((1 - tmp.y) / 2) * r.height + 'px';
+      v.bar.firstChild.style.width = (c.hp / MONSTERS[c.type].hp * 100) + '%';
     }
   }
 
-  heroRing.material.opacity = 0.55 + Math.sin(time * 3) * 0.3;
-  targetRing.material.opacity = 0.55 + Math.sin(time * 4) * 0.35;
-  const sh = dummy.userData.shake || 0;
-  dummyPivot.rotation.z = Math.sin(time * 40) * sh * 0.12;
-  dummy.userData.shake = Math.max(0, sh - dt * 2.5);
-  const fall = state.dummy.alive ? 0 : -1.35;
-  dummyPivot.rotation.x += (fall - dummyPivot.rotation.x) * Math.min(1, dt * 6);
-  lantern.intensity = 16 + Math.sin(time * 9) * 1.2 + Math.sin(time * 23) * 0.8;
-
   glow.update(dt, time); smoke.update(dt, time);
 
-  const r = stage.getBoundingClientRect();
   for (let i = floats.length - 1; i >= 0; i--) {
     const f = floats[i]; f.t += dt;
     tmp.copy(f.pos).add(new THREE.Vector3(0, f.t * 0.6, 0)).project(camera);
@@ -2026,6 +3044,13 @@ function tick() {
     f.el.style.top = ((1 - tmp.y) / 2) * r.height + 'px';
     f.el.style.opacity = Math.max(0, 1 - Math.max(0, f.t - 0.9) / 0.6);
     if (f.t > 1.5) { f.el.remove(); floats.splice(i, 1); }
+  }
+
+  // the camera drifts after the hero on big maps
+  if (MAP.fog) {
+    follow.copy(hero.position).setY(0).sub(controls.target); follow.y = 0;
+    const d = follow.length();
+    if (d > 1.5) { follow.multiplyScalar((1 - 1.5 / d) * Math.min(1, dt * 3)); controls.target.add(follow); camera.position.add(follow); }
   }
 
   controls.update();
@@ -2037,11 +3062,13 @@ function tick() {
   requestAnimationFrame(tick);
 }
 
-window.battleBoard = { camera, controls };   // handy for debugging from the console
-dressHero();
-placeMinis();
-rebuildFxGrid();
-for (const e of state.effects) spawnVisual(e, true);
+// handy for debugging from the browser console
+window.battleBoard = {
+  camera, controls, get state() { return state; },
+  screenOf(x, z) { const r = canvas.getBoundingClientRect(), p = worldOf(x, z).project(camera); return { x: r.left + (p.x + 1) / 2 * r.width, y: r.top + (1 - p.y) / 2 * r.height }; },
+  teleport(x, z) { state.pos = { x, z }; placeHero(); resetView(); refresh(); },
+};
+bootBoard();
 refresh();
 resize();
 tick();
