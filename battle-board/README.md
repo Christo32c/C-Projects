@@ -24,6 +24,16 @@ The default map is a dungeon (switch maps from the selector at the top left):
 - **A puzzle**: read the inscription, then step on the sun, moon and star plates in the right order to raise the portcullis. The wrong order sets off a dart trap.
 - **Win or lose**: reach the stairs to escape and see your stats, or fall and try again.
 
+### Danger
+
+The crypt plays by the real rules, and it fights back:
+
+- **No free casting** in the dungeon. Every spell costs a slot and your action. The manual Damage and Heal buttons are only in the Training Yard.
+- **Wandering monsters**: every ten squares you walk, the crypt rolls to see whether something finds you. Fireballs, traps and fights make noise, which makes it likelier. You hear them coming first, and the log tells you which direction.
+- **Ambushes**: some of the bone piles are skeletons lying in wait. Step next to one and it rises and attacks.
+- **Making camp** replaces the long rest. It can restore you fully, but something may find you while you sleep, and each camp is riskier than the last.
+- **Atmosphere**: read-aloud text the first time you enter each area, a closer camera, synthesised sound (dripping, distant rumbles, footsteps, steel, monster cries, a heartbeat when you're hurt) and a red pulse at the screen edges when you're low on HP. Turn sound on or off with the **Sound** button.
+
 ### Art
 
 - **The hero** is a sculpted paladin miniature. `assets/paladin.glb` (shipped to the page as `assets/paladin-glb.js`) was converted from the paladin STL with `tools/stl2glb.py`. The script splits the sculpt into painted regions (armour, leather, skin, gold, base), keeps the cape and plume as a separate mesh tinted with the character colour, and keeps the blade separate so it can change with the equipped weapon. After re-running the converter, regenerate the `.js` wrapper (it's the GLB as base64). If the model can't load (for example when the page is opened straight from disk without a web server), a simple figure stands in.
