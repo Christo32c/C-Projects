@@ -650,7 +650,14 @@ function computeVisibility() {
 let board = null, tileMeshes = [], overlays = [], tileObjs = [], props = [], torchFaces = new Set(), torchSpots = [];
 const floorGeo = new THREE.BoxGeometry(0.96, 0.2, 0.96);
 const brushGeo = new THREE.BoxGeometry(0.96, 0.14, 0.96);
-const wallGeo = new THREE.BoxGeometry(0.98, 1.1, 0.98);
+// Walls are thin sculpted slabs on the edges where rock meets open floor, like modular tabletop terrain
+const WALL_T = 0.22, WALL_Y0 = 0.18, WALL_Y1 = 1.04;
+const slabGeo = new THREE.BoxGeometry(1, WALL_Y1 - WALL_Y0, WALL_T);
+const postGeo = new THREE.BoxGeometry(WALL_T, WALL_Y1 - WALL_Y0, WALL_T);
+const capGeo = new THREE.BoxGeometry(1.02, 0.07, WALL_T + 0.06);
+const capPostGeo = new THREE.BoxGeometry(WALL_T + 0.08, 0.09, WALL_T + 0.08);
+const skirtGeo = new THREE.BoxGeometry(1, 0.08, WALL_T + 0.05);
+const rockGeo = new THREE.BoxGeometry(0.99, 0.24, 0.99);
 const tuftGeo = new THREE.ConeGeometry(0.05, 0.22, 5);
 const overlayGeo = new THREE.PlaneGeometry(0.88, 0.88);
 const unitBox = new THREE.BoxGeometry(1, 1, 1);
@@ -872,10 +879,35 @@ function buildTile(x, z) {
   const ST = stoneSets();
   if (isWall(ch)) {
     const side = mat(new THREE.Color(dark ? '#b9afa2' : '#d4c9b8').offsetHSL(0, 0, j), { map: ST.wall.map, normalMap: ST.wall.normalMap, roughness: 0.92 });
-    const top = mat(new THREE.Color(dark ? '#a0978b' : '#c4b9a8').offsetHSL(0, 0, j), { map: ST.top.map, normalMap: ST.top.normalMap, roughness: 0.95 });
-    mesh = new THREE.Mesh(wallGeo, [side, side, top, top, side, side]);
-    mesh.userData.dim = [[side, side.color.clone()], [top, top.color.clone()]];
-    mesh.position.set(p.x, 0.55, p.z); mesh.castShadow = true;
+    const trim = mat(new THREE.Color(dark ? '#9a9184' : '#b8ad9c').offsetHSL(0, 0, j), { map: ST.top.map, normalMap: ST.top.normalMap, roughness: 0.9 });
+    const rock = mat(new THREE.Color(dark ? '#3a342e' : '#5a5046').offsetHSL(0, 0, j), { map: ST.top.map, normalMap: ST.top.normalMap, roughness: 1 });
+    mesh = new THREE.Group();
+    const base = new THREE.Mesh(rockGeo, rock); base.position.set(p.x, 0.06, p.z); mesh.add(base);
+    // a few loose rocks on the solid ground behind the walls
+    for (let n = 0; n < 3; n++) if (r() < 0.6) {
+      const b = new THREE.Mesh(new THREE.DodecahedronGeometry(0.05 + r() * 0.07, 0), rock);
+      b.position.set(p.x + (r() - .5) * .6, 0.2, p.z + (r() - .5) * .6); b.rotation.set(r() * 3, r() * 3, 0); mesh.add(b);
+    }
+    const open = (dx, dz) => { const tx = x + dx, tz = z + dz; return tx >= 0 && tz >= 0 && tx < W && tz < H && !isWall(tileAt(tx, tz)); };
+    const ym = (WALL_Y0 + WALL_Y1) / 2, e = 0.5 - WALL_T / 2;
+    for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      if (!open(dx, dz)) continue;
+      const rot = dx ? Math.PI / 2 : 0, cx = p.x + dx * e, cz = p.z + dz * e;
+      const slab = new THREE.Mesh(slabGeo, side); slab.position.set(cx, ym, cz); slab.rotation.y = rot;
+      const cap = new THREE.Mesh(capGeo, trim); cap.position.set(cx + dx * 0.02, WALL_Y1 + 0.03, cz + dz * 0.02); cap.rotation.y = rot;
+      const skirt = new THREE.Mesh(skirtGeo, trim); skirt.position.set(cx + dx * 0.02, WALL_Y0 + 0.04, cz + dz * 0.02); skirt.rotation.y = rot;
+      mesh.add(slab, cap, skirt);
+    }
+    // corner posts: where two walls meet, and where an open diagonal sits between two rock neighbours
+    for (const [dx, dz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+      const a = open(dx, 0), b = open(0, dz);
+      if (!(a && b) && !(!a && !b && open(dx, dz))) continue;
+      const cx = p.x + dx * e, cz = p.z + dz * e;
+      const post = new THREE.Mesh(postGeo, side); post.position.set(cx, ym, cz);
+      const cp = new THREE.Mesh(capPostGeo, trim); cp.position.set(cx + dx * 0.02, WALL_Y1 + 0.04, cz + dz * 0.02);
+      mesh.add(post, cp);
+    }
+    mesh.userData.dim = [[side, side.color.clone()], [trim, trim.color.clone()], [rock, rock.color.clone()]];
   } else if (ch === '~' && !dark) {
     mesh = new THREE.Mesh(brushGeo, mat(new THREE.Color('#3d5636').offsetHSL(0, 0, j)));
     mesh.position.set(p.x, 0.07, p.z);
@@ -2373,7 +2405,14 @@ function rebuildFxGrid() {
   const bit = { firewall: FIRE, icewall: ICE, vines: VINE };
   for (const e of state.effects) for (const t of e.tiles) fxGrid[t.z * W + t.x] |= bit[e.type] || 0;
 }
-function setTile(x, z, ch, rebuild = false) { state.grid[z][x] = ch; if (rebuild) buildTile(x, z); }
+function setTile(x, z, ch, rebuild = false) {
+  const wasWall = isWall(tileAt(x, z)); state.grid[z][x] = ch;
+  if (!rebuild) return;
+  buildTile(x, z);
+  if (wasWall !== isWall(ch))   // neighbouring walls grow or lose a face
+    for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) { const tx = x + dx, tz = z + dz;
+      if ((dx || dz) && tx >= 0 && tz >= 0 && tx < W && tz < H && isWall(tileAt(tx, tz))) buildTile(tx, tz); }
+}
 
 /* ================================================================== *
  * MOVEMENT — Dijkstra over 8 directions, 5 ft per square. Rubble and
