@@ -12,6 +12,20 @@ cd battle-board && python3 -m http.server 8000
 
 Three.js loads from jsDelivr, so the first load needs an internet connection.
 
+## The Sunken Crypt
+
+The default map is a dungeon (switch maps from the selector at the top left):
+
+- **Fog of war**: you only see what your character can see. Rooms you've explored stay dimly visible.
+- **Enemies**: giant rats, skeletons, goblin archers and a boss, the Grave Warden. They wake when they see you, then combat runs in turns: you move and act, end your turn, and the enemies chase, shoot and attack. Outside combat you move freely.
+- **Loot**: chests, items on the floor, potions, gold, and weird swords (the Whispering Blade, the Eelblade and Sunderglass), each with its own quirk.
+- **A cursed object**: the Drowned Crown. It's great armor, but it won't come off and it drains you. There's a way to break the curse somewhere in the crypt.
+- **Secrets**: a secret door and a hidden cache. Use **Search** (a Perception check) near suspicious walls. There are also hidden dart and fire traps; once found, they can be disarmed.
+- **A puzzle**: read the inscription, then step on the sun, moon and star plates in the right order to raise the portcullis. The wrong order sets off a dart trap.
+- **Win or lose**: reach the stairs to escape and see your stats, or fall and try again.
+
+Maps are plain ASCII grids in `MAPS` with a legend at the top of the script, so new dungeons are easy to add.
+
 ## What's in the first loop
 
 - **3D board**: a 14×10 grid of 5 ft squares with walls and brush (difficult terrain, double cost). Drag to orbit, scroll to zoom.
