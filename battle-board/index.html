@@ -1174,7 +1174,10 @@ heroRing.rotation.x = -Math.PI / 2; heroRing.position.y = 0.01; heroRing.userDat
 hero.add(heroRing);
 scene.add(hero);
 // The sculpted paladin (converted from the STL with tools/stl2glb.py). If it can't load, the simple figure stays.
-new GLTFLoader().load('assets/paladin.glb', gltf => {
+import('./assets/paladin-glb.js').then(m => {
+  const bin = Uint8Array.from(atob(m.default), c => c.charCodeAt(0));
+  return new GLTFLoader().parseAsync(bin.buffer, '');
+}).then(gltf => {
   heroModel = gltf.scene; heroModel.scale.setScalar(0.75);
   heroModel.traverse(o => { if (o.isMesh) { heroParts[o.name] = o; o.castShadow = true; o.receiveShadow = true; } });
   paintRim(heroModel, 0.16);
@@ -1182,7 +1185,7 @@ new GLTFLoader().load('assets/paladin.glb', gltf => {
   heroParts.paint?.material.color.setScalar(0.78);   // keep polished steel from blowing out under torchlight
   heroFlashMats = ['paint', 'cloth', 'base'].map(n => heroParts[n]?.material).filter(Boolean);
   dressHero();
-}, undefined, err => console.warn('Hero miniature not loaded; using the simple figure.', err));
+}).catch(err => console.warn('Hero miniature not loaded; using the simple figure.', err));
 
 function crownMesh(y, r) {
   const g = new THREE.Group(), cursed = isCursed(), ironM = mat('#1f2224', { metalness: 0.9, roughness: 0.3, side: THREE.DoubleSide });
