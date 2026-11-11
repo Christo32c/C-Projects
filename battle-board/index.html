@@ -586,6 +586,7 @@ const mod = s => Math.floor((s - 10) / 2);
 const fmt = n => (n >= 0 ? '+' : '') + n;
 const roll = (n, d) => Array.from({ length: n }, () => 1 + Math.floor(Math.random() * d));
 const sum = a => a.reduce((p, c) => p + c, 0);
+const foeName = (m, cap) => m.boss ? m.name : `${cap ? 'The' : 'the'} ${m.name.toLowerCase()}`;
 const theName = n => /^the /i.test(n) ? n : `the ${n}`;   // "the Sunken Crypt", "The Goblin Warren"
 const cheb = (a, b) => Math.max(Math.abs(a.x - b.x), Math.abs(a.z - b.z));
 const keyOf = (x, z) => x + ',' + z;
@@ -2881,7 +2882,7 @@ function smashProp(c) {
   if (c.loot && (c.loot.items.length || c.loot.gold)) {
     const k = keyOf(c.x, c.z), L = state.loot[k];
     if (L && !L.taken) { L.items.push(...c.loot.items); L.gold = (L.gold || 0) + c.loot.gold; } else state.loot[k] = { items: c.loot.items, gold: c.loot.gold };
-    addLog('', `Something tumbles out of the ${m.name.toLowerCase()}. Walk over it to pick it up.`);
+    addLog('', `Something tumbles out of ${foeName(m)}. Walk over it to pick it up.`);
     buildTile(c.x, c.z); applyFog();
   }
   c.loot = null; c.looted = true;
@@ -2952,11 +2953,11 @@ ${NOISE}
 void main() {
   vec2 p = vW.xz, f = uFlow * uTime * 0.3;
   float n = snoise(vec3(p * 1.0 - f, uTime * 0.12)) * 0.62 + snoise(vec3(p * 2.4 - f * 1.6, uTime * 0.25)) * 0.38;
-  float crust = smoothstep(0.08, 0.5, n);
-  float vein = 1.0 - smoothstep(0.0, 0.16, abs(n - 0.04));
-  vec3 hot = mix(vec3(1.0, 0.22, 0.02), vec3(1.0, 0.72, 0.22), vein) * 3.2;
-  vec3 col = mix(hot, vec3(0.07, 0.035, 0.025), crust * 0.9);
-  col += vec3(1.0, 0.45, 0.08) * vein * 2.2 * (0.75 + 0.25 * sin(uTime * 2.3 + p.x * 3.0 + p.y * 2.0));
+  float pool = 1.0 - smoothstep(-0.5, -0.2, n);            // open pools of melt between the crust plates
+  float crack = 1.0 - smoothstep(0.0, 0.07, abs(n - 0.12));  // thin glowing seams across the crust
+  vec3 crustC = vec3(0.045, 0.02, 0.014) * (0.8 + 0.4 * snoise(vec3(p * 6.0, 1.0)));
+  vec3 melt = mix(vec3(0.75, 0.09, 0.0), vec3(1.0, 0.38, 0.04), pool) * (0.9 + 0.2 * sin(uTime * 2.3 + p.x * 3.0 + p.y * 2.0));
+  vec3 col = mix(crustC, melt, max(pool, crack * 0.85));
   gl_FragColor = vec4(col * uTint, 1.0);
 }`;
 const liquidGeo = new THREE.PlaneGeometry(1.0, 1.0).rotateX(-Math.PI / 2);
@@ -2987,7 +2988,7 @@ function grassAssets() {
     const cx = Math.cos(a) * w, cz = Math.sin(a) * w, g = 0.75 + r() * 0.5;
     pos.push(x - cx, 0, z - cz, x + cx, 0, z + cz, x + lean, h, z + lean * 0.5);
     uv.push(0, 0, 1, 0, 0.5, 1);
-    col.push(0.16 * g, 0.26 * g, 0.08 * g, 0.16 * g, 0.26 * g, 0.08 * g, 0.5 * g, 0.62 * g, 0.24 * g);
+    col.push(0.025 * g, 0.05 * g, 0.012 * g, 0.025 * g, 0.05 * g, 0.012 * g, 0.12 * g, 0.2 * g, 0.035 * g);
   }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
@@ -3653,7 +3654,7 @@ function killCreature(c) {
   const m = MONSTERS[c.type], wasCombat = !exploring();
   c.alive = false; c.restrained = false;
   SFX.death(c.type);
-  const nm = m.boss ? m.name : `The ${m.name.toLowerCase()}`;
+  const nm = m.boss ? m.name : `${foeName(m, true)}`;
   addLog('sys', m.object ? `${nm} ${m.breakText}.` : `${nm} ${m.ai === 'none' ? 'is destroyed' : 'falls'}. +${m.xp} XP.`);
   if (m.ai !== 'none') state.stats.kills++;
   if (m.boss) { toast(`${nm} falls!`); shakeCam(0.3); }
@@ -3680,7 +3681,7 @@ function attack(c) {
     let best = -1;
     for (let i = 0; i < W * H; i++) { const dd = reach.dist[i]; if (!(dd > 0) || dd > heroBudget()) continue;
       if (cheb({ x: i % W, z: (i / W) | 0 }, c) <= w.range && (best < 0 || dd < reach.dist[best])) best = i; }
-    if (best < 0) return toast(`You can't reach the ${m.name.toLowerCase()} this turn.`);
+    if (best < 0) return toast(`You can't reach ${foeName(m)} this turn.`);
     return moveTo(best % W, (best / W) | 0, () => attack(c));
   }
   if (w.ranged && !los(state.pos.x, state.pos.z, c.x, c.z)) return toast('You don\'t have a clear shot.');
@@ -3697,13 +3698,13 @@ function attack(c) {
   const resolve = () => {
     if (hit) { SFX.hit(); if (c.type === 'skeleton' || c.type === 'warden') SFX.clank(); }
     if (!hit) {
-      addLog('', `<b>${w.name}</b> misses the ${m.name.toLowerCase()}. ${rollTxt}${nat === 1 ? ' Natural 1.' : ''}`);
+      addLog('', `<b>${w.name}</b> misses ${foeName(m)}. ${rollTxt}${nat === 1 ? ' Natural 1.' : ''}`);
       floatText('Miss', creatureTop(c), 'miss');
     } else {
       const dice = roll(w.dice[0] * (crit ? 2 : 1), w.dice[1]);
       let dmg = Math.max(1, sum(dice) + d.dmgMod), extraTxt = '';
       if (w.extra) { const ex = roll(w.extra[0] * (crit ? 2 : 1), w.extra[1]); dmg += sum(ex); extraTxt = ` + [${ex.join(', ')}] ${w.extra[2]}`; }
-      addLog(crit ? 'crit' : 'hit', `<b>${crit ? 'Critical hit!' : 'Hit.'}</b> ${w.name} deals <b>${dmg}</b> to the ${m.name.toLowerCase()}. ${rollTxt} <span class="r">dmg [${dice.join(', ')}] ${fmt(d.dmgMod)}${extraTxt}</span>`);
+      addLog(crit ? 'crit' : 'hit', `<b>${crit ? 'Critical hit!' : 'Hit.'}</b> ${w.name} deals <b>${dmg}</b> to ${foeName(m)}. ${rollTxt} <span class="r">dmg [${dice.join(', ')}] ${fmt(d.dmgMod)}${extraTxt}</span>`);
       if (state.char.equipped.weapon === 'eel') { const p = creatureTop(c); burst(glow, 30, () => ({ p: [p.x, p.y - .3, p.z], v: [rnd(-2, 2), rnd(-1, 2), rnd(-2, 2)], life: rnd(.15, .35), s: [.06, .01], c0: hdr('#bff8ff', 9), c1: hdr('#4fe0ff', 2), a: 1 })); }
       damageCreature(c, dmg, crit ? 'crit' : 'dmg');
       if (state.char.equipped.weapon === 'whisper' && Math.random() < 1 / 6) {
@@ -3727,7 +3728,7 @@ function attack(c) {
 function openLoot(c) {
   if (!c || !c.loot) return;
   const L = c.loot, m = MONSTERS[c.type];
-  const body = () => `<p class="muted">You search what's left of the ${m.name.toLowerCase()}.</p><ul class="lootlist">
+  const body = () => `<p class="muted">You search what's left of ${foeName(m)}.</p><ul class="lootlist">
     ${L.items.map((k, n) => `<li><span><b>${ITEMS[k].name}</b>${ITEMS[k].weird ? '<span class="tag weird">Weird</span>' : ''}<br><span class="muted">${ITEMS[k].note}</span></span><button class="btn small" data-take="${n}">Take</button></li>`).join('')}
     ${L.gold ? `<li><span><b>${L.gold} gp</b></span><button class="btn small" data-take="gold">Take</button></li>` : ''}
     ${!L.items.length && !L.gold ? '<li><span class="muted">Nothing left.</span></li>' : ''}</ul>`;
@@ -3792,7 +3793,7 @@ async function creatureTurn(c) {
       goal = pickTile(c, (x, z, cost, f) => (cheb({ x, z }, state.pos) <= 1 ? 0 : 1000) + f + cost * 0.01);
     }
     if (goal && goal.path.length > 1) await walkCreature(c, goal.path);
-  } else addLog('', `The ${m.name.toLowerCase()} strains against the vines.`);
+  } else addLog('', `${foeName(m, true)} strains against the vines.`);
   if (c.alive && !state.over && inReach()) await creatureAttack(c);
   else await sleep(0.1);
 }
@@ -3809,11 +3810,11 @@ async function creatureAttack(c) {
   if (hit) {
     const dice = roll(m.dmg[0] * (crit ? 2 : 1), m.dmg[1]), dmg = sum(dice) + m.dmg[2];
     heroFlash = 1; shakeCam(m.boss ? 0.2 : 0.08);
-    hurtHero(dmg, `The ${m.name.toLowerCase()} ${m.verb}${crit ? ' (critical!)' : ''}`);
+    hurtHero(dmg, `${foeName(m, true)} ${m.verb}${crit ? ' (critical!)' : ''}`);
     addLog('', rollTxt);
   } else {
     floatText('Miss', above(hero, 1.2), 'miss');
-    addLog('', `The ${m.name.toLowerCase()} ${m.verb} and misses. ${rollTxt}`);
+    addLog('', `${foeName(m, true)} ${m.verb} and misses. ${rollTxt}`);
   }
   refresh();
   await sleep(0.35);
@@ -3963,15 +3964,15 @@ function spellHit(sp, c, what, dice) {
   if (!c.alive) return null;
   const d = derived(), bonus = MONSTERS[c.type].saves?.[sp.save] ?? 0, r = roll(1, 20)[0], saved = r + bonus >= d.spellDc;
   const saveTxt = `<span class="r">${sp.save.toUpperCase()} save ${r}${fmt(bonus)} = ${r + bonus} vs DC ${d.spellDc}: ${saved ? 'success' : 'fail'}</span>`;
-  const name = MONSTERS[c.type].name.toLowerCase();
+  const name = foeName(MONSTERS[c.type]);
   if (sp.damage) {
     const full = sum(dice), dmg = saved ? Math.floor(full / 2) : full;
-    addLog('hit', `${what} the ${name} for <b>${dmg}</b> ${sp.dmgType}${saved ? ' (half)' : ''}. ${saveTxt}`);
+    addLog('hit', `${what} ${name} for <b>${dmg}</b> ${sp.dmgType}${saved ? ' (half)' : ''}. ${saveTxt}`);
     damageCreature(c, dmg, sp.dmgType === 'cold' ? 'cold' : 'dmg');
   } else {
     if (MONSTERS[c.type].ai !== 'none' && !c.aware) { const was = exploring(); c.aware = true; if (was) startCombat(); }
-    if (!saved) { c.restrained = true; addLog('spell', `Vines seize the ${name}. It is <b>restrained</b>. ${saveTxt}`); floatText('Restrained', creatureTop(c), 'vine'); }
-    else addLog('spell', `The ${name} tears free of the vines. ${saveTxt}`);
+    if (!saved) { c.restrained = true; addLog('spell', `Vines seize ${name}. It is <b>restrained</b>. ${saveTxt}`); floatText('Restrained', creatureTop(c), 'vine'); }
+    else addLog('spell', `${name.replace(/^t/, 'T')} tears free of the vines. ${saveTxt}`);
   }
   return saved;
 }
