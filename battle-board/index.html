@@ -355,6 +355,60 @@
   body:not([data-mode="play"]) #partyFrames { display: none !important; }
   @media (max-width: 760px) { .partyframes { top: 96px; width: 150px; } }
 
+  .mpbar { position: relative; display: block; height: 10px; border-radius: 6px; background: #0c0d18; border: 1px solid #000; overflow: hidden; }
+  .mpbar i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(#7a9cff, #3a5ad0); transition: width .3s; }
+  .mpbar span { position: relative; display: block; text-align: center; font-size: 9.5px; line-height: 10px; font-weight: 700; text-shadow: 0 1px 2px #000; }
+  .mpbar.thin { height: 4px; border: 0; }
+  .mpline { display: flex; align-items: center; gap: 10px; } .mpline .mpbar { flex: 1; height: 14px; } .mpline .mpbar span { line-height: 14px; font-size: 11px; }
+  .sti { --c: #fff; display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 3px; border-radius: 5px; font-style: normal;
+         font-size: 11px; color: var(--c); background: color-mix(in srgb, var(--c) 18%, #0c0a08); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 50%, transparent); }
+  .sti sub { font-size: 8px; color: var(--ink); margin-left: 1px; vertical-align: baseline; }
+  .slots-mini { flex-wrap: wrap; gap: 3px; }
+  .pfst { display: flex; gap: 2px; flex-wrap: wrap; } .pfst .sti { min-width: 15px; height: 15px; font-size: 9.5px; }
+  .stlegend { display: flex; flex-direction: column; gap: 5px; font-size: 13px; } .stlegend div { display: flex; gap: 6px; align-items: baseline; }
+  .spellcard.locked { opacity: .5; }
+  .hotbar { flex-wrap: wrap; max-width: min(760px, calc(100vw - 380px)); }
+  .slot.sp { width: 58px; height: 54px; font-size: 9.5px; }
+  .hpbar { overflow: visible; } .hpbar > i { border-radius: 2px; }
+  .hpbar::after { content: attr(data-st); position: absolute; bottom: 9px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 12px; color: #ffe6b0; text-shadow: 0 1px 3px #000, 0 0 2px #000; }
+  .initbar { position: absolute; top: 52px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; padding: 5px 8px; border-radius: 12px; cursor: pointer;
+             background: color-mix(in srgb, var(--panel) 88%, transparent); border: 1px solid var(--line); max-width: calc(100% - 480px); overflow-x: auto; }
+  .ini { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 2px 4px; border-radius: 8px; font-size: 10px; color: var(--muted); }
+  .ini .por { width: 26px; height: 26px; border-radius: 50%; background: var(--c); display: grid; place-items: center; font: 700 12px var(--display); color: #fff; text-shadow: 0 1px 2px #000; border: 2px solid var(--line); }
+  .ini.hero .por { border-color: var(--brass); } .ini.foe .por { border-color: #8a3a2a; }
+  .ini.on { background: color-mix(in srgb, var(--brass) 22%, transparent); color: var(--ink); } .ini.on .por { box-shadow: 0 0 0 2px var(--brass), 0 0 12px var(--brass); }
+  .ini .ist { position: absolute; top: -2px; right: -3px; font-size: 9px; display: flex; gap: 1px; text-shadow: 0 1px 2px #000; }
+  .bossbar { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: min(420px, calc(100% - 420px)); display: flex; flex-direction: column; align-items: center; gap: 2px;
+             text-shadow: 0 2px 6px #000; pointer-events: none; }
+  .bossbar b { font: 700 17px var(--display); color: #ffb0a0; letter-spacing: .04em; } .bossbar small { font-size: 11px; color: var(--muted); margin-top: -3px; }
+  .bossbar .bb { width: 100%; height: 10px; border-radius: 5px; background: #120808; border: 1px solid #000; overflow: hidden; box-shadow: 0 0 12px rgba(200,40,20,.4); }
+  .bossbar .bb i { display: block; height: 100%; background: linear-gradient(#e0503a, #8a1a12); transition: width .4s; }
+  body[data-mode="play"] .bossbar:not([hidden]) ~ .initbar, .bossbar:not([hidden]) + .initbar { top: 70px; }
+  .vs { position: absolute; inset: 0; z-index: 40; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 20px; padding: 0 6%; cursor: pointer;
+        background: radial-gradient(ellipse at center, rgba(40,6,4,.55), rgba(0,0,0,.85)); overflow: hidden; }
+  .vs-slash { position: absolute; inset: -20%; background: linear-gradient(115deg, transparent 46%, rgba(255,90,40,.55) 49%, rgba(255,220,160,.9) 50%, rgba(255,90,40,.55) 51%, transparent 54%); transform: translateX(-120%); }
+  .vs.on .vs-slash { animation: vsSlash .7s .15s cubic-bezier(.2,.8,.2,1) forwards; }
+  .vs-l, .vs-r { display: flex; flex-direction: column; gap: 10px; opacity: 0; }
+  .vs-l { align-items: flex-end; } .vs.on .vs-l { animation: vsInL .6s .35s cubic-bezier(.2,.9,.3,1.2) forwards; }
+  .vs-r { align-items: flex-start; } .vs.on .vs-r { animation: vsInR .6s .35s cubic-bezier(.2,.9,.3,1.2) forwards; }
+  .vs-mid { font: 900 clamp(60px, 12vw, 140px)/1 var(--display); color: #ffd36a; text-shadow: 0 0 30px #ff6a20, 0 6px 0 #6a1a08; opacity: 0; transform: scale(3); }
+  .vs.on .vs-mid { animation: vsSlam .5s .7s cubic-bezier(.3,1.6,.5,1) forwards; }
+  .vs.on { animation: vsOut .5s 2.9s forwards; }
+  .vs-hero { display: flex; align-items: center; gap: 10px; font: 700 22px var(--display); color: var(--ink); text-shadow: 0 2px 8px #000; }
+  .vs-hero small { font: 12px var(--body); color: var(--muted); }
+  .vs-hero .por { width: 44px; height: 44px; border-radius: 50%; background: var(--c); border: 2px solid var(--brass); display: grid; place-items: center; color: #fff; font-size: 20px; }
+  .vs-boss { display: flex; flex-direction: column; gap: 4px; text-shadow: 0 3px 12px #000; }
+  .vs-boss small { font: italic 16px var(--display); color: #ffb0a0; letter-spacing: .06em; }
+  .vs-boss b { font: 900 clamp(30px, 5vw, 58px)/1 var(--display); color: #fff; letter-spacing: .02em; }
+  .vs-boss span { font-size: 13px; color: var(--muted); }
+  @keyframes vsSlash { to { transform: translateX(120%); } }
+  @keyframes vsInL { from { opacity: 0; transform: translateX(-80px); } to { opacity: 1; transform: none; } }
+  @keyframes vsInR { from { opacity: 0; transform: translateX(80px); } to { opacity: 1; transform: none; } }
+  @keyframes vsSlam { to { opacity: 1; transform: scale(1); } }
+  @keyframes vsOut { to { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .vs.on .vs-l, .vs.on .vs-r, .vs.on .vs-mid { animation-duration: .01s; } .vs.on .vs-slash { animation: none; } }
+  @media (max-width: 760px) { .vs { grid-template-columns: 1fr; text-align: center; padding: 10%; } .vs-l, .vs-r { align-items: center; } .initbar { max-width: calc(100% - 24px); top: 96px; } .bossbar { width: calc(100% - 140px); } .hotbar { max-width: calc(100vw - 24px); } }
+
   /* the creator */
   .pal { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 6px; }
   .pal button { display: flex; align-items: center; gap: 7px; padding: 5px 7px; background: var(--panel-2); border: 1px solid var(--line);
@@ -405,6 +459,9 @@
       </div>
     </div>
     <div class="partyframes" id="partyFrames" hidden></div>
+    <div class="initbar" id="initBar" hidden title="Initiative order"></div>
+    <div class="bossbar" id="bossBar" hidden></div>
+    <div class="vs" id="vs" hidden><div class="vs-slash"></div><div class="vs-l" id="vsL"></div><div class="vs-mid">VS</div><div class="vs-r" id="vsR"></div></div>
     <div class="sidebtns" id="sideBtns">
       <button class="sbtn" data-panel="sheet" title="Character sheet (C)"><b>C</b>Character</button>
       <button class="sbtn" data-panel="inv" title="Inventory (I)"><b>I</b>Inventory</button>
@@ -506,7 +563,7 @@ const MAPS = {
       { x0: 11, z0: 4, x1: 17, z1: 10, name: 'Chamber of Three Lights', text: 'Three worn plates are set in the floor, marked with sun, moon and star. A heavy iron gate bars the way north. The dust here is undisturbed, except around the plates.' },
       { x0: 13, z0: 1, x1: 15, z1: 3, name: 'The Reliquary', text: 'A small vault, sealed for centuries. A single chest waits on a dais. A drowned crown glints inside, and you could swear it is whispering your name.' },
       { x0: 19, z0: 11, x1: 24, z1: 17, name: 'The Bone Gallery', text: 'Collapsed pillars and burial niches line this gallery. The silence is wrong, as if the whole room is holding its breath.' },
-      { x0: 19, z0: 2, x1: 24, z1: 10, name: "The Warden's Sanctum", text: 'Cold blue light pours from a stair at the far end: the way out. Between you and it stands a figure in black iron, a greatsword planted at its feet. Its helm turns toward you.' },
+      { x0: 19, z0: 2, x1: 24, z1: 10, boss: true, name: "The Warden's Sanctum", text: 'Cold blue light pours from a stair at the far end: the way out. Between you and it stands a figure in black iron, a greatsword planted at its feet. Its helm turns toward you.' },
     ],
     loot: { '4,14': { items: ['potion'] }, '2,5': { items: ['whisper'] }, '19,16': { items: ['greater'] } },
     chests: { '16,18': { items: ['potion', 'leather', 'teeth'], gold: 30 }, '14,1': { items: ['crown', 'sunder', 'potion'], gold: 100 } },
@@ -532,13 +589,13 @@ const MAPS = {
     torches: [], loot: {}, chests: {}, stash: {}, secrets: {},
   },
   // The Lich's Descent: seven floors, generated and checked by tools/floors.py
-  descent1: {"name": "The Overgrown Gate", "floor": 1, "campaign": "descent", "rev": 1, "dark": false, "fog": true, "rows": ["############################", "#####eee~e~evwwve###########", "####eeeeeee~vwwve#C.....uX##", "##eeeeeee~e~vwwve#....a...~#", "#eeeeee~Pe~evwwve#..P..P..##", "#e$ee~epeeeevwwve~......n.##", "#eeeeePe~eeevwwve#........##", "#eeeeeeef~eevwwve#u......u##", "#eee~e~ee~eevwwve####D######", "#e~eeeee~eeevvvve~eeeeee~ee#", "#eeePeeee~e~vvvveee~eeeeeee#", "#eeeepee~eeevwwveeeee~eKeee#", "#eeeeeeeeneevwwveeeen~eeeae#", "#eeee~eeee~evwwveeeeeee~eee#", "#eeeeeeeeeeevwwv~eeeeqen~o~#", "#e~eeeee~eee....ee~neeeeoe~#", "#ee@eeeeeeeevwwveeceeefeee##", "#ee~eeeeeeeevwwveecceeee####", "###eeee~~eeevwwv~eeeeeee####", "############################"], "torches": [], "loot": {"2,5": {"items": ["potion"], "gold": 0}}, "chests": {"18,2": {"items": ["potion", "leather"], "gold": 30}}, "stash": {}, "secrets": {}, "rooms": [{"x0": 1, "z0": 1, "x1": 11, "z1": 18, "name": "The Edge of the Wood", "text": "Thornwick's dead have been vanishing from the churchyard, and the goblins took them. You followed their cart tracks here, to a ruined chapel swallowed by the forest. Smoke rises from a camp across the stream, and something howls in the long grass."}, {"x0": 16, "z0": 9, "x1": 26, "z1": 18, "name": "The Raiders' Camp", "text": "Crude tents, a spit of something you would rather not name, and sacks stamped with the Thornwick churchyard seal. The goblins have been well paid: black coins glint everywhere. Someone is buying bodies."}, {"x0": 18, "z0": 2, "x1": 25, "z1": 7, "name": "The Roofless Chapel", "text": "Ivy has pulled down the roof, and the saints in the windows have had their faces chiselled off. Behind the altar, a stair spirals down into the dark. Fresh drag marks lead to it."}], "danger": true, "sight": 9, "flow": [0.05, 0.45], "stairsText": "The stair spirals down through roots and old stone. The air turns cold and smells of smoke, lamp oil and wet dog.", "wanderers": [{"types": ["goblin", "goblin"], "text": "Harsh voices to the {dir}: a goblin patrol is coming back from the village."}, {"types": ["wolf", "wolf"], "text": "A howl rises to the {dir}, then another. Wolves have your scent."}], "next": "descent2", "title": "The Lich's Descent", "floors": 7, "desc": "Goblins have been stealing the dead of Thornwick. Follow them down through seven floors, from a sunlit ruin to the throne of a lich."},
-  descent2: {"name": "The Goblin Warren", "floor": 2, "campaign": "descent", "rev": 1, "dark": true, "fog": true, "rows": ["############################", "############################", "##.....######cc..K.o#u....##", "##.@...######c.....o#...C.##", "##.......Z......n...S.....##", "##.~...######.....n.#.....##", "##.....######.K.....#.H..u##", "####.########..o~.cc########", "####.###########.###########", "####.###########T#####j...j#", "####.###########.#####...C.#", "####.######..h.......#.n...#", "##......o##........Ka#.....#", "##.......##....cc....#..B..#", "##...f~.......n...n~.D.~...#", "##.......##....cc....#...n.#", "##.b...f.##......n...#....~#", "##o...~..##.K........#....X#", "######################j....#", "############################"], "torches": [[3, 1, 0, 1], [15, 1, 0, 1], [26, 2, -1, 0], [1, 3, 1, 0], [7, 3, -1, 0], [11, 5, 0, -1], [3, 7, 1, 0], [21, 7, 0, -1], [14, 8, 0, -1], [12, 10, 0, 1], [18, 10, 0, 1], [5, 11, -1, 0], [10, 12, 1, 0], [21, 13, 1, 0], [27, 13, -1, 0], [1, 15, 1, 0], [4, 18, 0, -1], [16, 18, 0, -1]], "loot": {}, "chests": {"25,10": {"items": ["greater", "whisper"], "gold": 40}, "24,3": {"items": ["potion", "potion", "boneCharm"], "gold": 90}}, "stash": {"22,6": {"items": ["eel"], "gold": 25, "dc": 13}}, "secrets": {"20,4": {"dc": 13}}, "rooms": [{"x0": 2, "z0": 2, "x1": 6, "z1": 6, "name": "The Warren Mouth", "text": "The goblins have dug deep. Their tunnels stink of smoke, wet fur and lamp oil, and powder kegs are stacked carelessly along the walls. One spark down here and the whole hill comes down."}, {"x0": 13, "z0": 2, "x1": 19, "z1": 7, "name": "The Storeroom", "text": "Stolen grain, stolen ale, and three coffins with the lids pried off. Empty. The bodies went somewhere else."}, {"x0": 2, "z0": 12, "x1": 8, "z1": 17, "name": "The Kennels", "text": "Gnawed bones carpet the floor. Not all of them belonged to animals."}, {"x0": 11, "z0": 11, "x1": 20, "z1": 17, "name": "The Feasting Hall", "text": "A fire roars in a hearth hacked from the rock. Goblins squabble over a heap of grave-goods: rings still on fingers, coins still in mouths."}, {"x0": 22, "z0": 9, "x1": 26, "z1": 18, "name": "The Chief's Den", "text": "\"The pale man pays in black gold for every body,\" snarls Chief Grizzlegut from a throne of stolen coffins. \"He will pay well for yours.\" Behind him, a shaft drops into the deep."}], "sight": 7, "stairsText": "A rope ladder drops down a natural shaft. Far below, water drips into a cavern, and the goblin noise fades to silence.", "wanderers": [{"types": ["goblin", "goblin", "goblin"], "text": "Goblin war-drums start up to the {dir}. They know you are here."}, {"types": ["wolf", "goblin"], "text": "Claws on stone to the {dir}: a goblin wolf-rider is hunting you."}], "next": "descent3", "hidden": true},
-  descent3: {"name": "The Weeping Caves", "floor": 3, "campaign": "descent", "rev": 1, "dark": true, "fog": true, "rows": ["##############################", "##############################", "#####.##################.$####", "###...r################.s.u###", "##..@...######~#######u....u.#", "##.......##........###..~.s..#", "###..r...~~.s.......~..b....##", "###...##................#.####", "########.....vvvv~....########", "#########.~~vvwwww...p.#######", "#########...vwwwwwv.~..#######", "#########..r.wwwwvvvv..#######", "########~.....vvv.vvvvv#######", "####~.I##.......~...vvv....###", "###.p~~.....p......s.#..z...##", "###.F~....#.~...r...##Y~....##", "##.u...u######~..#####...Xs.##", "###.....###############....###", "##############################", "##############################"], "torches": [[11, 4, 0, 1], [17, 4, 0, 1], [29, 4, -1, 0], [2, 7, 1, 0], [26, 7, -1, 0], [7, 8, 1, 0], [23, 10, -1, 0], [8, 13, 1, 0], [11, 16, 0, -1], [17, 16, -1, 0], [22, 17, 1, 0], [3, 18, 0, -1]], "loot": {"25,2": {"items": ["greater", "sunder"], "gold": 30}}, "chests": {}, "stash": {}, "secrets": {}, "rooms": [{"x0": 2, "z0": 2, "x1": 7, "z1": 7, "name": "The Weeping Caves", "text": "The goblin warren breaks into a natural cavern. Water drips from a thousand stone teeth, and the walls glitter with webs as thick as sailcloth. Something large shifts on the ceiling."}, {"x0": 9, "z0": 5, "x1": 21, "z1": 15, "name": "The Black Lake", "text": "A still black lake fills the heart of the cavern. Wrapped shapes hang from the webs above it, slowly turning. Some of them still twitch."}, {"x0": 21, "z0": 2, "x1": 27, "z1": 7, "name": "The Nest", "text": "The webs here are thick with bones and grave-goods. Whatever the goblins could not carry, the spiders took."}, {"x0": 2, "z0": 12, "x1": 8, "z1": 17, "name": "The Old Shrine", "text": "A spring bubbles up through carved stone. Someone built a shrine here long ago, before the dark crept in. A tablet beside it is scratched with a warning."}, {"x0": 21, "z0": 12, "x1": 27, "z1": 18, "name": "The Drowned Steps", "text": "Stone steps lead down into an older place. A body lies across them, bloated and grey. As your light touches it, its fingers curl."}], "sight": 7, "flow": [0.4, 0.1], "tablet": "Turn back. Below the lake lie the halls of the Pale Crown, where the dead do not rest. We sealed it once. We could not seal it twice.", "stairsText": "The steps sink into black water and come out somewhere colder. The smell of rot rises to meet you.", "wanderers": [{"types": ["spider"], "text": "Something skitters across the ceiling to the {dir}. The webs are trembling."}, {"types": ["rat", "rat", "rat"], "text": "A tide of squeaking pours out of a crack to the {dir}."}], "next": "descent4", "hidden": true},
-  descent4: {"name": "The Drowned Ossuary", "floor": 4, "campaign": "descent", "rev": 1, "dark": true, "fog": true, "rows": ["############################", "############################", "##u.....u#.u...u.........u##", "##.......#vvPvvvPvvvPvvvPv##", "##.@......vvvvzvvvvzvvvzvv##", "##.......#vvPvvvPvvvPvvvPv##", "##......u#.........u......##", "#####.###############.######", "#####Z###############D######", "##......u#.......u#j......j#", "##.P...P.#.b...k..#.P....P.#", "##...k...#...vv...#....k...#", "##.b.....#..vwwv..#..z.....#", "##H........vvwwvv.#......X.#", "##....b..#..vwwv..#.....z..#", "##.......#...vv............#", "##.P..rP.#..z...z.#.P....P.#", "##u......#........#.......C#", "############################", "############################"], "torches": [[7, 1, 0, 1], [13, 1, 0, 1], [19, 1, 0, 1], [9, 5, 1, 0], [26, 6, -1, 0], [7, 7, 0, -1], [13, 7, 0, -1], [24, 8, 0, 1], [9, 11, 1, 0], [27, 11, -1, 0], [1, 13, 1, 0], [18, 14, 1, 0], [9, 17, 1, 0], [14, 18, 0, -1], [20, 18, 0, -1]], "loot": {}, "chests": {"26,17": {"items": ["greater", "wardenHelm"], "gold": 60}}, "stash": {"2,13": {"items": ["potion", "boneCharm"], "gold": 30, "dc": 14}}, "secrets": {}, "rooms": [{"x0": 2, "z0": 2, "x1": 8, "z1": 6, "name": "The Drowned Ossuary", "text": "Below the caves lies an older place: a flooded hall of the dead. Bodies float in the black water, and the goblins' gifts are piled at the door, still in their sacks. Those sacks are empty now."}, {"x0": 10, "z0": 2, "x1": 25, "z1": 6, "name": "The Flooded Nave", "text": "Knee-deep water fills the nave. Shapes stand in it, perfectly still, facing the far end of the hall. One by one they turn toward the splashing of your boots."}, {"x0": 2, "z0": 9, "x1": 17, "z1": 17, "name": "The Bone Galleries", "text": "Skulls line every wall, thousands of them, sorted by size. Somebody has been taking them down and putting the skeletons back together."}, {"x0": 19, "z0": 9, "x1": 26, "z1": 17, "name": "The Stair of Candles", "text": "Braziers burn with a cold green flame. Fresh footprints lead downstairs: bare feet, and a long trailing robe."}], "sight": 7, "flow": [0.45, 0.05], "stairsText": "Below, you hear chanting. Many voices, all saying the same name.", "wanderers": [{"types": ["zombie", "zombie"], "text": "Something splashes through the water to the {dir}, slow and heavy and tireless."}, {"types": ["skeleton", "skeleton"], "text": "Bones clatter to the {dir} as the galleries give up their dead."}], "next": "descent5", "hidden": true},
-  descent5: {"name": "The Sanctum of the Pale Crown", "floor": 5, "campaign": "descent", "rev": 1, "dark": true, "fog": true, "rows": ["############################", "############################", "########u..........u#C.h..c#", "########.k..jllj....D...N.c#", "########..P..ll..P..#......#", "########..........N.#......#", "########....N.......########", "########..P......P..###j...#", "##.....#............###.z..#", "##.....#...j....j...###....#", "##.@......1..I...3..G....XN#", "##.....#...j....j...###....#", "##.....#..P......P..###..z.#", "########.......N....###j...#", "########.....2......########", "########.zP......P..#...z.$#", "########..........k.D.b....#", "########u..........u#....b.#", "#####################u....u#", "############################"], "torches": [[12, 1, 0, 1], [18, 1, 0, 1], [24, 1, 0, 1], [27, 4, -1, 0], [20, 5, 1, 0], [7, 6, 1, 0], [25, 6, 0, 1], [22, 9, 1, 0], [20, 11, -1, 0], [1, 12, 1, 0], [7, 12, 1, 0], [23, 14, 0, 1], [27, 16, -1, 0], [20, 17, 1, 0], [13, 18, 0, -1], [24, 19, 0, -1]], "loot": {"26,15": {"items": ["wardenBlade"], "gold": 0}}, "chests": {"21,2": {"items": ["greater", "potion"], "gold": 80}}, "stash": {}, "secrets": {}, "rooms": [{"x0": 2, "z0": 8, "x1": 6, "z1": 12, "name": "The Sanctum of the Pale Crown", "text": "Black candles. Bone-white robes. Chanting echoes through a temple carved from the living rock. The cult of the Pale Crown has made this place a factory for the dead."}, {"x0": 8, "z0": 2, "x1": 19, "z1": 17, "name": "The Temple of Three Lights", "text": "Fire pours from a cracked altar in the north. Before it stands a tablet, and set into the floor are three plates: a sun, a moon and a star. To the east, an iron portcullis bars the way down."}, {"x0": 21, "z0": 2, "x1": 26, "z1": 5, "name": "The Cult Library", "text": "Shelves of skin-bound books, and a desk covered in notes about raising the dead, written in a fine, patient hand. Every page is signed: V.M."}, {"x0": 21, "z0": 15, "x1": 26, "z1": 18, "name": "The Waiting Crypts", "text": "Rows of fresh bodies lie on stone slabs, ready to be raised. Some of them have already started without the priests."}], "sight": 7, "puzzleOrder": ["3", "2", "1"], "tablet": "First the <b>star</b> that guides the dead. Then the <b>moon</b> that wakes them. Last the <b>sun</b> they will never see again.", "stairsText": "The stairs grow hot underfoot. Red light flickers from below, and with it a cold that has nothing to do with the air.", "wanderers": [{"types": ["cultist", "skeleton"], "text": "Chanting grows louder to the {dir}. A priest and its servant are searching for you."}, {"types": ["zombie", "zombie", "zombie"], "text": "Shuffling feet to the {dir}. The crypts are emptying."}], "next": "descent6", "hidden": true, "puzzle": {"order": ["3", "2", "1"], "gate": [20, 10]}},
-  descent6: {"name": "The Burning Halls", "floor": 6, "campaign": "descent", "rev": 1, "dark": true, "fog": true, "rows": ["##############################", "##############lll#############", "##u..........ulll..#u......u##", "##............lll..#........##", "##...P....P...lll..#..P..P..##", "##...............Q.D........##", "##......z.....lll..#........##", "##............lll..#.N.j..j.##", "##...P....P...lll..#........##", "##$...........lll..#K......C##", "##.@.......N..lll..#K...W.X.##", "##...P....P...lll..#........##", "##............lll..#.N.j..j.##", "##.......z....lll..#........##", "##...............Q.D........##", "##...P....P...lll..#..P..P..##", "##..........K.lll..#........##", "##u..........Klll..#.......u##", "##############lll#############", "##############################"], "torches": [[5, 1, 0, 1], [11, 1, 0, 1], [17, 1, 0, 1], [23, 1, 0, 1], [1, 5, 1, 0], [28, 8, -1, 0], [1, 11, 1, 0], [19, 11, 1, 0], [28, 14, -1, 0], [19, 17, 1, 0], [6, 18, 0, -1], [12, 18, 0, -1], [24, 18, 0, -1]], "loot": {"2,9": {"items": ["potion", "potion"], "gold": 0}}, "chests": {"27,9": {"items": ["greater", "greater"], "gold": 120}}, "stash": {}, "secrets": {}, "rooms": [{"x0": 2, "z0": 2, "x1": 13, "z1": 17, "name": "The Burning Halls", "text": "The air shimmers with heat. A river of molten rock splits the hall in two, and pale cold shapes drift above it, untouched by the fire. The Restless have been waiting for you."}, {"x0": 17, "z0": 2, "x1": 18, "z1": 17, "name": "The Far Bank", "text": "Up close, the wraiths have faces: Thornwick faces. The miller. The blacksmith's wife. They do not know you any more."}, {"x0": 20, "z0": 2, "x1": 27, "z1": 17, "name": "The Warden's Gate", "text": "An armoured giant stands before the last stair, a greatsword planted at its feet. Its helm turns toward you, and green fire kindles behind the visor."}], "sight": 8, "flow": [0.02, 0.5], "stairsText": "The last stair. Below it, the heart of the mountain, and the one who has been waiting all along.", "wanderers": [{"types": ["zombie", "cultist"], "text": "A priest drives its dead toward you from the {dir}."}, {"types": ["skeleton", "skeleton", "skeleton"], "text": "Bones knit together to the {dir}. The halls are raising a guard."}], "next": "descent7", "hidden": true},
-  descent7: {"name": "The Throne of Vael Morrow", "floor": 7, "campaign": "descent", "rev": 1, "dark": true, "fog": true, "rows": ["##############################", "##############################", "##u........................u##", "##.P....P.............P....P##", "##..........lllllll.........##", "##...j....lllllllllll....j..##", "##..N....lllllllllllll....N.##", "##......lllllll.lllllll.....##", "##.....llllllj...jlllll.....##", "##.............L...llll.....##", "##.....lllll.......lllll....##", "##.....llllllj...jllllll....##", "##.....llllllll.lllllll.....##", "##......lllllll.lllllll.....##", "##......lllllll.lllllll.....##", "##...j...l.llll.lllll....j..##", "##..........lQl.lQ..........##", "##....z...K.........K...z...##", "##.P....P.............P....P##", "##u............@...........u##", "##############################", "##############################"], "torches": [[5, 1, 0, 1], [10, 1, 0, 1], [15, 1, 0, 1], [20, 1, 0, 1], [25, 1, 0, 1], [28, 4, -1, 0], [1, 7, 1, 0], [28, 9, -1, 0], [1, 12, 1, 0], [28, 14, -1, 0], [1, 17, 1, 0], [4, 20, 0, -1], [9, 20, 0, -1], [14, 20, 0, -1], [19, 20, 0, -1], [24, 20, 0, -1]], "loot": {}, "chests": {}, "stash": {}, "secrets": {}, "rooms": [{"x0": 1, "z0": 12, "x1": 28, "z1": 20, "name": "The Throne of Vael Morrow", "text": "At the heart of the mountain, on an island in a lake of fire, sits Vael Morrow, Lich of the Pale Crown. \"Thornwick sends me a hero,\" it whispers, and its voice is everywhere at once. \"How thoughtful. I needed a new captain.\""}], "sight": 9, "flow": [0.25, 0.2], "wanderers": [], "finale": {"title": "The Pale Crown falls", "text": "Vael Morrow's phylactery cracks with a sound like a bell breaking, and a scream that is centuries old tears through the mountain. All through the halls above, the dead of Thornwick lie down and are still. You climb back toward the daylight carrying the Pale Crown, and the story of the hero who walked into the dark and came back out."}, "hidden": true},
+  descent1: {"name": "The Overgrown Gate", "floor": 1, "campaign": "descent", "rev": 1, "dark": false, "fog": true, "rows": ["############################", "#####eee~e~evwwve###########", "####eeeeeee~vwwve#C.....uX##", "##eeeeeee~e~vwwve#........~#", "#eeeeee~Pe~evwwve#..P.RP..##", "#e$ee~epeeeevwwve~......n.##", "#eeeeePe~eeevwwve#........##", "#eeeeeeef~eevwwve#u......u##", "#eee~e~ee~eevwwve####D######", "#e~eeeee~eeevvvve~eeeeee~ee#", "#eeePeeee~e~vvvveee~eeeeeee#", "#eeeepee~eeevwwveeeee~eKeee#", "#eeeeeeeeneevwwveeeen~eeeae#", "#eeee~eeee~evwwveeeeeee~eee#", "#eeeeeeeeeeevwwv~eeeeqen~o~#", "#e~eeeee~eee....ee~neeeeoe~#", "#ee@eeeeeeeevwwveeceeefeee##", "#ee~eeeeeeeevwwveecceeee####", "###eeee~~eeevwwv~eeeeeee####", "############################"], "torches": [], "loot": {"2,5": {"items": ["potion"], "gold": 0}}, "chests": {"18,2": {"items": ["potion", "leather", "arrowFire", "manaPotion"], "gold": 30}}, "stash": {}, "secrets": {}, "rooms": [{"x0": 1, "z0": 1, "x1": 11, "z1": 18, "name": "The Edge of the Wood", "text": "Thornwick's dead have been vanishing from the churchyard, and the goblins took them. You followed their cart tracks here, to a ruined chapel swallowed by the forest. Smoke rises from a camp across the stream, and something howls in the long grass."}, {"x0": 16, "z0": 9, "x1": 26, "z1": 18, "name": "The Raiders' Camp", "text": "Crude tents, a spit of something you would rather not name, and sacks stamped with the Thornwick churchyard seal. The goblins have been well paid: black coins glint everywhere. Someone is buying bodies."}, {"x0": 18, "z0": 2, "x1": 25, "z1": 7, "name": "The Roofless Chapel", "text": "Ivy has pulled down the roof, and the saints in the windows have had their faces chiselled off. Behind the altar, a stair spirals down into the dark. Between you and it, a goblin in a wolf-skin cloak swings onto the back of a huge grey wolf.", "boss": true}], "danger": true, "sight": 9, "flow": [0.05, 0.45], "stairsText": "The stair spirals down through roots and old stone. The air turns cold and smells of smoke, lamp oil and wet dog.", "wanderers": [{"types": ["goblin", "goblin"], "text": "Harsh voices to the {dir}: a goblin patrol is coming back from the village."}, {"types": ["wolf", "wolf"], "text": "A howl rises to the {dir}, then another. Wolves have your scent."}], "next": "descent2", "title": "The Lich's Descent", "floors": 7, "desc": "Goblins have been stealing the dead of Thornwick. Follow them down through seven floors, from a sunlit ruin to the throne of a lich."},
+  descent2: {"name": "The Goblin Warren", "floor": 2, "campaign": "descent", "rev": 1, "dark": true, "fog": true, "rows": ["############################", "############################", "##.....######cc..K.o#u....##", "##.@...######c.....o#...C.##", "##.......Z......n...S.....##", "##.~...######.....n.#.....##", "##.....######.K.....#.H..u##", "####.########..o~.cc########", "####.###########.###########", "####.###########T#####j...j#", "####.###########.#####...C.#", "####.######..h.......#.n...#", "##......o##........Ka#.....#", "##.......##....cc....#..B..#", "##...f~.......n...n~.D.~...#", "##.......##....cc....#...n.#", "##.b...f.##......n...#....~#", "##o...~..##.K........#....X#", "######################j....#", "############################"], "torches": [[3, 1, 0, 1], [15, 1, 0, 1], [26, 2, -1, 0], [1, 3, 1, 0], [7, 3, -1, 0], [11, 5, 0, -1], [3, 7, 1, 0], [21, 7, 0, -1], [14, 8, 0, -1], [12, 10, 0, 1], [18, 10, 0, 1], [5, 11, -1, 0], [10, 12, 1, 0], [21, 13, 1, 0], [27, 13, -1, 0], [1, 15, 1, 0], [4, 18, 0, -1], [16, 18, 0, -1]], "loot": {}, "chests": {"25,10": {"items": ["greater", "whisper", "manaPotion"], "gold": 40}, "24,3": {"items": ["potion", "potion", "boneCharm"], "gold": 90}}, "stash": {"22,6": {"items": ["eel"], "gold": 25, "dc": 13}}, "secrets": {"20,4": {"dc": 13}}, "rooms": [{"x0": 2, "z0": 2, "x1": 6, "z1": 6, "name": "The Warren Mouth", "text": "The goblins have dug deep. Their tunnels stink of smoke, wet fur and lamp oil, and powder kegs are stacked carelessly along the walls. One spark down here and the whole hill comes down."}, {"x0": 13, "z0": 2, "x1": 19, "z1": 7, "name": "The Storeroom", "text": "Stolen grain, stolen ale, and three coffins with the lids pried off. Empty. The bodies went somewhere else."}, {"x0": 2, "z0": 12, "x1": 8, "z1": 17, "name": "The Kennels", "text": "Gnawed bones carpet the floor. Not all of them belonged to animals."}, {"x0": 11, "z0": 11, "x1": 20, "z1": 17, "name": "The Feasting Hall", "text": "A fire roars in a hearth hacked from the rock. Goblins squabble over a heap of grave-goods: rings still on fingers, coins still in mouths."}, {"x0": 22, "z0": 9, "x1": 26, "z1": 18, "name": "The Chief's Den", "text": "\"The pale man pays in black gold for every body,\" snarls Chief Grizzlegut from a throne of stolen coffins. \"He will pay well for yours.\" Behind him, a shaft drops into the deep.", "boss": true}], "sight": 7, "stairsText": "A rope ladder drops down a natural shaft. Far below, water drips into a cavern, and the goblin noise fades to silence.", "wanderers": [{"types": ["goblin", "goblin", "goblin"], "text": "Goblin war-drums start up to the {dir}. They know you are here."}, {"types": ["wolf", "goblin"], "text": "Claws on stone to the {dir}: a goblin wolf-rider is hunting you."}], "next": "descent3", "hidden": true},
+  descent3: {"name": "The Weeping Caves", "floor": 3, "campaign": "descent", "rev": 1, "dark": true, "fog": true, "rows": ["##############################", "##############################", "#####.##################.$####", "###...r################.s.u###", "##..@...######~#######u....u.#", "##.......##........###..~.s..#", "###..r...~~.s.......~..b....##", "###...##................#.####", "########.....vvvv~....########", "#########.~~vvwwww...p.#######", "#########...vwwwwwv.~..#######", "#########..r.wwwwvvvv..#######", "########~.....vvv.vvvvv#######", "####~.I##.......~...vvv....###", "###.p~~.....p......s.#..z...##", "###.F~....#.~...r...##Y~..M.##", "##.u...u######~..#####......##", "###.....###############..X.###", "##############################", "##############################"], "torches": [[11, 4, 0, 1], [17, 4, 0, 1], [29, 4, -1, 0], [2, 7, 1, 0], [26, 7, -1, 0], [7, 8, 1, 0], [23, 10, -1, 0], [8, 13, 1, 0], [11, 16, 0, -1], [17, 16, -1, 0], [22, 17, 1, 0], [3, 18, 0, -1]], "loot": {"25,2": {"items": ["greater", "sunder", "arrowFrost"], "gold": 30}}, "chests": {}, "stash": {}, "secrets": {}, "rooms": [{"x0": 2, "z0": 2, "x1": 7, "z1": 7, "name": "The Weeping Caves", "text": "The goblin warren breaks into a natural cavern. Water drips from a thousand stone teeth, and the walls glitter with webs as thick as sailcloth. Something large shifts on the ceiling."}, {"x0": 9, "z0": 5, "x1": 21, "z1": 15, "name": "The Black Lake", "text": "A still black lake fills the heart of the cavern. Wrapped shapes hang from the webs above it, slowly turning. Some of them still twitch."}, {"x0": 21, "z0": 2, "x1": 27, "z1": 7, "name": "The Nest", "text": "The webs here are thick with bones and grave-goods. Whatever the goblins could not carry, the spiders took."}, {"x0": 2, "z0": 12, "x1": 8, "z1": 17, "name": "The Old Shrine", "text": "A spring bubbles up through carved stone. Someone built a shrine here long ago, before the dark crept in. A tablet beside it is scratched with a warning."}, {"x0": 21, "z0": 12, "x1": 27, "z1": 18, "name": "The Drowned Steps", "text": "Stone steps lead down into an older place. A body lies across them, bloated and grey. As your light touches it, its fingers curl. Above the steps, something vast and many-legged unfolds from a cocoon of silk.", "boss": true}], "sight": 7, "flow": [0.4, 0.1], "tablet": "Turn back. Below the lake lie the halls of the Pale Crown, where the dead do not rest. We sealed it once. We could not seal it twice.", "stairsText": "The steps sink into black water and come out somewhere colder. The smell of rot rises to meet you.", "wanderers": [{"types": ["spider"], "text": "Something skitters across the ceiling to the {dir}. The webs are trembling."}, {"types": ["rat", "rat", "rat"], "text": "A tide of squeaking pours out of a crack to the {dir}."}], "next": "descent4", "hidden": true},
+  descent4: {"name": "The Drowned Ossuary", "floor": 4, "campaign": "descent", "rev": 1, "dark": true, "fog": true, "rows": ["############################", "############################", "##u.....u#.u...u.........u##", "##.......#vvPvvvPvvvPvvvPv##", "##.@......vvvvzvvvvzvvvzvv##", "##.......#vvPvvvPvvvPvvvPv##", "##......u#.........u......##", "#####.###############.######", "#####Z###############D######", "##......u#.......u#j......j#", "##.P...P.#.b...k..#.P....P.#", "##...k...#...vv...#....A...#", "##.b.....#..vwwv..#..z.....#", "##H........vvwwvv.#......X.#", "##....b..#..vwwv..#.....z..#", "##.......#...vv............#", "##.P..rP.#..z...z.#.P....P.#", "##u......#........#.......C#", "############################", "############################"], "torches": [[7, 1, 0, 1], [13, 1, 0, 1], [19, 1, 0, 1], [9, 5, 1, 0], [26, 6, -1, 0], [7, 7, 0, -1], [13, 7, 0, -1], [24, 8, 0, 1], [9, 11, 1, 0], [27, 11, -1, 0], [1, 13, 1, 0], [18, 14, 1, 0], [9, 17, 1, 0], [14, 18, 0, -1], [20, 18, 0, -1]], "loot": {}, "chests": {"26,17": {"items": ["greater", "wardenHelm", "manaPotion"], "gold": 60}}, "stash": {"2,13": {"items": ["potion", "boneCharm"], "gold": 30, "dc": 14}}, "secrets": {}, "rooms": [{"x0": 2, "z0": 2, "x1": 8, "z1": 6, "name": "The Drowned Ossuary", "text": "Below the caves lies an older place: a flooded hall of the dead. Bodies float in the black water, and the goblins' gifts are piled at the door, still in their sacks. Those sacks are empty now."}, {"x0": 10, "z0": 2, "x1": 25, "z1": 6, "name": "The Flooded Nave", "text": "Knee-deep water fills the nave. Shapes stand in it, perfectly still, facing the far end of the hall. One by one they turn toward the splashing of your boots."}, {"x0": 2, "z0": 9, "x1": 17, "z1": 17, "name": "The Bone Galleries", "text": "Skulls line every wall, thousands of them, sorted by size. Somebody has been taking them down and putting the skeletons back together."}, {"x0": 19, "z0": 9, "x1": 26, "z1": 17, "name": "The Stair of Candles", "text": "Braziers burn with a cold green flame. Fresh footprints lead downstairs: bare feet, and a long trailing robe. In the green light waits the abbot of this drowned house, bloated and crowned, still wearing his mitre.", "boss": true}], "sight": 7, "flow": [0.45, 0.05], "stairsText": "Below, you hear chanting. Many voices, all saying the same name.", "wanderers": [{"types": ["zombie", "zombie"], "text": "Something splashes through the water to the {dir}, slow and heavy and tireless."}, {"types": ["skeleton", "skeleton"], "text": "Bones clatter to the {dir} as the galleries give up their dead."}], "next": "descent5", "hidden": true},
+  descent5: {"name": "The Sanctum of the Pale Crown", "floor": 5, "campaign": "descent", "rev": 1, "dark": true, "fog": true, "rows": ["############################", "############################", "########u..........u#C.h..c#", "########.k..jllj....D...N.c#", "########..P..ll..P..#......#", "########..........N.#......#", "########....N.......########", "########..P......P..###j...#", "##.....#............###.z..#", "##.....#...j....j...###....#", "##.@......1..I...3..G...O.X#", "##.....#...j....j...###....#", "##.....#..P......P..###..z.#", "########.......N....###j...#", "########.....2......########", "########.zP......P..#...z.$#", "########..........k.D.b....#", "########u..........u#....b.#", "#####################u....u#", "############################"], "torches": [[12, 1, 0, 1], [18, 1, 0, 1], [24, 1, 0, 1], [27, 4, -1, 0], [20, 5, 1, 0], [7, 6, 1, 0], [25, 6, 0, 1], [22, 9, 1, 0], [27, 10, -1, 0], [20, 11, -1, 0], [1, 12, 1, 0], [7, 12, 1, 0], [23, 14, 0, 1], [27, 16, -1, 0], [20, 17, 1, 0], [13, 18, 0, -1], [24, 19, 0, -1]], "loot": {"26,15": {"items": ["wardenBlade"], "gold": 0}}, "chests": {"21,2": {"items": ["greater", "potion", "manaPotion", "arrowStorm"], "gold": 80}}, "stash": {}, "secrets": {}, "rooms": [{"x0": 2, "z0": 8, "x1": 6, "z1": 12, "name": "The Sanctum of the Pale Crown", "text": "Black candles. Bone-white robes. Chanting echoes through a temple carved from the living rock. The cult of the Pale Crown has made this place a factory for the dead."}, {"x0": 8, "z0": 2, "x1": 19, "z1": 17, "name": "The Temple of Three Lights", "text": "Fire pours from a cracked altar in the north. Before it stands a tablet, and set into the floor are three plates: a sun, a moon and a star. To the east, an iron portcullis bars the way down."}, {"x0": 21, "z0": 2, "x1": 26, "z1": 5, "name": "The Cult Library", "text": "Shelves of skin-bound books, and a desk covered in notes about raising the dead, written in a fine, patient hand. Every page is signed: V.M."}, {"x0": 23, "z0": 7, "x1": 26, "z1": 13, "name": "The Priest's Stair", "text": "Behind the portcullis, High Priest Ossian turns from the stair with a patient smile. \"You have come so far to join us,\" he says. \"Let me show you the rest of the way.\"", "boss": true}, {"x0": 21, "z0": 15, "x1": 26, "z1": 18, "name": "The Waiting Crypts", "text": "Rows of fresh bodies lie on stone slabs, ready to be raised. Some of them have already started without the priests."}], "sight": 7, "puzzleOrder": ["3", "2", "1"], "tablet": "First the <b>star</b> that guides the dead. Then the <b>moon</b> that wakes them. Last the <b>sun</b> they will never see again.", "stairsText": "The stairs grow hot underfoot. Red light flickers from below, and with it a cold that has nothing to do with the air.", "wanderers": [{"types": ["cultist", "skeleton"], "text": "Chanting grows louder to the {dir}. A priest and its servant are searching for you."}, {"types": ["zombie", "zombie", "zombie"], "text": "Shuffling feet to the {dir}. The crypts are emptying."}], "next": "descent6", "hidden": true, "puzzle": {"order": ["3", "2", "1"], "gate": [20, 10]}},
+  descent6: {"name": "The Burning Halls", "floor": 6, "campaign": "descent", "rev": 1, "dark": true, "fog": true, "rows": ["##############################", "##############lll#############", "##u..........ulll..#u......u##", "##............lll..#........##", "##...P....P...lll..#..P..P..##", "##...............Q.D........##", "##......z.....lll..#........##", "##............lll..#.N.j..j.##", "##...P....P...lll..#........##", "##$...........lll..#K......C##", "##.@.......N..lll..#K...W.X.##", "##...P....P...lll..#........##", "##............lll..#.N.j..j.##", "##.......z....lll..#........##", "##...............Q.D........##", "##...P....P...lll..#..P..P..##", "##..........K.lll..#........##", "##u..........Klll..#.......u##", "##############lll#############", "##############################"], "torches": [[5, 1, 0, 1], [11, 1, 0, 1], [17, 1, 0, 1], [23, 1, 0, 1], [1, 5, 1, 0], [28, 8, -1, 0], [1, 11, 1, 0], [19, 11, 1, 0], [28, 14, -1, 0], [19, 17, 1, 0], [6, 18, 0, -1], [12, 18, 0, -1], [24, 18, 0, -1]], "loot": {"2,9": {"items": ["potion", "potion"], "gold": 0}}, "chests": {"27,9": {"items": ["greater", "greater"], "gold": 120}}, "stash": {}, "secrets": {}, "rooms": [{"x0": 2, "z0": 2, "x1": 13, "z1": 17, "name": "The Burning Halls", "text": "The air shimmers with heat. A river of molten rock splits the hall in two, and pale cold shapes drift above it, untouched by the fire. The Restless have been waiting for you."}, {"x0": 17, "z0": 2, "x1": 18, "z1": 17, "name": "The Far Bank", "text": "Up close, the wraiths have faces: Thornwick faces. The miller. The blacksmith's wife. They do not know you any more."}, {"x0": 20, "z0": 2, "x1": 27, "z1": 17, "name": "The Warden's Gate", "text": "An armoured giant stands before the last stair, a greatsword planted at its feet. Its helm turns toward you, and green fire kindles behind the visor.", "boss": true}], "sight": 8, "flow": [0.02, 0.5], "stairsText": "The last stair. Below it, the heart of the mountain, and the one who has been waiting all along.", "wanderers": [{"types": ["zombie", "cultist"], "text": "A priest drives its dead toward you from the {dir}."}, {"types": ["skeleton", "skeleton", "skeleton"], "text": "Bones knit together to the {dir}. The halls are raising a guard."}], "next": "descent7", "hidden": true},
+  descent7: {"name": "The Throne of Vael Morrow", "floor": 7, "campaign": "descent", "rev": 1, "dark": true, "fog": true, "rows": ["##############################", "##############################", "##u........................u##", "##.P....P.............P....P##", "##..........lllllll.........##", "##...j....lllllllllll....j..##", "##..N....lllllllllllll....N.##", "##......lllllll.lllllll.....##", "##.....llllllj...jlllll.....##", "##.............L...llll.....##", "##.....lllll.......lllll....##", "##.....llllllj...jllllll....##", "##.....llllllll.lllllll.....##", "##......lllllll.lllllll.....##", "##......lllllll.lllllll.....##", "##...j...l.llll.lllll....j..##", "##..........lQl.lQ..........##", "##....z...K.........K...z...##", "##.P....P.............P....P##", "##u............@...........u##", "##############################", "##############################"], "torches": [[5, 1, 0, 1], [10, 1, 0, 1], [15, 1, 0, 1], [20, 1, 0, 1], [25, 1, 0, 1], [28, 4, -1, 0], [1, 7, 1, 0], [28, 9, -1, 0], [1, 12, 1, 0], [28, 14, -1, 0], [1, 17, 1, 0], [4, 20, 0, -1], [9, 20, 0, -1], [14, 20, 0, -1], [19, 20, 0, -1], [24, 20, 0, -1]], "loot": {}, "chests": {}, "stash": {}, "secrets": {}, "rooms": [{"x0": 1, "z0": 12, "x1": 28, "z1": 20, "name": "The Throne of Vael Morrow", "text": "At the heart of the mountain, on an island in a lake of fire, sits Vael Morrow, Lich of the Pale Crown. \"Thornwick sends me a hero,\" it whispers, and its voice is everywhere at once. \"How thoughtful. I needed a new captain.\"", "boss": true}], "sight": 9, "flow": [0.25, 0.2], "wanderers": [], "finale": {"title": "The Pale Crown falls", "text": "Vael Morrow's phylactery cracks with a sound like a bell breaking, and a scream that is centuries old tears through the mountain. All through the halls above, the dead of Thornwick lie down and are still. You climb back toward the daylight carrying the Pale Crown, and the story of the hero who walked into the dark and came back out."}, "hidden": true},
 };
 const PLATE_NAMES = { 1: 'sun', 2: 'moon', 3: 'star' };
 
@@ -570,6 +627,27 @@ const ITEMS = {
   boneCharm: { name: 'Bone Charm', type: 'neck', perception: 1, weight: 0.2, note: '+1 Perception. A knuckle bone on a cord that rattles when something is hidden nearby.' },
   wardenBlade:{ name: 'Warden\'s Greatsword', type: 'weapon', weird: true, dice: [2, 6], dmgType: 'slashing', ability: 'str', range: 1, twoHanded: true, weight: 6,
                note: '2d6 slashing, two-handed. Cold light runs along the fuller.' },
+  manaPotion:{ name: 'Potion of Mana', type: 'consumable', mana: [2, 4, 2], weight: 0.5, note: 'Action: regain 2d4 + 2 mana. Tastes of cold starlight.' },
+  arrowFire: { name: 'Arrows of Burning', type: 'ammo', bundle: 10, extra: [1, 6, 'fire'], onHit: { status: 'burning', rounds: 3 }, color: '#ff6a20', weight: 0.1, magic: true,
+               note: 'Ammunition for a bow. +1d6 fire, and the target burns for 3 rounds. Comes in tens.' },
+  arrowFrost:{ name: 'Frostbite Arrows', type: 'ammo', bundle: 10, extra: [1, 4, 'cold'], onHit: { status: 'chilled', rounds: 2 }, color: '#9fe4ff', weight: 0.1, magic: true,
+               note: 'Ammunition for a bow. +1d4 cold, and the target is chilled (half movement, -1 AC) for 2 rounds.' },
+  arrowVenom:{ name: 'Venom Arrows', type: 'ammo', bundle: 10, extra: [1, 4, 'poison'], onHit: { status: 'poisoned', rounds: 3 }, color: '#8fdc5a', weight: 0.1, magic: true,
+               note: 'Ammunition for a bow. +1d4 poison, and the target is poisoned for 3 rounds.' },
+  arrowStorm:{ name: 'Thunderclap Arrows', type: 'ammo', bundle: 10, extra: [1, 6, 'thunder'], onHit: { status: 'stunned', rounds: 1, chance: 0.25 }, color: '#ffe066', weight: 0.1, magic: true,
+               note: 'Ammunition for a bow. +1d6 thunder; 1 in 4 hits stuns the target for a turn.' },
+  flametongue:{ name: 'Flametongue', type: 'weapon', magic: true, dice: [1, 8], extra: [1, 6, 'fire'], dmgType: 'slashing', ability: 'str', range: 1, weight: 3, fx: '#ff7a2a',
+               onHit: { status: 'burning', rounds: 2, chance: 0.35 }, note: '+1d6 fire. Flame runs along the blade, and 1 hit in 3 sets the target burning.' },
+  frostbrand:{ name: 'Frostbrand', type: 'weapon', magic: true, dice: [1, 8], extra: [1, 6, 'cold'], dmgType: 'slashing', ability: 'str', range: 1, weight: 3, fx: '#9fe4ff',
+               onHit: { status: 'chilled', rounds: 2, chance: 0.5 }, note: '+1d6 cold. Rime creeps up the steel; half its hits chill the target.' },
+  venomFang: { name: 'Venom Fang', type: 'weapon', magic: true, dice: [1, 4], extra: [1, 4, 'poison'], dmgType: 'piercing', ability: 'finesse', range: 1, weight: 1, fx: '#8fdc5a',
+               onHit: { status: 'poisoned', rounds: 3, chance: 0.6 }, note: 'Finesse dagger. +1d4 poison, and most hits leave the target poisoned.' },
+  stormblade:{ name: 'Stormcaller', type: 'weapon', magic: true, dice: [1, 8], extra: [1, 6, 'lightning'], dmgType: 'slashing', ability: 'str', range: 1, weight: 3, fx: '#ffe066',
+               onHit: { status: 'stunned', rounds: 1, chance: 0.15 }, note: '+1d6 lightning. Sparks crawl over it, and now and then a hit stuns.' },
+  dawnbringer:{ name: 'Dawnbringer', type: 'weapon', magic: true, dice: [1, 8], extra: [1, 4, 'radiant'], undeadBane: [2, 6, 'radiant'], dmgType: 'slashing', ability: 'str', range: 1, weight: 3, fx: '#fff2b0',
+               note: '+1d4 radiant, and +2d6 more against the undead. It glows like a sunrise.' },
+  bloodthirst:{ name: 'Bloodthirst', type: 'weapon', magic: true, dice: [1, 10], dmgType: 'slashing', ability: 'str', range: 1, twoHanded: true, weight: 5, fx: '#d0304b', lifesteal: 0.4,
+               note: '1d10, two-handed. Every hit heals you for 40% of the damage dealt. The lich\'s own blade.' },
   wardenHelm:{ name: 'Warden\'s Helm', type: 'head', acBonus: 1, weight: 4, note: '+1 AC. Horned iron, still faintly cold inside.' },
 };
 const UNARMED = { name: 'Unarmed strike', type: 'weapon', dice: [1, 1], dmgType: 'bludgeoning', ability: 'str', range: 1 };
@@ -580,18 +658,26 @@ const MONSTERS = {
   skeleton: { name: 'Skeleton', hp: 13, ac: 13, xp: 50, speed: 6, ai: 'melee', atk: 4, dmg: [1, 6, 2], dmgType: 'slashing', range: 1, saves: { dex: 2, str: 0 }, verb: 'slashes' },
   archer:   { name: 'Goblin Archer', hp: 7, ac: 13, xp: 50, speed: 6, ai: 'ranged', atk: 4, dmg: [1, 6, 2], dmgType: 'piercing', range: 16, saves: { dex: 2, str: -1 }, verb: 'shoots' },
   goblin:   { name: 'Goblin', hp: 7, ac: 15, xp: 50, speed: 6, ai: 'melee', atk: 4, dmg: [1, 6, 2], dmgType: 'slashing', range: 1, saves: { dex: 2, str: -1 }, verb: 'hacks' },
-  goblinBoss: { name: 'Chief Grizzlegut', hp: 32, ac: 16, xp: 300, speed: 6, ai: 'melee', atk: 5, dmg: [2, 6, 3], dmgType: 'slashing', range: 1, saves: { dex: 2, str: 2 }, verb: 'cleaves', boss: true, scale: 1.3 },
+  goblinBoss: { name: 'Chief Grizzlegut', epithet: 'King of the Warren', onHit: { status: 'bleeding', rounds: 2, chance: 0.5 }, hp: 32, ac: 16, xp: 300, speed: 6, ai: 'melee', atk: 5, dmg: [2, 6, 3], dmgType: 'slashing', range: 1, saves: { dex: 2, str: 2 }, verb: 'cleaves', boss: true, scale: 1.3 },
   wolf:     { name: 'Wolf', hp: 11, ac: 13, xp: 50, speed: 8, ai: 'melee', atk: 4, dmg: [2, 4, 2], dmgType: 'piercing', range: 1, saves: { dex: 2, str: 1 }, verb: 'bites' },
-  spider:   { name: 'Giant Spider', hp: 26, ac: 14, xp: 200, speed: 6, ai: 'melee', atk: 5, dmg: [1, 8, 3], dmgType: 'piercing', range: 1, saves: { dex: 3, str: 2 }, verb: 'stabs with venomous fangs' },
+  spider:   { name: 'Giant Spider', hp: 26, ac: 14, xp: 200, speed: 6, ai: 'melee', atk: 5, dmg: [1, 8, 3], dmgType: 'piercing', range: 1, saves: { dex: 3, str: 2 }, verb: 'stabs with venomous fangs', onHit: { status: 'poisoned', rounds: 2, chance: 0.5 } },
   zombie:   { name: 'Zombie', hp: 22, ac: 8, xp: 50, speed: 4, ai: 'melee', atk: 3, dmg: [1, 6, 1], dmgType: 'bludgeoning', range: 1, saves: { dex: -2, str: 1 }, verb: 'claws' },
-  cultist:  { name: 'Bone Cultist', hp: 18, ac: 12, xp: 100, speed: 6, ai: 'ranged', atk: 4, dmg: [2, 6, 0], dmgType: 'necrotic', range: 12, proj: 'bolt', saves: { dex: 1, str: 0 }, verb: 'hurls a bolt of grave-light' },
-  wraith:   { name: 'Wraith', hp: 45, ac: 13, xp: 450, speed: 6, ai: 'melee', atk: 6, dmg: [3, 6, 2], dmgType: 'necrotic', range: 1, saves: { dex: 3, str: 0 }, verb: 'drains your life', float: true, aura: '#8af2ff' },
-  lich:     { name: 'Vael Morrow', hp: 110, ac: 16, xp: 3000, speed: 5, ai: 'ranged', atk: 7, dmg: [4, 8, 0], dmgType: 'necrotic', range: 14, proj: 'bolt', saves: { dex: 3, str: 1 }, verb: 'unleashes a bolt of death', boss: true, summon: true, aura: '#5fffd0' },
+  cultist:  { name: 'Bone Cultist', hp: 18, ac: 12, xp: 100, speed: 6, ai: 'ranged', atk: 4, dmg: [2, 6, 0], dmgType: 'necrotic', range: 12, proj: 'bolt', saves: { dex: 1, str: 0 }, verb: 'hurls a bolt of grave-light', onHit: { status: 'hexed', rounds: 2, chance: 0.35 } },
+  wraith:   { name: 'Wraith', hp: 45, ac: 13, xp: 450, speed: 6, ai: 'melee', atk: 6, dmg: [3, 6, 2], dmgType: 'necrotic', range: 1, saves: { dex: 3, str: 0 }, verb: 'drains your life', float: true, aura: '#8af2ff', onHit: { status: 'weakened', rounds: 2, chance: 0.4 } },
+  lich:     { name: 'Vael Morrow', epithet: 'Lich of the Pale Crown', onHit: { status: 'chilled', rounds: 2, chance: 0.5 }, hp: 110, ac: 16, xp: 3000, speed: 5, ai: 'ranged', atk: 7, dmg: [4, 8, 0], dmgType: 'necrotic', range: 14, proj: 'bolt', saves: { dex: 3, str: 1 }, verb: 'unleashes a bolt of death', boss: true, summon: true, aura: '#5fffd0' },
   crate:    { name: 'Crate', hp: 8, ac: 10, xp: 0, speed: 0, ai: 'none', object: true, saves: { dex: -5, str: -5 }, debris: '#7a5530', breakText: 'splinters apart' },
   barrel:   { name: 'Barrel', hp: 10, ac: 10, xp: 0, speed: 0, ai: 'none', object: true, saves: { dex: -5, str: -5 }, debris: '#6a4a2a', breakText: 'bursts its hoops' },
   keg:      { name: 'Powder Keg', hp: 4, ac: 10, xp: 0, speed: 0, ai: 'none', object: true, saves: { dex: -5, str: -5 }, debris: '#5a1a14', breakText: 'cracks open' },
   urn:      { name: 'Clay Urn', hp: 3, ac: 9, xp: 0, speed: 0, ai: 'none', object: true, saves: { dex: -5, str: -5 }, debris: '#a8603a', breakText: 'shatters' },
-  warden:   { name: 'Grave Warden', hp: 45, ac: 16, xp: 450, speed: 5, ai: 'melee', atk: 5, dmg: [2, 6, 3], dmgType: 'slashing', range: 1, saves: { dex: 0, str: 3 }, verb: 'cleaves', boss: true },
+  wolfRider: { name: 'Grak the Wolf-Rider', epithet: 'Terror of the Thornwick Road', hp: 36, ac: 14, xp: 450, speed: 8, ai: 'melee', atk: 5, dmg: [2, 6, 3], dmgType: 'piercing', range: 1,
+               saves: { dex: 3, str: 3, con: 2, wis: 0 }, verb: 'rides you down', boss: true, scale: 1, onHit: { status: 'bleeding', rounds: 3, chance: 0.6 } },
+  spiderQueen: { name: 'Mother of Webs', epithet: 'Queen of the Weeping Caves', hp: 70, ac: 15, xp: 1100, speed: 6, ai: 'melee', atk: 6, dmg: [2, 8, 3], dmgType: 'piercing', range: 1,
+               saves: { dex: 3, str: 3, con: 3, wis: 1 }, verb: 'sinks her fangs in', boss: true, scale: 1, summon: 'spider', onHit: { status: 'poisoned', rounds: 3 } },
+  abbot:    { name: 'The Drowned Abbot', epithet: 'First of the Risen', hp: 85, ac: 12, xp: 1800, speed: 4, ai: 'melee', atk: 6, dmg: [2, 8, 3], dmgType: 'necrotic', range: 1,
+               saves: { dex: -1, str: 4, con: 4, wis: 2 }, verb: 'crushes you in rotten arms', boss: true, scale: 1, summon: 'zombie', onHit: { status: 'weakened', rounds: 2, chance: 0.5 } },
+  highPriest: { name: 'High Priest Ossian', epithet: 'Voice of the Pale Crown', hp: 80, ac: 14, xp: 2300, speed: 6, ai: 'ranged', atk: 7, dmg: [3, 6, 2], dmgType: 'necrotic', range: 12, proj: 'bolt',
+               saves: { dex: 2, str: 0, con: 2, wis: 5 }, verb: 'speaks a word of death', boss: true, scale: 1, blessAllies: true, aura: '#7dff8a', onHit: { status: 'hexed', rounds: 3, chance: 0.6 } },
+  warden:   { name: 'Grave Warden', epithet: 'Keeper of the Last Stair', onHit: { status: 'stunned', rounds: 1, chance: 0.25 }, hp: 45, ac: 16, xp: 450, speed: 5, ai: 'melee', atk: 5, dmg: [2, 6, 3], dmgType: 'slashing', range: 1, saves: { dex: 0, str: 3 }, verb: 'cleaves', boss: true },
 };
 // What each enemy carries. Rolled when it dies; click the body to search it.
 const LOOT_TABLES = {
@@ -599,18 +685,22 @@ const LOOT_TABLES = {
   skeleton: [{ gold: [2, 8] }, { item: 'boneCharm', p: 0.45 }, { item: 'potion', p: 0.35 }, { item: 'dagger', p: 0.3 }],
   archer:   [{ gold: [3, 10] }, { item: 'arrows', p: 0.8 }, { item: 'goblinStew', p: 0.45 }, { item: 'potion', p: 0.25 }, { item: 'shortbow', p: 0.15 }],
   goblin:   [{ gold: [1, 8] }, { item: 'goblinStew', p: 0.25 }, { item: 'dagger', p: 0.2 }, { item: 'potion', p: 0.12 }],
-  goblinBoss: [{ gold: [30, 50] }, { item: 'greater', p: 1 }, { item: 'potion', p: 1 }],
+  goblinBoss: [{ gold: [30, 50] }, { item: 'greater', p: 1 }, { item: 'flametongue', p: 1 }, { item: 'arrowStorm', p: 1 }],
   wolf:     [{ item: 'teeth', p: 0.3 }],
   spider:   [{ gold: [0, 10] }, { item: 'potion', p: 0.3 }],
   zombie:   [{ gold: [0, 6] }, { item: 'teeth', p: 0.2 }],
-  cultist:  [{ gold: [5, 15] }, { item: 'potion', p: 0.35 }, { item: 'boneCharm', p: 0.15 }],
+  cultist:  [{ gold: [5, 15] }, { item: 'potion', p: 0.25 }, { item: 'manaPotion', p: 0.4 }, { item: 'boneCharm', p: 0.15 }],
   wraith:   [{ gold: [10, 25] }, { item: 'greater', p: 0.5 }],
-  lich:     [{ gold: [200, 300] }, { item: 'greater', p: 1 }, { item: 'crown', p: 1 }],
+  lich:     [{ gold: [200, 300] }, { item: 'greater', p: 1 }, { item: 'crown', p: 1 }, { item: 'bloodthirst', p: 1 }],
+  wolfRider: [{ gold: [20, 40] }, { item: 'arrowFire', p: 1 }, { item: 'greater', p: 1 }, { item: 'manaPotion', p: 1 }],
+  spiderQueen: [{ gold: [40, 80] }, { item: 'venomFang', p: 1 }, { item: 'arrowVenom', p: 1 }, { item: 'manaPotion', p: 1 }],
+  abbot:    [{ gold: [60, 100] }, { item: 'frostbrand', p: 1 }, { item: 'arrowFrost', p: 1 }, { item: 'greater', p: 1 }],
+  highPriest: [{ gold: [80, 140] }, { item: 'dawnbringer', p: 1 }, { item: 'manaPotion', p: 1 }, { item: 'manaPotion', p: 1 }],
   crate:    [{ gold: [0, 5] }, { item: 'potion', p: 0.15 }, { item: 'rations', p: 0.3 }, { item: 'arrows', p: 0.15 }],
   barrel:   [{ gold: [0, 3] }, { item: 'goblinStew', p: 0.3 }],
   urn:      [{ gold: [2, 14] }, { item: 'potion', p: 0.12 }, { item: 'boneCharm', p: 0.05 }],
   keg:      [],
-  warden:   [{ gold: [40, 60] }, { item: 'greater', p: 1 }, { item: 'wardenBlade', p: 1 }, { item: 'wardenHelm', p: 1 }],
+  warden:   [{ gold: [40, 60] }, { item: 'stormblade', p: 1 }, { item: 'greater', p: 1 }, { item: 'wardenBlade', p: 1 }, { item: 'wardenHelm', p: 1 }],
 };
 function rollLoot(type) {
   const t = LOOT_TABLES[type]; if (!t) return null;
@@ -622,7 +712,7 @@ function rollLoot(type) {
   if (!items.length && !gold && !MONSTERS[type].object) gold = 1;
   return { items, gold };
 }
-const CREATURE_CHARS = { r: 'rat', k: 'skeleton', b: 'skeleton', a: 'archer', W: 'warden', m: 'dummy', n: 'goblin', B: 'goblinBoss', f: 'wolf', s: 'spider', z: 'zombie', N: 'cultist', Q: 'wraith', L: 'lich',
+const CREATURE_CHARS = { r: 'rat', k: 'skeleton', b: 'skeleton', a: 'archer', W: 'warden', m: 'dummy', n: 'goblin', R: 'wolfRider', M: 'spiderQueen', A: 'abbot', O: 'highPriest', B: 'goblinBoss', f: 'wolf', s: 'spider', z: 'zombie', N: 'cultist', Q: 'wraith', L: 'lich',
   c: 'crate', o: 'barrel', K: 'keg', u: 'urn' };
 
 // range and size are in 5 ft squares
@@ -652,8 +742,8 @@ function newCharacter() {
       { key: 'chain', qty: 1 }, { key: 'shield', qty: 1 }, { key: 'potion', qty: 2 },
       { key: 'rope', qty: 1 }, { key: 'torch', qty: 3 }, { key: 'rations', qty: 5 },
     ],
-    equipped: { weapon: 'longsword', armor: 'chain', shield: 'shield', head: null, neck: null },
-    model: 'adventurer', skin: '#d6a982', hair: '#5a3a20',
+    equipped: { weapon: 'longsword', armor: 'chain', shield: 'shield', head: null, neck: null, ammo: null },
+    model: 'adventurer', skin: '#d6a982', hair: '#5a3a20', mp: 16, status: [],
   };
 }
 function freshSlots() { const s = {}; for (const l in SLOT_TABLE) s[l] = { max: SLOT_TABLE[l], left: SLOT_TABLE[l] }; return s; }
@@ -681,13 +771,17 @@ function derived() {
   const weapon = c.equipped.weapon ? ITEMS[c.equipped.weapon] : UNARMED;
   const am = weapon.ability === 'finesse' ? Math.max(m('str'), m('dex')) : m(weapon.ability);
   const weight = c.inventory.reduce((s, i) => s + ITEMS[i.key].weight * i.qty, 0);
-  const cm = m(c.castAbility || 'int');
-  return { prof, maxHp, ac, weapon, atk: am + prof, dmgMod: am, init: m('dex'),
-           speedSq: Math.floor(c.speed / 5), weight, cap: c.abilities.str * 15,
-           spellDc: 8 + prof + cm, spellAtk: prof + cm,
+  const cm = m(c.castAbility || 'int'), st = id => c.status?.some(s => s.id === id);
+  ac += (st('shielded') ? 4 : 0) + (st('hasted') ? 2 : 0) - (st('chilled') ? 1 : 0);
+  const atkMod = (st('blessed') ? 2 : 0) - (st('poisoned') ? 2 : 0);
+  let speedSq = Math.floor(c.speed / 5) + (st('hasted') ? 3 : 0); if (st('chilled')) speedSq = Math.floor(speedSq / 2);
+  return { prof, maxHp, ac, weapon, atk: am + prof + atkMod, dmgMod: am, init: m('dex'),
+           speedSq, weight, cap: c.abilities.str * 15,
+           spellDc: 8 + prof + cm, spellAtk: prof + cm + atkMod,
            perception: m('wis') + prof + (c.equipped.neck ? ITEMS[c.equipped.neck].perception || 0 : 0),
            passive: 10 + m('wis') + prof + (c.equipped.neck ? ITEMS[c.equipped.neck].perception || 0 : 0) };
 }
+// end-of-fight cleanup also clears buffs and debuffs (see endCombat)
 const isCursed = () => state.char.equipped.head && ITEMS[state.char.equipped.head].cursed && !state.char.curseLifted;
 
 /* ================================================================== *
@@ -697,6 +791,8 @@ const SAVE_KEY = 'battleboard.v2', OLD_KEY = 'battleboard.v1', PREF_KEY = 'battl
 
 function migrateChar(c) {
   c.slots ||= freshSlots(); c.castAbility ||= 'int';
+  if (!('ammo' in c.equipped)) c.equipped.ammo = null;
+  c.status ||= []; if (c.mp == null) c.mp = 6 + 4 * c.level + 2 * Math.max(0, Math.floor((c.abilities.int - 10) / 2));
   if (c.cls === 'Fighter') c.cls = 'Spellblade';
   if (!('head' in c.equipped)) c.equipped.head = null;
   if (!('neck' in c.equipped)) c.equipped.neck = null;
@@ -1620,6 +1716,12 @@ function weaponModel(key) {
       return g;
     }
     case 'sunder': return swordModel(0.4, 0.036, new THREE.MeshBasicMaterial({ color: hdrColor('#e8fbff', 1.8), transparent: true, opacity: 0.85 }));
+    case 'flametongue': return swordModel(0.42, 0.038, new THREE.MeshStandardMaterial({ color: '#5a2a10', emissive: '#ff6a1a', emissiveIntensity: 1.8, metalness: 0.6, roughness: 0.3 }));
+    case 'frostbrand': return swordModel(0.42, 0.038, new THREE.MeshStandardMaterial({ color: '#d8f4ff', emissive: '#6fc8ff', emissiveIntensity: 0.9, metalness: 0.4, roughness: 0.15, transparent: true, opacity: 0.9 }));
+    case 'venomFang': return swordModel(0.19, 0.028, new THREE.MeshStandardMaterial({ color: '#2a4a1a', emissive: '#6fdc3a', emissiveIntensity: 1.2, metalness: 0.5, roughness: 0.3 }), 0.06, 0.06);
+    case 'stormblade': return swordModel(0.42, 0.036, new THREE.MeshStandardMaterial({ color: '#c8ccd8', emissive: '#ffe066', emissiveIntensity: 1.3, metalness: 0.9, roughness: 0.2 }));
+    case 'dawnbringer': return swordModel(0.44, 0.04, new THREE.MeshStandardMaterial({ color: '#f4e2a0', emissive: '#ffd36a', emissiveIntensity: 1.6, metalness: 0.9, roughness: 0.2 }));
+    case 'bloodthirst': return swordModel(0.56, 0.055, new THREE.MeshStandardMaterial({ color: '#2a0a10', emissive: '#d0203a', emissiveIntensity: 1.3, metalness: 0.8, roughness: 0.3 }), 0.16, 0.18);
     case 'wardenBlade': return swordModel(0.6, 0.06, new THREE.MeshStandardMaterial({ color: '#9fb4c0', metalness: 0.8, roughness: 0.25, emissive: '#2a6c80', emissiveIntensity: 1.1 }), 0.17, 0.2);
     case 'eel': {
       const g = new THREE.Group(), segs = [], body = new THREE.MeshStandardMaterial({ color: '#2f6f6a', emissive: '#4fe0ff', emissiveIntensity: 0.7, roughness: 0.2 });
@@ -1709,6 +1811,7 @@ function dressHuman() {
   const w = eq.weapon, wItem = w ? ITEMS[w] : null;
   H.bow = w === 'shortbow'; H.two = !!wItem && wItem.twoHanded && !H.bow; H.shield = !!eq.shield; H.eel = null;
   const held = weaponModel(w);
+  H.held = held;
   if (held) { const mount = new THREE.Group(); mount.add(held); add(H.handR, mount); H.mount = mount; H.eel = held.userData.eel || null; }
   if (H.bow) { const mount = new THREE.Group(), bw = bowModel(); bw.rotation.y = 0.5; mount.add(bw); add(H.handL, mount); H.bowMount = mount;
     const quiver = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.03, 0.24, 10), leather); quiver.position.set(0.06, 0.14, -0.11); quiver.rotation.z = -0.35; add(H.torso, quiver);
@@ -1735,7 +1838,9 @@ function dressModel() {
   const eq = state.char.equipped, P = heroParts;
   if (P.cloth) P.cloth.material.color.set(state.char.color);
   if (P.blade) {
-    const looks = { whisper: ['#3a2450', '#8a4fd0', 1.6], eel: ['#2f6f6a', '#4fe0ff', 0.9], sunder: ['#e8fbff', '#bfefff', 2.2], wardenBlade: ['#9fb4c0', '#2a6c80', 1.1] };
+    const looks = { whisper: ['#3a2450', '#8a4fd0', 1.6], eel: ['#2f6f6a', '#4fe0ff', 0.9], sunder: ['#e8fbff', '#bfefff', 2.2], wardenBlade: ['#9fb4c0', '#2a6c80', 1.1],
+      flametongue: ['#5a2a10', '#ff6a1a', 1.8], frostbrand: ['#d8f4ff', '#6fc8ff', 0.9], venomFang: ['#2a4a1a', '#6fdc3a', 1.2], stormblade: ['#c8ccd8', '#ffe066', 1.3],
+      dawnbringer: ['#f4e2a0', '#ffd36a', 1.6], bloodthirst: ['#2a0a10', '#d0203a', 1.3] };
     const [c, e, k] = looks[eq.weapon] || ['#c2c9d1', '#000000', 0];
     P.blade.material.color.set(c); P.blade.material.emissive.set(e); P.blade.material.emissiveIntensity = k;
     P.blade.visible = !!eq.weapon && eq.weapon !== 'shortbow';
@@ -3018,9 +3123,9 @@ function kegBlast(c) {
     refresh(); save();
   });
 }
-function summonDead(lich) {
+function summonDead(lich, type = 'skeleton') {
   const raised = state.creatures.filter(c => c.alive && c.summoned).length;
-  if (raised >= 4) return;
+  if (raised >= (type === 'spider' ? 2 : 4)) return;
   const spots = [];
   for (let dz = -2; dz <= 2; dz++) for (let dx = -2; dx <= 2; dx++) {
     const x = lich.x + dx, z = lich.z + dz;
@@ -3029,14 +3134,15 @@ function summonDead(lich) {
   spots.sort(() => Math.random() - 0.5);
   let id = Math.max(0, ...state.creatures.map(c => c.id)) + 1;
   for (const s of spots.slice(0, 2)) {
-    const c = { id: id++, type: 'skeleton', x: s.x, z: s.z, hp: MONSTERS.skeleton.hp, alive: true, aware: true, restrained: false, summoned: true };
+    const c = { id: id++, type, x: s.x, z: s.z, hp: MONSTERS[type].hp, alive: true, aware: true, restrained: false, summoned: true };
     state.creatures.push(c); buildCreature(c);
     const p = worldOf(s.x, s.z);
     burst(glow, 40, () => ({ p: [p.x + rnd(-.3, .3), p.y + .05, p.z + rnd(-.3, .3)], v: [0, rnd(.8, 2), 0], life: rnd(.5, 1), s: [.08, .01], c0: hdr('#a0ffd8', 5), c1: hdr('#20a080', 1), a: 1 }));
   }
   SFX.rattle(1.4); shakeCam(0.15);
-  addLog('hit', `<b>${MONSTERS[lich.type].name} raises the dead!</b> Skeletons claw their way out of the floor.`);
-  toast('The lich raises the dead!');
+  const what = { skeleton: 'raises the dead! Skeletons claw their way out of the floor.', zombie: 'calls the drowned! Corpses heave themselves out of the water.', spider: 'shrieks, and her brood drops from the ceiling!' }[type];
+  addLog('hit', `<b>${MONSTERS[lich.type].name} ${what}</b>`);
+  toast(`${MONSTERS[lich.type].name} ${what.split('!')[0]}!`);
   applyFog();
 }
 
@@ -3219,8 +3325,9 @@ function buildFireProp(i, x, z, ch, p, r) {
 function descend() {
   const next = MAPS[MAP.next];
   showModal(next.floor ? `Floor ${next.floor}: ${next.name}` : next.name, `<p>${esc(MAP.stairsText || 'The stairs wind down into the dark.')}</p>
-    <p class="muted">You keep your hit points, gear and gold. Spell slots come back as you catch your breath on the stairs.</p>`, [
+    <p class="muted">You keep your hit points, gear and gold. Your mana comes back as you catch your breath on the stairs.</p>`, [
     { label: 'Descend', primary: true, fn: () => {
+      for (const m of state.party) m.char.mp = maxMpOf(m.char);
       const st = freshState(MAP.next, partyChars());
       st.partyMode = state.partyMode; st.party.forEach((m, i) => { m.heroId = state.party[i].heroId; });
       st.stats = { ...state.stats }; st.danger = { steps: 0, noise: 0, waves: 0, rests: state.danger?.rests || 0 };
@@ -3321,6 +3428,7 @@ function onHeroStep(cell) {
   computeVisibility(); applyFog();
   SFX.step();
   const wasExploring = exploring();
+  if (wasExploring && (state.stepCount = (state.stepCount || 0) + 1) % 4 === 0) for (const m of state.party) if (m.char.hp > 0) restoreMp(m.char, 1);
   const rose = riseCheck();
   if ((wakeCreatures() || rose) && wasExploring) { startCombat(); stop = true; }
   if (rose) stop = true;
@@ -3355,6 +3463,7 @@ function wakeCreatures() {
     const names = [...new Set(woke.map(c => MONSTERS[c.type].name))].join(', ');
     addLog('hit', `<b>${names}</b> ${woke.length > 1 ? 'spot' : 'spots'} you!`);
     for (const c of woke) floatText('!', creatureTop(c), 'crit');
+    const boss = woke.find(c => MONSTERS[c.type].boss); if (boss) bossIntro(boss);
     for (const t of new Set(woke.map(c => c.type))) SFX.alert(t);
   }
   return woke.length > 0;
@@ -3440,8 +3549,8 @@ function makeCamp() {
     D.waves = Math.min(D.waves, 3);
     if (spawnWanderers(3, 8, 'You jolt awake with only half a rest behind you.')) startCombat();
   } else {
-    for (const m of state.party) { m.char.hp = maxHpOf(m.char); m.char.slots = freshSlots(); }
-    addLog('heal', `<b>You make camp in the dark</b> and sleep in fits. Nothing finds you: full HP and spell slots. <span class="r">d6 ${r}</span>`);
+    for (const m of state.party) { m.char.hp = maxHpOf(m.char); m.char.mp = maxMpOf(m.char); }
+    addLog('heal', `<b>You make camp in the dark</b> and sleep in fits. Nothing finds you: full HP and mana. <span class="r">d6 ${r}</span>`);
     toast('You rest undisturbed. Each camp is riskier than the last.');
   }
   refresh(); save();
@@ -3451,7 +3560,9 @@ const roomAt = (x, z) => (MAP.rooms || []).find(r => x >= r.x0 && x <= r.x1 && z
 function enterRoom(x, z) {
   const r = roomAt(x, z), seen = (state.seenRooms ||= []);
   if (!r || seen.includes(r.name)) return;
-  seen.push(r.name); narrate(r.name, r.text);
+  seen.push(r.name);
+  if (r.boss && state.creatures.some(c => c.alive && MONSTERS[c.type].boss && c.x >= r.x0 && c.x <= r.x1 && c.z >= r.z0 && c.z <= r.z1)) { addLog('sys', `<b>${r.name}.</b> <i>${r.text}</i>`); bossCheckRoom(r); return; }
+  narrate(r.name, r.text);
 }
 function narrate(title, text) {
   $('narrT').textContent = title; $('narrP').textContent = text;
@@ -3478,7 +3589,7 @@ const partyAt = (x, z) => state.party.some(m => m.pos.x === x && m.pos.z === z);
 const partyUp = () => state.party.some(m => m.char.hp > 0);
 const partyChars = () => state.party.map(m => m.char);
 const firstUp = () => state.party.findIndex(m => m.char.hp > 0);
-const freshTurn = c => ({ move: Math.floor(c.speed / 5), action: true });
+const freshTurn = c => { let mv = Math.floor(c.speed / 5) + (c.status?.some(s => s.id === 'hasted') ? 3 : 0); if (c.status?.some(s => s.id === 'chilled')) mv = Math.floor(mv / 2); return { move: mv, action: true }; };
 // a painted copy of an adventurer's mini, posed and dressed as they are now
 function snapshotMember(idx) {
   const keep = state.active, saved = [anim, lunge, castT, heroFlash];
@@ -3527,12 +3638,12 @@ function switchTo(idx, { cam = true } = {}) {
 function clickAlly(id) {
   const idx = state.party.findIndex(m => m.id === id), m = state.party[idx]; if (!m || busy || anim) return;
   if (m.char.hp <= 0) return approach(m.pos.x, m.pos.z, () => helpAlly(idx));
-  if (!exploring() && state.partyMode === 'turns') return toast(`It's ${state.char.name}'s turn. ${m.char.name} acts after.`);
+  if (!exploring()) return toast(`It's ${state.char.name}'s turn. ${m.char.name} acts on their initiative.`);
   switchTo(idx);
 }
 function cycleMember() {
   if (state.party.length < 2 || busy || anim) return;
-  if (!exploring() && state.partyMode === 'turns') return toast(`Turns go in order: it's ${state.char.name}'s turn.`);
+  if (!exploring()) return toast(`Initiative decides who acts: it's ${state.char.name}'s turn.`);
   for (let k = 1; k < state.party.length; k++) { const i = (state.active + k) % state.party.length; if (state.party[i].char.hp > 0) return switchTo(i); }
 }
 // get a fallen friend back on their feet: a potion if you carry one, otherwise a hard shake
@@ -3564,11 +3675,11 @@ function memberDown() {
   addLog('hit', `<b>${c.name} falls unconscious!</b> Get them up with a potion (click them from next to them), or win the fight and they'll come round.`);
   toast(`${c.name} is down!`);
   state.party[state.active].done = true;
-  if (busy) return;   // the enemy turn carries on and picks a new target
+  if (busy) return;   // a monster's turn carries on and picks a new target
   after(0.9, () => {
     if (state.char.hp > 0 || state.over) return;
-    const next = state.partyMode === 'turns' && !exploring() ? state.party.findIndex(m => !m.done && m.char.hp > 0) : firstUp();
-    if (next >= 0) switchTo(next); else if (!exploring()) endTurn();
+    if (state.combat && !exploring()) return endTurn();
+    const next = firstUp(); if (next >= 0) switchTo(next);
   });
 }
 // who a monster goes for: the closest adventurer still standing, the weakest on a tie
@@ -3644,13 +3755,476 @@ function hireCompanion() {
   return h;
 }
 
-function startCombat() {
-  for (const m of state.party) { m.turn = freshTurn(m.char); m.done = m.char.hp <= 0; }
-  for (const v of allyViews.values()) if (v.anim) v.anim.t = 1e3;   // followers snap into place
-  addLog('sys', '<b>Combat!</b> Your turn: move up to 30 ft and take one action, then end your turn.');
-  toast('Combat! Your turn.');
-  camToHero(0.9);
+
+/* ================================================================== *
+ * BUFFS AND DEBUFFS — statuses on adventurers (char.status) and monsters (c.status)
+ * ================================================================== */
+const STATUS = {
+  burning:   { name: 'Burning', icon: '♨', color: '#ff7a2a', bad: true, desc: '1d6 fire at the start of each turn.' },
+  poisoned:  { name: 'Poisoned', icon: '☣', color: '#8fdc5a', bad: true, desc: '1d4 poison each turn and -2 to attack rolls.' },
+  bleeding:  { name: 'Bleeding', icon: '✚', color: '#e0405a', bad: true, desc: '1d4 damage at the start of each turn.' },
+  chilled:   { name: 'Chilled', icon: '❄', color: '#9fe4ff', bad: true, desc: 'Half movement and -1 AC.' },
+  stunned:   { name: 'Stunned', icon: '✶', color: '#ffe066', bad: true, desc: 'Loses its next turn.' },
+  weakened:  { name: 'Weakened', icon: '↓', color: '#b0a8a0', bad: true, desc: 'Deals half damage.' },
+  hexed:     { name: 'Hexed', icon: '✠', color: '#b07cff', bad: true, desc: 'Takes an extra 1d6 necrotic from every hit.' },
+  blessed:   { name: 'Blessed', icon: '✦', color: '#ffd36a', desc: '+2 to attack rolls and saving throws.' },
+  hasted:    { name: 'Hasted', icon: '»', color: '#7ad8ff', desc: '+15 ft movement and +2 AC.' },
+  shielded:  { name: 'Warded', icon: '◈', color: '#8ab8ff', desc: '+4 AC.' },
+  regen:     { name: 'Regenerating', icon: '❦', color: '#7ff0a0', desc: 'Heals 1d6 at the start of each turn.' },
+  empowered: { name: 'Empowered', icon: '▲', color: '#ff9a5a', desc: '+1d6 damage on weapon hits.' },
+};
+const stList = t => (t.status ||= []);
+const hasSt = (t, id) => !!t?.status?.some(s => s.id === id);
+const isHeroT = t => !!t.abilities;   // characters have ability scores, monsters don't
+// where a status-bearer stands in the world, for floating text and particles
+function stPos(t) {
+  if (!isHeroT(t)) { const v = views.get(t.id); return v ? v.g.position.clone() : null; }
+  const i = state.party.findIndex(m => m.char === t); if (i < 0) return null;
+  if (i === state.active) return hero.position.clone();
+  return allyViews.get(state.party[i].id)?.g.position.clone() || worldOf(state.party[i].pos.x, state.party[i].pos.z);
 }
+const tName = t => isHeroT(t) ? t.name : foeName(MONSTERS[t.type]);
+function addStatus(t, id, rounds) {
+  if (!t || (isHeroT(t) ? t.hp <= 0 : !t.alive)) return;
+  const S = STATUS[id], list = stList(t), cur = list.find(s => s.id === id);
+  if (cur) cur.rounds = Math.max(cur.rounds, rounds); else list.push({ id, rounds });
+  const p = stPos(t);
+  if (p) {
+    floatText(`${S.icon} ${S.name}`, p.clone().add(new THREE.Vector3(0, 1.45, 0)), S.bad ? 'dmg' : 'heal');
+    const c = new THREE.Color(S.color);
+    burst(glow, 40, () => { const a = Math.random() * 6.283; return { p: [p.x + Math.cos(a) * .45, p.y + .1, p.z + Math.sin(a) * .45], v: [0, rnd(.6, 1.8), 0], life: rnd(.5, 1), s: [.07, .01], c0: [c.r * 4, c.g * 4, c.b * 4], c1: [c.r, c.g, c.b], a: 1 }; });
+  }
+  addLog(S.bad ? 'hit' : 'spell', `${tName(t).replace(/^t/, 'T')} is <b style="color:${S.color}">${S.name.toLowerCase()}</b> (${rounds} round${rounds > 1 ? 's' : ''}).`);
+}
+function clearStatuses() {
+  for (const m of state.party) m.char.status = [];
+  for (const c of state.creatures) c.status = [];
+}
+// monster numbers with their statuses folded in
+const acOf = c => MONSTERS[c.type].ac + (hasSt(c, 'shielded') ? 4 : 0) + (hasSt(c, 'hasted') ? 2 : 0) - (hasSt(c, 'chilled') ? 1 : 0);
+const atkOf = c => (MONSTERS[c.type].atk || 0) + (hasSt(c, 'blessed') ? 2 : 0) - (hasSt(c, 'poisoned') ? 2 : 0);
+const speedOf = c => { const s = MONSTERS[c.type].speed + (hasSt(c, 'hasted') ? 3 : 0); return hasSt(c, 'chilled') ? Math.floor(s / 2) : s; };
+const saveOf = (c, ab) => (MONSTERS[c.type].saves?.[ab] ?? 0) + (hasSt(c, 'blessed') ? 2 : 0);
+function rollFor(t, sides = 6, n = 1) { return sum(roll(n, sides)); }
+// damage or healing from a status at the start of a turn
+function stHarm(t, n, what) {
+  if (isHeroT(t)) { const i = state.party.findIndex(m => m.char === t); if (i >= 0) hurtMember(i, n, what); }
+  else { addLog('hit', `${what}: ${tName(t)} takes <b>${n}</b>.`); damageCreature(t, n, 'dmg'); }
+}
+function stHeal(t, n, what) {
+  if (isHeroT(t)) {
+    const i = state.party.findIndex(m => m.char === t); if (i < 0) return;
+    if (i === state.active) return heal(n, what);
+    t.hp = Math.min(maxHpOf(t), t.hp + n); floatText(`+${n}`, stPos(t).add(new THREE.Vector3(0, 1.2, 0)), 'heal');
+    addLog('heal', `${what}: ${t.name} regains <b>${n}</b> HP.`);
+  } else { t.hp = Math.min(MONSTERS[t.type].hp, t.hp + n); floatText(`+${n}`, creatureTop(t), 'heal'); }
+}
+// returns true when the bearer loses this turn
+function statusTurnStart(t) {
+  let skip = false;
+  for (const s of [...stList(t)]) {
+    if (isHeroT(t) ? t.hp <= 0 : !t.alive) break;
+    if (s.id === 'burning') stHarm(t, rollFor(t, 6), 'Burning');
+    else if (s.id === 'poisoned') stHarm(t, rollFor(t, 4), 'Poison');
+    else if (s.id === 'bleeding') stHarm(t, rollFor(t, 4), 'Bleeding');
+    else if (s.id === 'regen') stHeal(t, rollFor(t, 6), 'Regeneration');
+    else if (s.id === 'stunned') skip = true;
+  }
+  return skip;
+}
+function statusTurnEnd(t) {
+  const list = stList(t);
+  for (const s of [...list]) if (--s.rounds <= 0) { list.splice(list.indexOf(s), 1); addLog('', `${tName(t).replace(/^t/, 'T')} is no longer ${STATUS[s.id].name.toLowerCase()}.`); }
+}
+// particles for every status, every frame
+const _sp = new THREE.Vector3();
+function statusFx(dt) {
+  const each = (t, p, h) => {
+    for (const s of t.status || []) {
+      const c = new THREE.Color(STATUS[s.id].color), c0 = [c.r * 4, c.g * 4, c.b * 4], c1 = [c.r * .8, c.g * .8, c.b * .8];
+      switch (s.id) {
+        case 'burning': stream(glow, 14, dt, () => ({ p: [p.x + rnd(-.18, .18), p.y + rnd(.1, h), p.z + rnd(-.18, .18)], v: [rnd(-.1, .1), rnd(.6, 1.3), rnd(-.1, .1)], life: rnd(.3, .6), s: [.12, .02], c0: hdr('#ffc070', 5), c1: hdr('#ff3000', 1.4), a: .9, turb: 1 })); break;
+        case 'stunned': stream(glow, 6, dt, () => { const a = performance.now() / 300 + Math.random() * 6.28; return { p: [p.x + Math.cos(a) * .22, p.y + h + .15, p.z + Math.sin(a) * .22], v: [0, .05, 0], life: .5, s: [.06, .02], c0, c1, a: 1 }; }); break;
+        case 'chilled': stream(glow, 6, dt, () => ({ p: [p.x + rnd(-.3, .3), p.y + h + .2, p.z + rnd(-.3, .3)], v: [rnd(-.05, .05), -rnd(.2, .5), rnd(-.05, .05)], life: rnd(.8, 1.4), s: [.05, .02], c0, c1, a: .9 })); break;
+        case 'hasted': stream(glow, 8, dt, () => ({ p: [p.x + rnd(-.25, .25), p.y + rnd(.05, .5), p.z + rnd(-.25, .25)], v: [rnd(-.6, .6), 0, rnd(-.6, .6)], life: .3, s: [.05, .0], c0, c1, a: 1 })); break;
+        case 'shielded': stream(glow, 10, dt, () => { const a = Math.random() * 6.28, y = rnd(0, h); return { p: [p.x + Math.cos(a) * .48, p.y + y, p.z + Math.sin(a) * .48], v: [0, .1, 0], life: .5, s: [.05, .0], c0, c1, a: .7 }; }); break;
+        default: stream(glow, 4, dt, () => ({ p: [p.x + rnd(-.25, .25), p.y + rnd(.1, h), p.z + rnd(-.25, .25)], v: [rnd(-.05, .05), rnd(.2, .5), rnd(-.05, .05)], life: rnd(.6, 1.1), s: [.06, .0], c0, c1, a: .9 }));
+      }
+    }
+  };
+  state.party.forEach((m, i) => { if (!m.char.status?.length || m.char.hp <= 0) return; const p = i === state.active ? hero.position : allyViews.get(m.id)?.g.position; if (p) each(m.char, p, 1.1); });
+  for (const c of state.creatures) { if (!c.alive || !c.status?.length) continue; const v = views.get(c.id); if (v && v.g.visible) each(c, v.g.position, v.height * v.g.scale.y); }
+}
+const stIcons = t => (t.status || []).map(s => `<i class="sti" style="--c:${STATUS[s.id].color}" title="${STATUS[s.id].name} (${s.rounds}): ${STATUS[s.id].desc}">${STATUS[s.id].icon}<sub>${s.rounds}</sub></i>`).join('');
+
+/* ================================================================== *
+ * MANA
+ * ================================================================== */
+const maxMpOf = c => 6 + 4 * c.level + 2 * Math.max(0, mod(c.abilities[c.castAbility || 'int']));
+function restoreMp(c, n, why) {
+  const before = c.mp ?? 0; c.mp = Math.min(maxMpOf(c), before + n);
+  return c.mp - before;
+}
+// spells you know grow with your level; free casting (Training Yard) shows them all
+const knownSpells = (c = state.char) => Object.keys(SPELLS).filter(k => freeCast() || (SPELLS[k].unlock || 1) <= c.level);
+
+/* ================================================================== *
+ * INITIATIVE — everyone in the fight rolls d20 + Dex; turns go highest first
+ * ================================================================== */
+const entryOf = () => state.combat?.order[state.combat.i];
+const entryChar = e => state.party.find(m => m.id === e.id);
+function entryAlive(e) {
+  if (e.t === 'h') { const m = entryChar(e); return !!m && m.char.hp > 0; }
+  const c = creatureById(e.id); return !!c && c.alive && c.aware && MONSTERS[c.type].ai !== 'none';
+}
+const entryTarget = e => e.t === 'h' ? entryChar(e)?.char : creatureById(e.id);
+function initFor(t, id, kind) {
+  const r = roll(1, 20)[0], b = kind === 'h' ? mod(t.abilities.dex) : (MONSTERS[t.type].saves?.dex ?? 0);
+  return { t: kind, id, init: r + b, roll: r, bonus: b };
+}
+function sortInsert(order, e) { let i = order.findIndex(o => o.init < e.init); if (i < 0) i = order.length; order.splice(i, 0, e); return i; }
+// newcomers (waking monsters, summons, revived friends) slot into the order as they appear
+function syncOrder() {
+  const cb = state.combat; if (!cb) return;
+  for (const c of state.creatures) {
+    if (!c.alive || !c.aware || MONSTERS[c.type].ai === 'none' || cb.order.some(o => o.t === 'm' && o.id === c.id)) continue;
+    const e = initFor(c, c.id, 'm'), at = sortInsert(cb.order, e);
+    if (at <= cb.i) cb.i++;
+    addLog('sys', `${foeName(MONSTERS[c.type], true)} joins the fight (initiative ${e.init}).`);
+  }
+  for (const m of state.party) if (!cb.order.some(o => o.t === 'h' && o.id === m.id)) { const e = initFor(m.char, m.id, 'h'), at = sortInsert(cb.order, e); if (at <= cb.i) cb.i++; }
+}
+function startCombat() {
+  if (state.combat) return syncOrder();
+  for (const v of allyViews.values()) if (v.anim) v.anim.t = 1e3;   // followers snap into place
+  const order = [];
+  for (const m of state.party) if (m.char.hp > 0) order.push(initFor(m.char, m.id, 'h'));
+  for (const c of state.creatures) if (c.alive && c.aware && MONSTERS[c.type].ai !== 'none') order.push(initFor(c, c.id, 'm'));
+  order.sort((a, b) => b.init - a.init || (a.t === 'h' ? -1 : 1));
+  state.combat = { order, i: -1 };
+  const nm = e => e.t === 'h' ? entryChar(e).char.name : MONSTERS[creatureById(e.id).type].name;
+  addLog('sys', `<b>Combat! Roll for initiative.</b> ${order.map(e => `${nm(e)} <b>${e.init}</b> <span class="r">(d20 ${e.roll}${fmt(e.bonus)})</span>`).join(', ')}.`);
+  toast('Roll for initiative!');
+  SFX.sting();
+  busy = true; refresh();
+  const kick = () => (anim || $('vs').classList.contains('on')) ? after(0.25, kick) : (busy = false, nextTurn());
+  after(0.9, kick);
+}
+function endCombat() {
+  if (!state.combat) return;
+  state.combat = null; busy = false;
+  clearStatuses();
+  for (const m of state.party) { m.turn = freshTurn(m.char); m.done = false; }
+  refresh();
+}
+async function nextTurn() {
+  const cb = state.combat; if (!cb || state.over) return;
+  if (exploring()) return endCombat();
+  syncOrder();
+  let guard = 0;
+  do {
+    cb.i++;
+    if (cb.i >= cb.order.length) {
+      cb.i = 0; state.round++;
+      await roundEffects();
+      if (!state.combat || state.over) return;
+      if (exploring()) return endCombat();
+      addLog('sys', `<b>Round ${state.round}.</b>`);
+    }
+  } while (!entryAlive(cb.order[cb.i]) && ++guard < 100);
+  const cur = cb.order[cb.i];
+  cb.order = cb.order.filter(e => e === cur || e.t === 'h' || entryAlive(e));   // the fallen leave the order
+  cb.i = cb.order.indexOf(cur);
+  await beginTurn(cb.order[cb.i]);
+}
+async function beginTurn(e) {
+  const t = entryTarget(e); if (!t) return nextTurn();
+  if (e.t === 'h') {
+    const idx = state.party.findIndex(m => m.id === e.id), m = state.party[idx];
+    switchTo(idx);
+    m.turn = freshTurn(m.char); m.done = false;
+    restoreMp(m.char, 1);
+    const skip = statusTurnStart(m.char);
+    if (state.over) return;
+    if (m.char.hp <= 0 || skip) {
+      if (skip) { addLog('hit', `${m.char.name} is stunned and loses the turn.`); toast(`${m.char.name} is stunned!`); }
+      statusTurnEnd(m.char); busy = true; refresh(); await sleep(0.9); busy = false; return nextTurn();
+    }
+    busy = false; refresh(); save();
+    toast(`${m.char.name}'s turn`);
+    return;   // the player acts, then End turn calls nextTurn
+  }
+  const c = t, v = views.get(c.id);
+  busy = true; refresh();
+  const skip = statusTurnStart(c);
+  if (c.alive && !state.over) {
+    if (skip) { addLog('hit', `${foeName(MONSTERS[c.type], true)} is stunned and loses the turn.`); if (v?.g.visible) { camShot(v.g, hero.position, 0.5); await sleep(0.7); } }
+    else {
+      const tgt = targetFor(c);
+      if (tgt >= 0) {
+        if (tgt !== state.active) switchTo(tgt, { cam: false });
+        if (v && v.g.visible) { camShot(v.g, hero.position, 0.7); $('aim').hidden = false; $('aim').style.setProperty('--c', '#d0604b'); $('aim').textContent = `${MONSTERS[c.type].name}'s turn`; await sleep(reduceMotion ? 0.05 : 0.5); }
+        else { $('aim').hidden = false; $('aim').textContent = 'Something moves in the dark…'; }
+        await creatureTurn(c);
+        $('aim').hidden = true;
+      }
+    }
+    if (c.alive) statusTurnEnd(c);
+  }
+  busy = false;
+  if (state.over) return;
+  await sleep(0.15);
+  return nextTurn();
+}
+// lingering spells and other things that happen once a round
+async function roundEffects() {
+  for (const e of state.effects) if (e.type === 'firewall') {
+    const dice = roll(4, 8);
+    for (const c of state.creatures) if (c.alive && e.tiles.some(t => cheb(t, c) <= 1)) spellHit(SPELLS.firewall, c, 'The wall of fire scorches', dice);
+  }
+  for (const e of [...state.effects]) {
+    if (--e.rounds > 0) continue;
+    state.effects.splice(state.effects.indexOf(e), 1);
+    visuals.get(e.id)?.expire(); visuals.delete(e.id);
+    if (e.type === 'vines') for (const w of e.wraps || []) { const c = creatureById(w.id); if (c) c.restrained = false; }
+    addLog('spell', `${SPELLS[e.type].name} ends.`);
+  }
+  for (const c of state.creatures) if (!c.alive && MONSTERS[c.type].respawn) {
+    c.alive = true; c.hp = MONSTERS[c.type].hp; c.restrained = false;
+    addLog('sys', `The ${MONSTERS[c.type].name.toLowerCase()} is propped back up.`);
+  }
+}
+async function endTurn() {
+  if (anim || busy || state.over) return;
+  cancelSpell();
+  if (state.combat && !exploring()) {
+    const e = entryOf();
+    if (e && e.t === 'h') { statusTurnEnd(state.char); if (isCursed()) curseDrain(); }
+    return nextTurn();
+  }
+  if (state.combat) endCombat();
+  // exploring: let a round go by
+  await roundEffects();
+  state.round++;
+  for (const m of state.party) { m.turn = freshTurn(m.char); restoreMp(m.char, 1); }
+  if (isCursed()) curseDrain();
+  refresh(); save();
+}
+
+/* ================================================================== *
+ * THE NEW SPELLS — single targets, buffs for friends, curses for foes
+ * ================================================================== */
+const NEW_SPELLS = {
+  firebolt:  { name: 'Fire Bolt', cost: 1, unlock: 1, shape: 'single', target: 'enemy', range: 24, color: '#ff8a3a', icon: '✺', attack: true, damage: [2, 8], dmgType: 'fire', status: ['burning', 2, 0.35],
+               area: 'one creature', desc: 'Hurl a mote of flame. Spell attack for 2d8 fire. One hit in three sets the target burning for 2 rounds.' },
+  frostray:  { name: 'Ray of Frost', cost: 2, unlock: 1, shape: 'single', target: 'enemy', range: 16, color: '#9fe4ff', icon: '❄', attack: true, damage: [2, 6], dmgType: 'cold', status: ['chilled', 2, 1],
+               area: 'one creature', desc: 'A beam of blue-white cold. Spell attack for 2d6 cold, and the target is chilled for 2 rounds: half movement, -1 AC.' },
+  hex:       { name: 'Hex', cost: 2, unlock: 1, shape: 'single', target: 'enemy', range: 18, color: '#b07cff', icon: '✠', status: ['hexed', 4, 1],
+               area: 'one creature', desc: 'Curse a foe for 4 rounds. Every hit against it deals an extra 1d6 necrotic, from anyone in the party.' },
+  bless:     { name: 'Bless', cost: 2, unlock: 1, shape: 'sphere', size: 2, target: 'ally', range: 6, color: '#ffd36a', icon: '✦', status: ['blessed', 3, 1],
+               area: '10 ft radius', desc: 'Golden light settles on every friend within 10 ft of the point you choose: +2 to attacks and saves for 3 rounds.' },
+  healword:  { name: 'Healing Word', cost: 2, unlock: 1, shape: 'single', target: 'ally', range: 12, color: '#7ff0a0', icon: '✚', heal: [2, 4],
+               area: 'one friend', desc: 'A word of power closes wounds at range: the target regains 2d4 + your Intelligence modifier. Works on fallen friends.' },
+  ward:      { name: 'Arcane Ward', cost: 2, unlock: 1, shape: 'single', target: 'ally', range: 6, color: '#8ab8ff', icon: '◈', status: ['shielded', 3, 1],
+               area: 'one friend', desc: 'A shimmering shell of force: +4 AC for 3 rounds.' },
+  enfeeble:  { name: 'Enfeeble', cost: 2, unlock: 2, shape: 'single', target: 'enemy', range: 12, color: '#b0a8a0', icon: '↓', save: 'con', status: ['weakened', 3, 1],
+               area: 'one creature', desc: 'Drain a foe\'s strength. On a failed Con save it deals half damage for 3 rounds.' },
+  empower:   { name: 'Elemental Weapon', cost: 3, unlock: 2, shape: 'single', target: 'ally', range: 6, color: '#ff9a5a', icon: '▲', status: ['empowered', 3, 1],
+               area: 'one friend', desc: 'Wreathe a friend\'s weapon in raw magic: +1d6 damage on every weapon hit for 3 rounds.' },
+  poison:    { name: 'Poison Cloud', cost: 4, unlock: 2, shape: 'sphere', size: 2, target: 'area', range: 18, color: '#8fdc5a', icon: '☣', save: 'con', damage: [2, 6], dmgType: 'poison', status: ['poisoned', 3, 1],
+               area: '10 ft radius', desc: 'A choking green cloud. Enemies inside take 2d6 poison and are poisoned for 3 rounds; a Con save halves the damage and avoids the poison. Your friends hold their breath.' },
+  haste:     { name: 'Haste', cost: 4, unlock: 2, shape: 'single', target: 'ally', range: 6, color: '#7ad8ff', icon: '»', status: ['hasted', 3, 1],
+               area: 'one friend', desc: 'Time runs fast around a friend: +15 ft movement and +2 AC for 3 rounds.' },
+  regen:     { name: 'Regeneration', cost: 4, unlock: 3, shape: 'single', target: 'ally', range: 6, color: '#7ff0a0', icon: '❦', status: ['regen', 4, 1],
+               area: 'one friend', desc: 'Living green light knits flesh: the target heals 1d6 at the start of each of its turns for 4 rounds.' },
+  hold:      { name: 'Hold Monster', cost: 5, unlock: 4, shape: 'single', target: 'enemy', range: 18, color: '#ffe066', icon: '✶', save: 'wis', status: ['stunned', 1, 1],
+               area: 'one creature', desc: 'Lock a creature in place. On a failed Wis save it is stunned and loses its next turn.' },
+};
+Object.assign(SPELLS, NEW_SPELLS);
+Object.assign(SPELLS.fireball, { cost: 7, unlock: 4, icon: '✹', target: 'area' });
+Object.assign(SPELLS.firewall, { cost: 5, unlock: 3, icon: '▲', target: 'area' });
+Object.assign(SPELLS.icewall, { cost: 5, unlock: 3, icon: '❄', target: 'area' });
+Object.assign(SPELLS.vines, { cost: 3, unlock: 1, icon: '❦', target: 'area' });
+// spellbook order: cheap first
+const SPELL_ORDER = ['firebolt', 'frostray', 'hex', 'bless', 'healword', 'ward', 'vines', 'enfeeble', 'empower', 'poison', 'haste', 'firewall', 'icewall', 'regen', 'fireball', 'hold'];
+{ const re = {}; for (const k of SPELL_ORDER) re[k] = SPELLS[k]; for (const k of Object.keys(SPELLS)) delete SPELLS[k]; Object.assign(SPELLS, re); }
+
+const memberAt = (x, z) => state.party.findIndex(m => m.pos.x === x && m.pos.z === z);
+// a bright mote that arcs from the caster to a friend
+function moteArc(from, to, color) {
+  const c = new THREE.Color(color), d = from.distanceTo(to), dur = 0.25 + d * 0.04, p = new THREE.Vector3(); let t = 0;
+  return new Promise(res => fxList.push({ update(dt) {
+    t += dt; const k = clamp01(t / dur);
+    p.lerpVectors(from, to, k); p.y += Math.sin(k * Math.PI) * (0.4 + d * 0.06);
+    stream(glow, 90, dt, () => ({ p: [p.x + rnd(-.03, .03), p.y, p.z + rnd(-.03, .03)], v: [rnd(-.2, .2), rnd(-.1, .3), rnd(-.2, .2)], life: rnd(.3, .6), s: [.1, .01], c0: [c.r * 5, c.g * 5, c.b * 5], c1: [c.r, c.g, c.b], a: 1 }));
+    if (k >= 1) { res(); return false; } return true;
+  } }));
+}
+// returns a reason it can't be cast there, or null
+function spellTargetError(sp, x, z) {
+  if (sp.shape !== 'single') return null;
+  const foe = creatureAt(x, z), ally = memberAt(x, z);
+  if (sp.target === 'enemy' && (!foe || (MONSTERS[foe.type].object && !sp.attack))) return `${sp.name} needs a creature as its target.`;
+  if (sp.target === 'ally' && ally < 0) return `${sp.name} targets a member of your party (or yourself).`;
+  if (sp.target === 'ally' && !sp.heal && state.party[ally].char.hp <= 0) return `${state.party[ally].char.name} is down. Healing Word can bring them back.`;
+  return null;
+}
+function castMagic(key, x, z, tiles, finish) {
+  const sp = SPELLS[key], d = derived(), from = above(hero, 0.95), to = worldOf(x, z).add(new THREE.Vector3(0, 0.6, 0));
+  const provoke = c => { if (MONSTERS[c.type].ai !== 'none' && !c.aware) { const was = exploring(); c.aware = true; if (was) startCombat(); } };
+  if (sp.shape === 'single' && sp.target === 'enemy') {
+    const c = creatureAt(x, z);
+    return shootBolt(from, creatureTop(c).add(new THREE.Vector3(0, -0.25, 0)), sp.color).then(() => {
+      const name = foeName(MONSTERS[c.type]);
+      if (sp.attack) {
+        const r = roll(1, 20)[0], total = r + d.spellAtk, crit = r === 20, hit = crit || (r !== 1 && total >= acOf(c));
+        const txt = `<span class="r">spell attack d20 ${r} ${fmt(d.spellAtk)} = ${total} vs AC ${acOf(c)}</span>`;
+        if (!hit) { floatText('Miss', creatureTop(c), 'miss'); addLog('spell', `${sp.name} misses ${name}. ${txt}`); provoke(c); return finish(); }
+        let dmg = sum(roll(sp.damage[0] * (crit ? 2 : 1), sp.damage[1]));
+        if (hasSt(c, 'hexed')) dmg += rollFor(c, 6);
+        addLog('spell', `<b>${sp.name}</b> hits ${name} for <b>${dmg}</b> ${sp.dmgType}${crit ? ' (critical!)' : ''}. ${txt}`);
+        damageCreature(c, dmg, sp.dmgType === 'cold' ? 'cold' : 'dmg');
+        if (c.alive && sp.status && Math.random() < sp.status[2]) addStatus(c, sp.status[0], sp.status[1]);
+      } else if (sp.save) {
+        const r = roll(1, 20)[0], b = saveOf(c, sp.save), saved = r + b >= d.spellDc;
+        addLog('spell', `${sp.name}: ${name} makes a ${sp.save.toUpperCase()} save. <span class="r">d20 ${r}${fmt(b)} = ${r + b} vs DC ${d.spellDc}: ${saved ? 'success' : 'fail'}</span>`);
+        provoke(c);
+        if (saved) floatText('Resisted', creatureTop(c), 'miss'); else addStatus(c, sp.status[0], sp.status[1]);
+      } else { provoke(c); addStatus(c, sp.status[0], sp.status[1]); }
+      SFX.hit(); finish();
+    });
+  }
+  if (sp.shape === 'single' && sp.target === 'ally') {
+    const i = memberAt(x, z), m = state.party[i];
+    return moteArc(from, (i === state.active ? hero.position : (allyViews.get(m.id)?.g.position || to)).clone().add(new THREE.Vector3(0, 0.8, 0)), sp.color).then(() => {
+      if (sp.heal) {
+        const n = sum(roll(...sp.heal)) + Math.max(0, mod(state.char.abilities.int));
+        if (i === state.active) heal(n, sp.name);
+        else { const was = m.char.hp; m.char.hp = Math.min(maxHpOf(m.char), Math.max(0, m.char.hp) + n); floatText(`+${n}`, worldOf(m.pos.x, m.pos.z).add(new THREE.Vector3(0, 1.2, 0)), 'heal'); addLog('heal', `${sp.name}: ${m.char.name} regains <b>${n}</b> HP.`); if (was <= 0) buildAllies(); }
+      } else addStatus(m.char, sp.status[0], sp.status[1]);
+      SFX.coins(); finish();
+    });
+  }
+  // areas: bless (friends) and poison cloud (foes)
+  const inTiles = p => tiles.some(t => t.x === p.x && t.z === p.z), c0 = new THREE.Color(sp.color);
+  burst(smoke, key === 'poison' ? 120 : 30, () => { const t = tiles[Math.floor(Math.random() * tiles.length)], w = worldOf(t.x, t.z); return { p: [w.x + rnd(-.4, .4), w.y + rnd(.1, .6), w.z + rnd(-.4, .4)], v: [rnd(-.2, .2), rnd(.05, .4), rnd(-.2, .2)], life: rnd(1.5, 3), s: [.5, 1.4], c0: [c0.r * .7, c0.g * .7, c0.b * .7], c1: [c0.r * .3, c0.g * .3, c0.b * .3], a: .45, drag: 1 }; });
+  burst(glow, 60, () => { const t = tiles[Math.floor(Math.random() * tiles.length)], w = worldOf(t.x, t.z); return { p: [w.x + rnd(-.4, .4), w.y + .1, w.z + rnd(-.4, .4)], v: [0, rnd(.4, 1.4), 0], life: rnd(.6, 1.2), s: [.08, .01], c0: [c0.r * 4, c0.g * 4, c0.b * 4], c1: [c0.r, c0.g, c0.b], a: 1 }; });
+  after(0.5, () => {
+    if (sp.target === 'ally') state.party.forEach(m => { if (m.char.hp > 0 && inTiles(m.pos)) addStatus(m.char, sp.status[0], sp.status[1]); });
+    else {
+      const dice = roll(...sp.damage);
+      for (const c of state.creatures) {
+        if (!c.alive || !inTiles(c) || MONSTERS[c.type].object) continue;
+        const r = roll(1, 20)[0], b = saveOf(c, sp.save), saved = r + b >= d.spellDc, dmg = saved ? Math.floor(sum(dice) / 2) : sum(dice);
+        addLog('spell', `${sp.name} chokes ${foeName(MONSTERS[c.type])} for <b>${dmg}</b> poison. <span class="r">${sp.save.toUpperCase()} save ${r + b} vs DC ${d.spellDc}: ${saved ? 'success' : 'fail'}</span>`);
+        damageCreature(c, dmg, 'dmg');
+        if (c.alive && !saved) addStatus(c, sp.status[0], sp.status[1]);
+      }
+    }
+    finish();
+  });
+}
+
+/* ================================================================== *
+ * MAGIC WEAPONS AND ARROWS
+ * ================================================================== */
+const UNDEAD = new Set(['skeleton', 'zombie', 'wraith', 'lich', 'warden', 'abbot']);
+// extra damage when an adventurer lands a weapon hit
+function heroHitBonus(c, w, ammo, crit, dmg, extraTxt) {
+  const add = (n, d, type) => { const ex = roll(n * (crit ? 2 : 1), d); dmg += sum(ex); extraTxt += ` + [${ex.join(', ')}] ${type}`; };
+  if (ammo?.extra) add(...ammo.extra);
+  if (w.undeadBane && UNDEAD.has(c.type)) add(...w.undeadBane);
+  if (hasSt(state.char, 'empowered')) add(1, 6, 'arcane');
+  if (hasSt(c, 'hexed')) add(1, 6, 'necrotic (hex)');
+  if (hasSt(state.char, 'weakened')) { dmg = Math.max(1, Math.floor(dmg / 2)); extraTxt += ' (weakened: half)'; }
+  return { dmg, extraTxt };
+}
+function heroHitAfter(c, w, ammo, dmg) {
+  for (const src of [w, ammo]) if (src?.onHit && c.alive && Math.random() < (src.onHit.chance ?? 1)) addStatus(c, src.onHit.status, src.onHit.rounds);
+  if (w.lifesteal) { const n = Math.max(1, Math.floor(dmg * w.lifesteal)); heal(n, `${w.name} drinks deep`); }
+}
+// sparks, frost or flame streaming off an enchanted blade in the hero's hand
+const _tip = new THREE.Vector3();
+function weaponFx(dt) {
+  const k = state.char?.equipped?.weapon, it = k && ITEMS[k];
+  if (!it?.fx || !human?.held || !human.root.visible || !hero.visible) return;
+  const c = new THREE.Color(it.fx);
+  for (const y of [0.12, 0.25, 0.38]) {
+    human.held.localToWorld(_tip.set(0, y, 0));
+    const p = _tip.clone();
+    stream(glow, 7, dt, () => ({ p: [p.x + rnd(-.02, .02), p.y, p.z + rnd(-.02, .02)], v: [rnd(-.05, .05), rnd(.15, .5), rnd(-.05, .05)], life: rnd(.25, .55), s: [.06, .0], c0: [c.r * 5, c.g * 5, c.b * 5], c1: [c.r, c.g, c.b], a: 1, turb: .5 }));
+  }
+}
+
+/* ================================================================== *
+ * BOSSES: a versus card when you first meet one
+ * ================================================================== */
+function bossIntro(c) {
+  const m = MONSTERS[c.type];
+  if (!m.boss || !playing()) return;
+  const seen = (state.bossSeen ||= []); if (seen.includes(c.id)) return;
+  seen.push(c.id);
+  const v = views.get(c.id);
+  $('vsL').innerHTML = state.party.filter(p => p.char.hp > 0).map(p => `<div class="vs-hero"><span class="por" style="--c:${esc(p.char.color)}">${esc(p.char.name[0])}</span><b>${esc(p.char.name)}</b><small>Level ${p.char.level}</small></div>`).join('');
+  $('vsR').innerHTML = `<div class="vs-boss"><small>${esc(m.epithet || 'A deadly foe')}</small><b>${esc(m.name)}</b><span>${m.hp} HP · AC ${m.ac}</span></div>`;
+  const el = $('vs'); el.hidden = false; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+  SFX.alert(c.type); SFX.boom(); shakeCam(0.35);
+  if (v) camShot(v.g, hero.position, 1.1);
+  const done = () => { el.classList.remove('on'); el.hidden = true; el.onclick = null; };
+  el.onclick = done;
+  after(reduceMotion ? 1.6 : 3.4, done);
+  addLog('hit', `<b>${m.name}</b>, ${m.epithet || 'a deadly foe'}, bars the way!`);
+}
+function bossCheckRoom(room) {
+  if (!room?.boss) return;
+  const c = state.creatures.find(c => c.alive && MONSTERS[c.type].boss && c.x >= room.x0 && c.x <= room.x1 && c.z >= room.z0 && c.z <= room.z1);
+  if (c) bossIntro(c);
+}
+
+/* --- more minis: the bosses --- */
+Object.assign(MODELS, {
+  wolfRider(p) {
+    const w = new THREE.Group(); MODELS.wolf(w); w.scale.setScalar(1.35); p.add(w);
+    const g = new THREE.Group(); MODELS.goblin(g, true); g.position.set(0, 0.5, -0.05); g.scale.setScalar(0.9); p.add(g);
+    const saddle = new THREE.Mesh(unitBox, mat('#5a3a20')); saddle.scale.set(0.3, 0.06, 0.3); saddle.position.set(0, 0.62, -0.05); p.add(saddle);
+    return 1.2;
+  },
+  spiderQueen(p) {
+    const s = new THREE.Group(); MODELS.spider(s); s.scale.setScalar(1.6); p.add(s);
+    const sac = mat('#e8e2d0', { roughness: 0.6 });
+    for (let n = 0; n < 5; n++) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.07 + Math.random() * 0.03, 10, 8), sac); e.position.set((Math.random() - 0.5) * 0.4, 0.92 + Math.random() * 0.1, -0.45 + Math.random() * 0.2); p.add(e); }
+    for (let n = 0; n < 5; n++) { const sp = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.16, 5), mat('#8a1a12')); const a = n / 5 * 6.283; sp.position.set(Math.sin(a) * 0.14, 0.72, 0.15 + Math.cos(a) * 0.14); p.add(sp); }
+    return 1.1;
+  },
+  abbot(p) {
+    const z = new THREE.Group(); MODELS.zombie(z); z.scale.setScalar(1.25); p.add(z);
+    const robe = mat('#3a4a3a', { side: THREE.DoubleSide, roughness: 1 }), gold = mat('#a8873a', { metalness: 0.9, roughness: 0.35 });
+    const cloak = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.9, 14, 1, true), robe); cloak.position.y = 0.5; p.add(cloak);
+    const mitre = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.32, 4), mat('#d8d0b8')); mitre.position.set(0.04, 1.27, 0.12); mitre.rotation.z = 0.35; p.add(mitre);
+    const band = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.012, 6, 14), gold); band.rotation.x = Math.PI / 2; band.position.set(0.02, 1.14, 0.12); p.add(band);
+    const chain = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.01, 6, 20), gold); chain.position.set(0, 0.95, 0.16); chain.rotation.x = 0.3; p.add(chain);
+    return 1.5;
+  },
+  highPriest(p) {
+    const c = new THREE.Group(); MODELS.cultist(c); c.scale.setScalar(1.15); p.add(c);
+    const gold = mat('#c9a24a', { metalness: 0.9, roughness: 0.3 });
+    const halo = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.015, 6, 30), new THREE.MeshBasicMaterial({ color: hdrColor('#7dff8a', 3) })); halo.position.set(0, 1.28, -0.12); p.add(halo);
+    const collar = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.025, 6, 20), gold); collar.rotation.x = Math.PI / 2; collar.position.y = 0.9; p.add(collar);
+    const orb = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 8), new THREE.MeshBasicMaterial({ color: hdrColor('#7dff8a', 6) })); orb.position.set(0.28, 1.5, 0.17); orb.userData.noShadow = true; p.add(orb);
+    return 1.4;
+  },
+});
+// a priest's blessing on the faithful around it
+function blessAllies(c) {
+  const v = views.get(c.id), p = v?.g.position;
+  let n = 0;
+  for (const o of state.creatures) if (o.alive && o.aware && cheb(o, c) <= 5 && MONSTERS[o.type].ai !== 'none') { addStatus(o, 'blessed', 3); if (o !== c) n++; }
+  addStatus(c, 'shielded', 2);
+  if (p) burst(glow, 80, () => { const a = Math.random() * 6.283, r = rnd(.2, 3); return { p: [p.x + Math.cos(a) * r, p.y + .1, p.z + Math.sin(a) * r], v: [0, rnd(.8, 2), 0], life: rnd(.6, 1.2), s: [.08, .01], c0: hdr('#ffe08a', 5), c1: hdr('#ffb020', 1), a: 1 }; });
+  addLog('hit', `<b>${MONSTERS[c.type].name}</b> calls on the Pale Crown: ${n ? 'its servants are blessed' : 'it wraps itself in a ward'}!`);
+  SFX.sting();
+}
+
 function checkFightOver(wasCombat) {
   if (wasCombat && exploring()) {
     makeNoise(1);
@@ -3658,6 +4232,7 @@ function checkFightOver(wasCombat) {
     for (const m of up) { m.char.hp = 1; addLog('heal', `${m.char.name} groans and gets back up (1 HP).`); }
     for (const m of state.party) m.done = false;
     if (up.length) { if (state.char.hp <= 0) state.char.hp = 1; buildAllies(); }
+    endCombat();
     addLog('sys', 'The fight is over. You can move freely again.');
     toast('The fight is over.');
   }
@@ -3746,6 +4321,7 @@ function readTablet() {
 const sleep = s => new Promise(r => after(s, r));
 function shootProjectile(from, to, kind) {
   if (kind === 'bolt') return shootBolt(from, to);
+  let trail = null; if (kind.startsWith('arrow:')) { trail = new THREE.Color(kind.slice(6)); kind = 'arrow'; }
   const len = kind === 'arrow' ? 0.4 : 0.2;
   const g = new THREE.Group();
   const shaft = new THREE.Mesh(unitBox, mat(kind === 'arrow' ? '#7a5a3a' : '#3a3a3a', { metalness: kind === 'arrow' ? 0 : 0.6 })); shaft.scale.set(0.02, 0.02, len);
@@ -3757,6 +4333,7 @@ function shootProjectile(from, to, kind) {
     t += dt; const k = clamp01(t / dur);
     p.lerpVectors(from, to, k); p.y += Math.sin(Math.PI * k) * arc;
     g.position.copy(p); if (p.distanceToSquared(prev) > 1e-6) g.lookAt(p.clone().add(p.clone().sub(prev))); prev.copy(p);
+    if (trail) stream(glow, 120, dt, () => ({ p: [p.x + rnd(-.03, .03), p.y + rnd(-.03, .03), p.z + rnd(-.03, .03)], v: [rnd(-.2, .2), rnd(0, .4), rnd(-.2, .2)], life: rnd(.25, .5), s: [.09, .01], c0: [trail.r * 5, trail.g * 5, trail.b * 5], c1: [trail.r, trail.g, trail.b], a: 1 }));
     if (k >= 1) {
       g.removeFromParent();
       burst(glow, 8, () => ({ p: [to.x, to.y, to.z], v: [rnd(-1, 1), rnd(0, 1.5), rnd(-1, 1)], life: .3, s: [.04, .01], c0: hdr('#ffe0a0', 4), a: 1 }));
@@ -3766,17 +4343,18 @@ function shootProjectile(from, to, kind) {
   } }));
 }
 // a ball of sickly grave-light with a smoking trail
-function shootBolt(from, to) {
-  const orb = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 8), new THREE.MeshBasicMaterial({ color: hdrColor('#7dffb0', 6) }));
+function shootBolt(from, to, color = '#7dffb0') {
+  const bc = new THREE.Color(color), b0 = [bc.r * 4, bc.g * 4, bc.b * 4], b1 = [bc.r * .5, bc.g * .5, bc.b * .5];
+  const orb = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 8), new THREE.MeshBasicMaterial({ color: bc.clone().multiplyScalar(6) }));
   scene.add(orb);
   const d = from.distanceTo(to), dur = 0.2 + d * 0.05, p = new THREE.Vector3(); let t = 0;
   return new Promise(res => fxList.push({ update(dt) {
     t += dt; const k = clamp01(t / dur);
     p.lerpVectors(from, to, k); p.y += Math.sin(k * Math.PI) * 0.25 + Math.sin(t * 30) * 0.03; orb.position.copy(p);
-    stream(glow, 60, dt, () => ({ p: [p.x + rnd(-.04, .04), p.y + rnd(-.04, .04), p.z + rnd(-.04, .04)], v: [rnd(-.2, .2), rnd(-.1, .3), rnd(-.2, .2)], life: rnd(.25, .5), s: [.1, .01], c0: hdr('#a0ffc8', 4), c1: hdr('#108a50', 1), a: 1 }));
+    stream(glow, 60, dt, () => ({ p: [p.x + rnd(-.04, .04), p.y + rnd(-.04, .04), p.z + rnd(-.04, .04)], v: [rnd(-.2, .2), rnd(-.1, .3), rnd(-.2, .2)], life: rnd(.25, .5), s: [.1, .01], c0: b0, c1: b1, a: 1 }));
     if (k >= 1) {
       orb.removeFromParent(); orb.material.dispose();
-      burst(glow, 40, () => { const v = rndDir().multiplyScalar(rnd(.5, 2.5)); return { p: [to.x, to.y, to.z], v: [v.x, v.y, v.z], life: rnd(.3, .7), s: [.08, .01], c0: hdr('#c0ffe0', 6), c1: hdr('#108a50', 1), a: 1 }; });
+      burst(glow, 40, () => { const v = rndDir().multiplyScalar(rnd(.5, 2.5)); return { p: [to.x, to.y, to.z], v: [v.x, v.y, v.z], life: rnd(.3, .7), s: [.08, .01], c0: b0, c1: b1, a: 1 }; });
       res(); return false;
     }
     return true;
@@ -3979,15 +4557,18 @@ function attack(c) {
     return moveTo(best % W, (best / W) | 0, () => attack(c));
   }
   if (w.ranged && !los(state.pos.x, state.pos.z, c.x, c.z)) return toast('You don\'t have a clear shot.');
+  const ammoKey = w.ranged ? state.char.equipped.ammo : null, ammo = ammoKey && invEntry(ammoKey) ? ITEMS[ammoKey] : null;
+  if (ammo) { removeOne(ammoKey); if (!invEntry(ammoKey)) { state.char.equipped.ammo = null; after(0.8, () => toast(`That was your last ${ammo.name.toLowerCase()}.`)); } }
+  const tac = acOf(c);
   const disadv = w.ranged && dist <= 1, adv = c.restrained;
   const n = adv !== disadv ? 2 : 1, r = roll(n, 20);
   const nat = n === 1 ? r[0] : adv ? Math.max(...r) : Math.min(...r), total = nat + d.atk;
-  const crit = nat === 20, hit = crit || (nat !== 1 && total >= m.ac);
+  const crit = nat === 20, hit = crit || (nat !== 1 && total >= tac);
   state.turn.action = false; faceAt = worldOf(c.x, c.z);
   lungeDir.subVectors(worldOf(c.x, c.z), worldOf(state.pos.x, state.pos.z)).setY(0).normalize();
   if (!w.ranged) lunge = 1;
   const tag = n === 2 ? ` (${adv ? 'adv.' : 'disadv.'} ${r.join(', ')})` : '';
-  const rollTxt = `<span class="r">d20${tag} ${nat} ${fmt(d.atk)} = ${total} vs AC ${m.ac}</span>`;
+  const rollTxt = `<span class="r">d20${tag} ${nat} ${fmt(d.atk)} = ${total} vs AC ${tac}</span>`;
   if (w.ranged) SFX.bow(); else SFX.swing();
   const resolve = () => {
     if (hit) { SFX.hit(); if (c.type === 'skeleton' || c.type === 'warden') SFX.clank(); }
@@ -3998,9 +4579,11 @@ function attack(c) {
       const dice = roll(w.dice[0] * (crit ? 2 : 1), w.dice[1]);
       let dmg = Math.max(1, sum(dice) + d.dmgMod), extraTxt = '';
       if (w.extra) { const ex = roll(w.extra[0] * (crit ? 2 : 1), w.extra[1]); dmg += sum(ex); extraTxt = ` + [${ex.join(', ')}] ${w.extra[2]}`; }
+      ({ dmg, extraTxt } = heroHitBonus(c, w, ammo, crit, dmg, extraTxt));
       addLog(crit ? 'crit' : 'hit', `<b>${crit ? 'Critical hit!' : 'Hit.'}</b> ${w.name} deals <b>${dmg}</b> to ${foeName(m)}. ${rollTxt} <span class="r">dmg [${dice.join(', ')}] ${fmt(d.dmgMod)}${extraTxt}</span>`);
       if (state.char.equipped.weapon === 'eel') { const p = creatureTop(c); burst(glow, 30, () => ({ p: [p.x, p.y - .3, p.z], v: [rnd(-2, 2), rnd(-1, 2), rnd(-2, 2)], life: rnd(.15, .35), s: [.06, .01], c0: hdr('#bff8ff', 9), c1: hdr('#4fe0ff', 2), a: 1 })); }
       damageCreature(c, dmg, crit ? 'crit' : 'dmg');
+      heroHitAfter(c, w, ammo, dmg);
       if (state.char.equipped.weapon === 'whisper' && Math.random() < 1 / 6) {
         const self = roll(1, 4)[0];
         after(0.4, () => { hurtHero(self, 'The Whispering Blade hisses your secrets and bites your hand', 'dmg'); refresh(); });
@@ -4015,7 +4598,7 @@ function attack(c) {
     }
     refresh(); save();
   };
-  if (w.ranged) shootProjectile(above(hero, 0.5), creatureTop(c).add(new THREE.Vector3(0, -0.3, 0)), 'arrow').then(resolve);
+  if (w.ranged) shootProjectile(above(hero, 0.5), creatureTop(c).add(new THREE.Vector3(0, -0.3, 0)), ammo ? `arrow:${ammo.color}` : 'arrow').then(resolve);
   else resolve();
 }
 
@@ -4050,8 +4633,10 @@ function gainXp(n) {   // everyone still standing shares in the victory
     const c = m.char; if (c.hp <= 0) continue;
     c.xp += n;
     while (c.level < 20 && c.xp >= XP_TABLE[c.level]) {
-      const before = maxHpOf(c); c.level++;
-      c.hp += maxHpOf(c) - before;
+      const before = maxHpOf(c), mb = maxMpOf(c); c.level++;
+      c.hp += maxHpOf(c) - before; c.mp = (c.mp ?? 0) + maxMpOf(c) - mb;
+      const learned = Object.keys(SPELLS).filter(k => SPELLS[k].unlock === c.level);
+      if (learned.length) addLog('spell', `${c.name} learns <b>${learned.map(k => SPELLS[k].name).join(', ')}</b>.`);
       addLog('sys', `<b>Level up!</b> ${c.name} is now level ${c.level}.`);
       toast(`${c.name} reaches level ${c.level}! Max HP is now ${maxHpOf(c)}.`);
     }
@@ -4060,10 +4645,10 @@ function gainXp(n) {   // everyone still standing shares in the victory
 
 /* --- enemy turns --- */
 function pickTile(c, scoreFn) {
-  const m = MONSTERS[c.type], r = dijkstra(c.x, c.z, m.speed, c), field = dijkstra(state.pos.x, state.pos.z, Infinity, 'field').dist;
+  const spd = speedOf(c), r = dijkstra(c.x, c.z, spd, c), field = dijkstra(state.pos.x, state.pos.z, Infinity, 'field').dist;
   let best = -1, bestS = Infinity;
   for (let i = 0; i < W * H; i++) {
-    if (!(r.dist[i] <= m.speed)) continue;
+    if (!(r.dist[i] <= spd)) continue;
     const x = i % W, z = (i / W) | 0, s = scoreFn(x, z, r.dist[i], field[i]);
     if (s < bestS) { bestS = s; best = i; }
   }
@@ -4076,7 +4661,9 @@ function walkCreature(c, path) {
 }
 async function creatureTurn(c) {
   const m = MONSTERS[c.type];
-  if (m.summon && (c.turns = (c.turns || 0) + 1) % 3 === 1) { summonDead(c); await sleep(0.6); }
+  c.turns = (c.turns || 0) + 1;
+  if (m.summon && c.turns % 3 === 1) { summonDead(c, typeof m.summon === 'string' ? m.summon : 'skeleton'); await sleep(0.6); }
+  if (m.blessAllies && c.turns % 3 === 1) { blessAllies(c); await sleep(0.6); }
   const inReach = () => cheb(c, state.pos) <= m.range && (m.range === 1 || los(c.x, c.z, state.pos.x, state.pos.z));
   if (!c.restrained) {
     let goal = null;
@@ -4101,14 +4688,19 @@ async function creatureAttack(c) {
   if (m.ai === 'ranged') await shootProjectile(creatureTop(c).add(new THREE.Vector3(0, -0.35, 0)), above(hero, 0.5), m.proj || 'arrow');
   else { v.lunge = 1; await sleep(0.14); }
   const dist = cheb(c, state.pos), disadv = c.restrained || (m.ai === 'ranged' && dist <= 1);
-  const r = roll(disadv ? 2 : 1, 20), nat = disadv ? Math.min(...r) : r[0], total = nat + m.atk;
+  const ak = atkOf(c), r = roll(disadv ? 2 : 1, 20), nat = disadv ? Math.min(...r) : r[0], total = nat + ak;
   const crit = nat === 20, hit = crit || (nat !== 1 && total >= d.ac);
-  const rollTxt = `<span class="r">d20${disadv ? ` (disadv. ${r.join(', ')})` : ''} ${nat} ${fmt(m.atk)} = ${total} vs AC ${d.ac}</span>`;
+  const rollTxt = `<span class="r">d20${disadv ? ` (disadv. ${r.join(', ')})` : ''} ${nat} ${fmt(ak)} = ${total} vs AC ${d.ac}</span>`;
   if (hit) {
-    const dice = roll(m.dmg[0] * (crit ? 2 : 1), m.dmg[1]), dmg = sum(dice) + m.dmg[2];
+    const dice = roll(m.dmg[0] * (crit ? 2 : 1), m.dmg[1]);
+    let dmg = sum(dice) + m.dmg[2];
+    if (hasSt(c, 'weakened')) dmg = Math.max(1, Math.floor(dmg / 2));
+    if (hasSt(state.char, 'hexed')) dmg += rollFor(c, 6);
     heroFlash = 1; shakeCam(m.boss ? 0.2 : 0.08);
+    const victim = state.char;
     hurtHero(dmg, `${foeName(m, true)} ${m.verb}${crit ? ' (critical!)' : ''}`);
     addLog('', rollTxt);
+    if (m.onHit && victim.hp > 0 && Math.random() < (m.onHit.chance ?? 1)) addStatus(victim, m.onHit.status, m.onHit.rounds);
   } else {
     floatText('Miss', above(hero, 1.2), 'miss');
     addLog('', `${foeName(m, true)} ${m.verb} and misses. ${rollTxt}`);
@@ -4145,45 +4737,6 @@ function curseDrain() {
   hurtHero(1, 'The Drowned Crown feeds on you', 'dmg');
   const p = above(hero, 0.85);
   burst(glow, 16, () => ({ p: [p.x, p.y, p.z], v: [rnd(-.5, .5), rnd(.5, 1.2), rnd(-.5, .5)], life: rnd(.5, .9), s: [.06, .01], c0: hdr('#d8a0ff', 5), c1: hdr('#7a2acc', 1.5), a: 1 }));
-}
-
-async function endTurn() {
-  if (anim || busy || state.over) return;
-  cancelSpell();
-  // taking turns: each adventurer acts in order before the monsters go
-  if (!exploring() && state.partyMode === 'turns' && state.party.length > 1) {
-    state.party[state.active].done = true;
-    const next = state.party.findIndex(m => !m.done && m.char.hp > 0);
-    if (next >= 0) { switchTo(next); addLog('sys', `${state.char.name}'s turn.`); toast(`${state.char.name}'s turn`); save(); return; }
-  }
-  const lead = state.active;
-  // lingering spells act at the end of the round
-  for (const e of state.effects) if (e.type === 'firewall') {
-    const dice = roll(4, 8);
-    for (const c of state.creatures) if (c.alive && e.tiles.some(t => cheb(t, c) <= 1)) spellHit(SPELLS.firewall, c, 'The wall of fire scorches', dice);
-  }
-  for (const e of [...state.effects]) {
-    if (--e.rounds > 0) continue;
-    state.effects.splice(state.effects.indexOf(e), 1);
-    visuals.get(e.id)?.expire(); visuals.delete(e.id);
-    if (e.type === 'vines') for (const w of e.wraps || []) { const c = creatureById(w.id); if (c) c.restrained = false; }
-    addLog('spell', `${SPELLS[e.type].name} ends.`);
-  }
-  if (isCursed()) curseDrain();
-  if (!exploring() && partyUp()) await enemyPhase();
-  if (state.over) return;
-  state.round++;
-  for (const m of state.party) { m.turn = freshTurn(m.char); m.done = m.char.hp <= 0; }
-  if (!exploring() && state.party.length > 1) {
-    const first = state.partyMode === 'turns' || state.party[lead].char.hp <= 0 ? firstUp() : lead;
-    if (first >= 0 && first !== state.active) switchTo(first);
-  }
-  for (const c of state.creatures) if (!c.alive && MONSTERS[c.type].respawn) {
-    c.alive = true; c.hp = MONSTERS[c.type].hp; c.restrained = false;
-    addLog('sys', `The ${MONSTERS[c.type].name.toLowerCase()} is propped back up.`);
-  }
-  if (!exploring()) addLog('sys', `Round ${state.round}. ${state.party.length > 1 ? `${state.char.name}'s` : 'Your'} turn.`);
-  refresh(); save();
 }
 
 function rollDie(sides) {
@@ -4261,6 +4814,7 @@ function restartMap(key, char) {
 function templateTiles(key, x, z) {
   const sp = SPELLS[key], out = [];
   const open = (tx, tz) => !isWall(tileAt(tx, tz)) && tx >= 0 && tz >= 0 && tx < W && tz < H;
+  if (sp.shape === 'single') return { tiles: open(x, z) ? [{ x, z }] : [] };
   if (sp.shape === 'sphere' || sp.shape === 'square') {
     for (let dz = -sp.size; dz <= sp.size; dz++) for (let dx = -sp.size; dx <= sp.size; dx++)
       if ((sp.shape === 'square' || dx * dx + dz * dz <= sp.size * sp.size + 1) && open(x + dx, z + dz)) out.push({ x: x + dx, z: z + dz });
@@ -4279,7 +4833,7 @@ function templateTiles(key, x, z) {
 
 function spellHit(sp, c, what, dice) {
   if (!c.alive) return null;
-  const d = derived(), bonus = MONSTERS[c.type].saves?.[sp.save] ?? 0, r = roll(1, 20)[0], saved = r + bonus >= d.spellDc;
+  const d = derived(), bonus = saveOf(c, sp.save), r = roll(1, 20)[0], saved = r + bonus >= d.spellDc;
   const saveTxt = `<span class="r">${sp.save.toUpperCase()} save ${r}${fmt(bonus)} = ${r + bonus} vs DC ${d.spellDc}: ${saved ? 'success' : 'fail'}</span>`;
   const name = foeName(MONSTERS[c.type]);
   if (sp.damage) {
@@ -4300,11 +4854,11 @@ function selectSpell(key) {
   const sp = SPELLS[key];
   if (!freeCast()) {
     if (!state.turn.action) return toast('Casting a spell uses your action, and it is already spent.');
-    if (state.char.slots[sp.level].left <= 0) return toast(`No level ${sp.level} spell slots left. Take a long rest on the Sheet tab.`);
+    if ((state.char.mp ?? 0) < sp.cost) return toast(`${sp.name} costs ${sp.cost} mana. You have ${state.char.mp}.`);
   }
   ui.spell = key; ui.aim = null; clearPath();
   const aim = $('aim'); aim.hidden = false; aim.style.setProperty('--c', sp.color);
-  aim.textContent = `${sp.name}: ${window.matchMedia('(pointer: coarse)').matches ? 'tap a square, then tap it again to cast' : 'click a square'} within ${sp.range * 5} ft. Esc cancels.`;
+  aim.textContent = `${sp.name} (${sp.cost} MP): ${window.matchMedia('(pointer: coarse)').matches ? 'tap' : 'click'} ${sp.target === 'enemy' && sp.shape === 'single' ? 'a creature' : sp.target === 'ally' && sp.shape === 'single' ? 'a party member (or yourself)' : 'a square'} within ${sp.range * 5} ft. Esc cancels.`;
   refresh();
 }
 function cancelSpell() { if (!ui.spell) return; ui.spell = null; ui.aim = null; $('aim').hidden = true; clearPath(); refresh(); }
@@ -4327,19 +4881,20 @@ function cast(key, x, z) {
   if (cheb(state.pos, { x, z }) > sp.range) return toast(`Out of range. ${sp.name} reaches ${sp.range * 5} ft.`);
   const { tiles, axis } = templateTiles(key, x, z);
   if (!tiles.length) return toast('There is no open ground there.');
+  const why = spellTargetError(sp, x, z); if (why) return toast(why);
   if (!freeCast()) {
     if (!state.turn.action) return toast('Casting a spell uses your action, and it is already spent.');
-    const slot = state.char.slots[sp.level];
-    if (slot.left <= 0) return toast(`No level ${sp.level} spell slots left.`);
-    slot.left--; state.turn.action = false;
+    if ((state.char.mp ?? 0) < sp.cost) return toast(`${sp.name} costs ${sp.cost} mana. You have ${state.char.mp}.`);
+    state.char.mp -= sp.cost; state.turn.action = false;
   }
   ui.spell = null; ui.aim = null; $('aim').hidden = true; clearPath();
   busy = true; faceAt = worldOf(x, z); castT = key === 'fireball' ? 1.3 : 1.0;
-  SFX.cast(key); makeNoise(key === 'fireball' ? 3 : 1);
+  SFX.cast(NEW_SPELLS[key] ? (sp.target === 'enemy' ? 'fireball' : 'vines') : key); makeNoise(key === 'fireball' ? 3 : 1);
   castCircle(worldOf(state.pos.x, state.pos.z), sp.color, key === 'fireball' ? (reduceMotion ? 0.3 : 1.0) : 0.7);
-  addLog('spell', `<b>${state.char.name}</b> casts <b>${sp.name}</b>${freeCast() ? '' : ` using a level ${sp.level} slot`}.`);
+  addLog('spell', `<b>${state.char.name}</b> casts <b>${sp.name}</b>${freeCast() ? '' : ` (${sp.cost} MP)`}.`);
   const inTiles = p => tiles.some(t => t.x === p.x && t.z === p.z);
   const finish = () => { busy = false; refresh(); save(); };
+  if (NEW_SPELLS[key]) { castMagic(key, x, z, tiles, finish); refresh(); return; }
 
   if (key === 'fireball') {
     castFireball({ x, z }, () => {
@@ -4383,7 +4938,7 @@ function removeOne(key) {
   it.qty--;
   if (it.qty <= 0) {
     c.inventory = c.inventory.filter(i => i !== it);
-    for (const slot of ['weapon', 'armor', 'shield', 'head', 'neck']) if (c.equipped[slot] === key) c.equipped[slot] = null;
+    for (const slot of ['weapon', 'armor', 'shield', 'head', 'neck', 'ammo']) if (c.equipped[slot] === key) c.equipped[slot] = null;
   }
 }
 function equip(key) {
@@ -4392,6 +4947,7 @@ function equip(key) {
     eq.weapon = key;
     if (item.twoHanded && eq.shield) { eq.shield = null; toast(`${item.name} needs both hands, so you sling your shield.`); }
   } else if (item.type === 'armor') eq.armor = key;
+  else if (item.type === 'ammo') { if (!c.inventory.some(i => i.key === 'shortbow')) toast('You need a bow to shoot these.'); eq.ammo = key; }
   else if (item.type === 'neck') eq.neck = key;
   else if (item.type === 'head') {
     if (isCursed()) { toast('The Drowned Crown won\'t come off, so nothing else fits.'); return; }
@@ -4416,6 +4972,14 @@ function unequip(slot) {
 function useItem(key) {
   const item = ITEMS[key];
   if (item.type !== 'consumable') return;
+  if (item.mana) {
+    if (!exploring() && !state.turn.action) return toast('Drinking a potion takes your action, and it is already spent.');
+    if (state.char.mp >= maxMpOf(state.char)) return toast('Your mana is already full.');
+    if (!exploring()) state.turn.action = false;
+    const dice = roll(item.mana[0], item.mana[1]), got = restoreMp(state.char, sum(dice) + item.mana[2]);
+    floatText(`+${got} MP`, above(hero, 1.2), 'cold'); addLog('spell', `${item.name} [${dice.join(', ')}] +${item.mana[2]}: regain <b>${got}</b> mana.`);
+    return removeOne(key);
+  }
   if (!exploring() && !state.turn.action) return toast('Drinking a potion takes your action, and it is already spent.');
   if (state.char.hp >= derived().maxHp) return toast('You are already at full health.');
   if (!exploring()) state.turn.action = false;
@@ -4425,7 +4989,8 @@ function useItem(key) {
 }
 function addItem(key, silent) {
   const it = invEntry(key);
-  if (it) it.qty++; else state.char.inventory.push({ key, qty: 1 });
+  const n = ITEMS[key].bundle || 1;
+  if (it) it.qty += n; else state.char.inventory.push({ key, qty: n });
   if (!silent) addLog('', `Added <b>${ITEMS[key].name}</b> to the pack.`);
 }
 
@@ -4468,39 +5033,55 @@ function renderHud() {
   $('vitals').innerHTML = `<span class="por" style="--c:${esc(c.color)}">${esc((c.name || '?')[0])}</span>
     <span class="vt"><span class="nm"><b>${esc(c.name)}</b><span class="muted">Lv ${c.level} · AC ${d.ac}</span></span>
     <span class="hpbar2 ${f <= 0.35 ? 'low' : ''}"><i style="width:${Math.max(0, f * 100)}%"></i><span>${c.hp} / ${d.maxHp}</span></span>
-    <span class="slots-mini">${Object.entries(c.slots).map(([lv, sl]) => `<span>L${lv}${Array.from({ length: sl.max }, (_, i) => `<i class="${i < sl.left ? '' : 'off'}"></i>`).join('')}</span>`).join('')}
+    <span class="mpbar"><i style="width:${Math.max(0, (c.mp ?? 0) / maxMpOf(c) * 100)}%"></i><span>${c.mp ?? 0} / ${maxMpOf(c)} MP</span></span>
+    <span class="slots-mini">${stIcons(c) || '<span class="muted">No effects</span>'}
       <span style="margin-left:auto">${c.gold} gp</span></span></span>`;
   // the hotbar: spells, then a potion, search and dash
   const potion = ['potion', 'greater', 'goblinStew'].map(k => invEntry(k)).find(Boolean);
   const actOk = ex || t.action;
-  $('spellbar').innerHTML = Object.entries(SPELLS).map(([k, sp]) => {
-    const left = c.slots[sp.level]?.left ?? 0;
-    const off = busy || (!freeCast() && ((!ex && !t.action) || left <= 0));
-    return `<button class="slot" style="--c:${sp.color}" data-spell="${k}" aria-pressed="${ui.spell === k}" ${off ? 'disabled' : ''}
-      title="${sp.name} (${sp.key}): ${sp.area}, range ${sp.range * 5} ft, level ${sp.level}"><span class="k">${sp.key}</span><span class="q">L${sp.level}</span>
-      <span class="ic">${{ fireball: '✹', firewall: '▲', icewall: '❄', vines: '❦' }[k]}</span>${sp.name}</button>`;
+  const known = knownSpells(c), cur = entryOf(), heroTurn = ex || (cur?.t === 'h' && !busy);
+  $('spellbar').innerHTML = known.map((k, n) => {
+    const sp = SPELLS[k], off = busy || !heroTurn || (!freeCast() && ((!ex && !t.action) || (c.mp ?? 0) < sp.cost));
+    return `<button class="slot sp" style="--c:${sp.color}" data-spell="${k}" aria-pressed="${ui.spell === k}" ${off ? 'disabled' : ''}
+      title="${sp.name} (${n < 10 ? (n + 1) % 10 : 'click'}): ${sp.cost} MP · ${sp.area} · ${sp.range * 5} ft. ${esc(sp.desc)}">${n < 10 ? `<span class="k">${(n + 1) % 10}</span>` : ''}<span class="q">${sp.cost}</span>
+      <span class="ic">${sp.icon || '✦'}</span>${sp.name}</button>`;
   }).join('') + `
-    <button class="slot gap" style="--c:#e0605a" data-hot="potion" ${!potion || busy || !actOk ? 'disabled' : ''} title="Drink ${potion ? ITEMS[potion.key].name : 'a healing potion'} (5)">
-      <span class="k">5</span>${potion ? `<span class="q">×${potion.qty}</span>` : ''}<span class="ic">♥</span>${potion ? (potion.key === 'goblinStew' ? 'Stew' : 'Potion') : 'No potion'}</button>
-    <button class="slot" style="--c:#d3aa55" data-hot="search" ${busy || !actOk ? 'disabled' : ''} title="Search (6): a Perception check for traps, secret doors and hidden caches within 15 ft">
-      <span class="k">6</span><span class="ic">⌕</span>Search</button>
-    <button class="slot" style="--c:#7aa7cb" data-hot="dash" ${ex || !t.action || busy ? 'disabled' : ''} title="Dash (7): use your action to double your movement">
-      <span class="k">7</span><span class="ic">»</span>Dash</button>`;
-  $('endBtn').disabled = busy;
+    <button class="slot gap" style="--c:#e0605a" data-hot="potion" ${!potion || busy || !actOk ? 'disabled' : ''} title="Drink ${potion ? ITEMS[potion.key].name : 'a healing potion'} (Q)">
+      <span class="k">Q</span>${potion ? `<span class="q">×${potion.qty}</span>` : ''}<span class="ic">♥</span>${potion ? (potion.key === 'goblinStew' ? 'Stew' : 'Potion') : 'No potion'}</button>
+    <button class="slot" style="--c:#6f9cff" data-hot="mana" ${!invEntry('manaPotion') || busy || !actOk ? 'disabled' : ''} title="Drink a Potion of Mana (E)">
+      <span class="k">E</span>${invEntry('manaPotion') ? `<span class="q">×${invEntry('manaPotion').qty}</span>` : ''}<span class="ic">◆</span>Mana</button>
+    <button class="slot" style="--c:#d3aa55" data-hot="search" ${busy || !actOk ? 'disabled' : ''} title="Search (F): a Perception check for traps, secret doors and hidden caches within 15 ft">
+      <span class="k">F</span><span class="ic">⌕</span>Search</button>
+    <button class="slot" style="--c:#7aa7cb" data-hot="dash" ${ex || !t.action || busy ? 'disabled' : ''} title="Dash (X): use your action to double your movement">
+      <span class="k">X</span><span class="ic">»</span>Dash</button>`;
+  // initiative tracker and boss health
+  const cb = state.combat;
+  $('initBar').hidden = !cb || ex;
+  if (cb && !ex) $('initBar').innerHTML = cb.order.filter(entryAlive).map(e => {
+    const tg = entryTarget(e), on = e === cur, isH = e.t === 'h';
+    const col = isH ? tg.color : (MONSTERS[tg.type].boss ? '#a83a2a' : '#5a4a3a'), lbl = isH ? tg.name : MONSTERS[tg.type].name;
+    return `<span class="ini ${on ? 'on' : ''} ${isH ? 'hero' : 'foe'}" title="${esc(lbl)}: initiative ${e.init}${tg.status?.length ? ' · ' + tg.status.map(s => STATUS[s.id].name).join(', ') : ''}">
+      <span class="por" style="--c:${esc(col)}">${esc(lbl[0])}</span><b>${e.init}</b>${tg.status?.length ? `<span class="ist">${tg.status.map(s => `<i style="color:${STATUS[s.id].color}">${STATUS[s.id].icon}</i>`).join('')}</span>` : ''}</span>`;
+  }).join('');
+  const boss = state.creatures.find(b => b.alive && b.aware && MONSTERS[b.type].boss);
+  $('bossBar').hidden = !boss || !playing();
+  if (boss) { const bm = MONSTERS[boss.type]; $('bossBar').innerHTML = `<b>${esc(bm.name)}</b><small>${esc(bm.epithet || '')}</small><span class="bb"><i style="width:${boss.hp / bm.hp * 100}%"></i></span>${stIcons(boss)}`; }
+  $('endBtn').disabled = busy || !heroTurn;
   $('endBtn').textContent = ex ? 'Wait' : 'End turn';
   const who = state.party.length > 1 ? `<b style="color:var(--ink)">${esc(c.name)}</b><br>` : '';
   $('partyFrames').hidden = state.party.length < 2;
-  $('partyFrames').innerHTML = state.party.length < 2 ? '' : `<span class="pf-mode">${state.partyMode === 'turns' ? 'Taking turns' : 'Commanding the party'} · Tab</span>` + state.party.map((m, i) => {
-    const mf = m.char.hp / maxHpOf(m.char), st = m.char.hp <= 0 ? 'Down' : i === state.active ? (ex ? 'Leading' : 'Acting') : ex ? '' : m.done ? 'Done' : 'Ready';
+  $('partyFrames').innerHTML = state.party.length < 2 ? '' : `<span class="pf-mode">${ex ? 'Party · Tab to switch leader' : 'Party · initiative order'}</span>` + state.party.map((m, i) => {
+    const mf = m.char.hp / maxHpOf(m.char), st = m.char.hp <= 0 ? 'Down' : i === state.active ? (ex ? 'Leading' : 'Acting') : '';
     return `<button class="pf ${i === state.active ? 'on' : ''} ${m.char.hp <= 0 ? 'down' : ''}" data-member="${i}" title="${esc(m.char.name)}">
       <span class="por" style="--c:${esc(m.char.color)}">${esc((m.char.name || '?')[0])}</span>
       <span class="vt"><span class="nm"><b>${esc(m.char.name)}</b><span class="muted">${st}</span></span>
-      <span class="hpbar2 ${mf <= 0.35 ? 'low' : ''}"><i style="width:${Math.max(0, mf * 100)}%"></i><span>${Math.max(0, m.char.hp)} / ${maxHpOf(m.char)}</span></span></span></button>`;
+      <span class="hpbar2 ${mf <= 0.35 ? 'low' : ''}"><i style="width:${Math.max(0, mf * 100)}%"></i><span>${Math.max(0, m.char.hp)} / ${maxHpOf(m.char)}</span></span>
+      <span class="mpbar thin"><i style="width:${Math.max(0, (m.char.mp ?? 0) / maxMpOf(m.char) * 100)}%"></i></span>${m.char.status?.length ? `<span class="pfst">${stIcons(m.char)}</span>` : ''}</span></button>`;
   }).join('');
-  $('turnInfo').innerHTML = ex ? `${who}Exploring` : busy ? 'Enemy turn…' : `${who}Move <b>${t.move * 5} ft</b> · ${t.action ? 'action ready' : 'action used'}`;
+  $('turnInfo').innerHTML = ex ? `${who}Exploring` : busy || !heroTurn ? (cur?.t === 'm' ? `${esc(MONSTERS[creatureById(cur.id)?.type]?.name || 'Enemy')}'s turn` : 'Waiting…') : `${who}Move <b>${t.move * 5} ft</b> · ${t.action ? 'action ready' : 'action used'}`;
   for (const b of document.querySelectorAll('[data-panel]')) b.setAttribute('aria-pressed', ui.panelOpen && ui.tab === b.dataset.panel);
   $('camLbl').textContent = CAM.auto ? 'Follow cam' : 'Free cam';
-  $('modeBtn').hidden = state.party.length < 2;
+  $('modeBtn').hidden = true;   // initiative decides turn order now
   $('modeLbl').textContent = state.partyMode === 'turns' ? 'Take turns' : 'Command all';
 }
 
@@ -4579,22 +5160,21 @@ function renderSpells() {
         <div class="vital"><div class="v">${fmt(d.spellAtk)}</div><div class="label">Spell atk</div></div>
         <div class="vital"><div class="v">INT</div><div class="label">Ability</div></div>
       </div>
-      <div class="pips">
-        ${Object.entries(c.slots).map(([lv, s]) => `<div class="pip-row"><span class="label">Level ${lv}</span>
-          ${Array.from({ length: s.max }, (_, i) => `<i class="pip ${i < s.left ? 'on' : ''}"></i>`).join('')}
-          <span class="muted">${s.left}/${s.max}</span></div>`).join('')}
-      </div>
+      <div class="mpline"><span class="label">Mana</span><span class="mpbar"><i style="width:${(c.mp ?? 0) / maxMpOf(c) * 100}%"></i><span>${c.mp ?? 0} / ${maxMpOf(c)} MP</span></span></div>
+      <p class="muted">Mana grows with your level and Intelligence. You regain 1 at the start of each of your turns in a fight and 1 for every few squares you walk; rests and Potions of Mana restore more.</p>
       <label class="toggle"><input type="checkbox" id="sandbox" ${ui.sandbox ? 'checked' : ''} ${grim() ? 'disabled' : ''}>
-        <span><b>Free casting</b><br><span class="muted">${grim() ? 'Off in the dungeon. Every spell costs a slot and your action, so spend them carefully.' : "Spells don't use your action or slots. Handy for watching effects. It only works in the Training Yard."}</span></span></label>
+        <span><b>Free casting</b><br><span class="muted">${grim() ? 'Off in the dungeon. Every spell costs mana and your action, so spend them carefully.' : "Spells don't use your action or mana, and every spell is unlocked. Handy for watching effects. It only works in the Training Yard."}</span></span></label>
     </div>
     <div class="section">
       <h3>Spellbook</h3>
-      ${Object.entries(SPELLS).map(([k, sp]) => `
-        <div class="spellcard" style="--c:${sp.color}">
-          <div class="t"><b>${sp.name}</b><button class="btn small" data-act="cast" data-k="${k}">Cast <span class="muted">(${sp.key})</span></button></div>
-          <span class="facts">Level ${sp.level} · ${sp.range * 5} ft range · ${sp.area}${sp.duration ? ` · ${sp.duration} rounds` : ''}${sp.damage ? ` · ${sp.damage[0]}d${sp.damage[1]} ${sp.dmgType}` : ''}</span>
+      ${Object.entries(SPELLS).map(([k, sp]) => { const ok = knownSpells(c).includes(k); return `
+        <div class="spellcard ${ok ? '' : 'locked'}" style="--c:${sp.color}">
+          <div class="t"><b>${sp.icon || ''} ${sp.name}</b>${ok ? `<button class="btn small" data-act="cast" data-k="${k}">Cast</button>` : `<span class="muted">Learned at level ${sp.unlock}</span>`}</div>
+          <span class="facts">${sp.cost} MP · ${sp.range * 5} ft · ${sp.area}${sp.duration ? ` · ${sp.duration} rounds` : ''}${sp.damage ? ` · ${sp.damage[0]}d${sp.damage[1]} ${sp.dmgType}` : ''}${sp.status ? ` · <span style="color:${STATUS[sp.status[0]].color}">${STATUS[sp.status[0]].name}</span>` : ''}</span>
           <p>${sp.desc}</p>
-        </div>`).join('')}
+        </div>`; }).join('')}
+      <h3>Effects</h3>
+      <div class="stlegend">${Object.values(STATUS).map(S => `<div><i class="sti" style="--c:${S.color}">${S.icon}</i><b>${S.name}</b> <span class="muted">${S.desc}</span></div>`).join('')}</div>
     </div>
     <div class="section">
       <h3>Effects quality</h3>
@@ -4621,7 +5201,7 @@ function renderInv() {
   $('tab-inv').innerHTML = `
     <div class="section">
       <h3>Equipped</h3>
-      <div class="slots">${slot('weapon', 'Weapon')}${slot('armor', 'Armor')}${slot('shield', 'Off-hand')}${slot('head', 'Head')}${slot('neck', 'Neck')}</div>
+      <div class="slots">${slot('weapon', 'Weapon')}${slot('armor', 'Armor')}${slot('shield', 'Off-hand')}${slot('head', 'Head')}${slot('neck', 'Neck')}${slot('ammo', 'Arrows')}</div>
     </div>
     <div class="section">
       <div class="row between"><h3>Pack</h3><span class="muted">${d.weight} / ${d.cap} lb · ${c.gold} gp</span></div>
@@ -4631,7 +5211,7 @@ function renderInv() {
             <span class="nm">${it.name}${qty > 1 ? ` <span class="q">×${qty}</span>` : ''}${isEq(key) ? '<span class="tag">Equipped</span>' : ''}${it.weird ? '<span class="tag weird">Weird</span>' : ''}</span>
             <span class="meta">${noteOf(key, it)}${it.dice ? ` · ${it.dice[0]}d${it.dice[1]} ${it.dmgType}` : ''} · ${it.weight} lb</span>
             <span class="ctl">
-              ${['weapon', 'armor', 'shield', 'head', 'neck'].includes(it.type) && !isEq(key) ? `<button class="btn small" data-act="equip" data-k="${key}">Equip</button>` : ''}
+              ${['weapon', 'armor', 'shield', 'head', 'neck', 'ammo'].includes(it.type) && !isEq(key) ? `<button class="btn small" data-act="equip" data-k="${key}">Equip</button>` : ''}
               ${it.type === 'consumable' ? `<button class="btn small" data-act="use" data-k="${key}">Drink</button>` : ''}
               <button class="btn small" data-act="drop" data-k="${key}" aria-label="Drop one ${it.name}" ${locked ? 'disabled' : ''}>Drop</button>
             </span>
@@ -4723,9 +5303,9 @@ $('panel').addEventListener('click', e => {
     case 'rest':
       if (!exploring()) { toast('You can\'t rest with enemies hunting you.'); return; }
       if (grim()) { makeCamp(); return; }
-      for (const m of state.party) { m.char.hp = maxHpOf(m.char); m.char.slots = freshSlots(); }
+      for (const m of state.party) { m.char.hp = maxHpOf(m.char); m.char.mp = maxMpOf(m.char); }
       buildAllies();
-      addLog('heal', `${state.party.length > 1 ? 'The party takes' : `${c.name} takes`} a long rest: full HP and spell slots.`); break;
+      addLog('heal', `${state.party.length > 1 ? 'The party takes' : `${c.name} takes`} a long rest: full HP and mana.`); break;
     case 'equip': equip(k); dressHero(); break;
     case 'unequip': unequip(k); dressHero(); break;
     case 'use': useItem(k); break;
@@ -4746,8 +5326,10 @@ function useHot(h) {
   if (h === 'search') return search();
   if (h === 'dash') return dash();
   if (h === 'potion') { const p = ['potion', 'greater', 'goblinStew'].find(k => invEntry(k)); if (!p) return toast('You have no healing left.'); useItem(p); refresh(); save(); }
+  if (h === 'mana') { if (!invEntry('manaPotion')) return toast('You have no mana potions.'); useItem('manaPotion'); refresh(); save(); }
 }
 $('spellbar').addEventListener('click', e => { const h = e.target.closest('[data-hot]'); if (h) useHot(h.dataset.hot); });
+$('initBar').addEventListener('click', () => setPanel('log'));
 // the drawer: character sheet, inventory, spells and log open and close over the board
 function setPanel(tab) {
   if (tab && ui.panelOpen && ui.tab === tab) tab = null;
@@ -4776,12 +5358,13 @@ $('soundBtn').addEventListener('click', () => { SFX.toggle(); savePrefs(); updat
 $('narr').addEventListener('click', () => { narrT = Math.min(narrT, 0.01); });
 window.addEventListener('keydown', e => {
   if (!playing() || e.target.closest('input, select, textarea') || !$('modal').hidden) return;
-  const k = Object.keys(SPELLS).find(k => SPELLS[k].key === e.key), key = e.key.toLowerCase();
+  const key = e.key.toLowerCase(), digit = /^[0-9]$/.test(e.key) ? (+e.key + 9) % 10 : -1, k = digit >= 0 ? knownSpells()[digit] : null;
   if (k) { selectSpell(k); e.preventDefault(); }
   else if (e.key === 'Escape') { if (ui.spell) cancelSpell(); else if (ui.panelOpen) setPanel(null); }
-  else if (e.key === '5') useHot('potion');
-  else if (e.key === '6') useHot('search');
-  else if (e.key === '7') useHot('dash');
+  else if (key === 'q') useHot('potion');
+  else if (key === 'e') useHot('mana');
+  else if (key === 'f') useHot('search');
+  else if (key === 'x') useHot('dash');
   else if (e.key === ' ') { e.preventDefault(); if (!busy && !anim) endTurn(); }
   else if ({ c: 'sheet', i: 'inv', k: 'spells', l: 'log' }[key]) setPanel({ c: 'sheet', i: 'inv', k: 'spells', l: 'log' }[key]);
   else if (key === 'v') $('camBtn').click();
@@ -5009,6 +5592,7 @@ function tick() {
   for (const m of heroFlashMats) m.emissive.copy(RED).multiplyScalar(heroFlash * 0.8);
   castT = Math.max(0, castT - dt);
   animateHuman(dt, time); allyTick(dt);
+  if (playing()) { statusFx(dt); weaponFx(dt); }
   { const lay = state.char.hp <= 0 && playing() ? -1.35 : 0; for (const o of [human?.root, heroModel]) if (o) o.rotation.x += (lay - o.rotation.x) * Math.min(1, dt * 6); }
   heroRing.material.opacity = 0.55 + Math.sin(time * 3) * 0.3;
   heroLight.position.copy(hero.position).add(tmp.set(0, 1.6, 0));
@@ -5053,7 +5637,8 @@ function tick() {
     const M = MONSTERS[c.type];
     if (M.float && c.alive) v.pivot.position.y = 0.12 + Math.sin(time * 2 + c.id) * 0.06;
     if (M.aura && c.alive && v.g.visible) { const gp = v.g.position, col = M.aura; stream(glow, M.boss ? 0.9 : 0.4, dt, () => ({ p: [gp.x + rnd(-.3, .3), gp.y + rnd(.1, 1.2), gp.z + rnd(-.3, .3)], v: [rnd(-.1, .1), rnd(.1, .4), rnd(-.1, .1)], life: rnd(.8, 1.6), s: [.06, .0], c0: hdr(col, 3), c1: hdr(col, .5), a: .8, turb: .4 })); }
-    const showBar = c.alive && v.g.visible && (c.aware || c.hp < MONSTERS[c.type].hp || ui.hover === c.id);
+    const showBar = c.alive && v.g.visible && (c.aware || c.hp < MONSTERS[c.type].hp || ui.hover === c.id || c.status?.length);
+    v.bar.dataset.st = (c.status || []).map(s => STATUS[s.id].icon).join(' ');
     v.bar.hidden = !showBar;
     if (showBar) {
       tmp.copy(v.g.position); tmp.y += v.height * v.g.scale.y + 0.35; tmp.project(camera);
@@ -5456,7 +6041,7 @@ function importDungeon(file) {
     const j = JSON.parse(t), m = j.map || j;
     const okRows = Array.isArray(m.rows) && m.rows.length >= 4 && m.rows.length <= 60 && m.rows.every(r => typeof r === 'string' && r.length === m.rows[0].length && r.length <= 60);
     if (!okRows) throw new Error('bad');
-    const legal = new Set('#.~DSGXCFI123$HTYZPp@rkbaWmdgevwlhjqcoKunBfszNQL'.split(''));
+    const legal = new Set('#.~DSGXCFI123$HTYZPp@rkbaWmdgevwlhjqcoKunBfszNQLRMAO'.split(''));
     m.rows = m.rows.map(r => [...r].map(ch => legal.has(ch) ? ch : '#').join(''));
     m.name = String(m.name || 'Imported dungeon').slice(0, 40); m.custom = true; m.rev = 1; m.updated = Date.now();
     m.rooms = (m.rooms || []).filter(a => a && Number.isInteger(a.x0)).map(a => ({ ...a, name: String(a.name || '').slice(0, 60), text: String(a.text || '').slice(0, 600) }));
@@ -5514,6 +6099,13 @@ const TOOLS = [
   { g: 'Monsters', id: 'cultist', ch: 'N', label: 'Bone cultist', icon: 'c', bg: '#8a8478' },
   { g: 'Monsters', id: 'wraith', ch: 'Q', label: 'Wraith', icon: 'R', bg: '#1c2a3a' },
   { g: 'Monsters', id: 'lich', ch: 'L', label: 'Lich', icon: 'L', bg: '#3a1a4a' },
+  { g: 'Bosses', id: 'wolfRider', ch: 'R', label: 'Wolf-rider', icon: 'R', bg: '#5a3a2a' },
+  { g: 'Bosses', id: 'chiefB', ch: 'B', label: 'Goblin chief', icon: 'C', bg: '#4a2a5a' },
+  { g: 'Bosses', id: 'spiderQueen', ch: 'M', label: 'Spider queen', icon: 'M', bg: '#3a1418' },
+  { g: 'Bosses', id: 'abbot', ch: 'A', label: 'Drowned Abbot', icon: 'A', bg: '#3a4a3a' },
+  { g: 'Bosses', id: 'highPriest', ch: 'O', label: 'High Priest', icon: 'O', bg: '#6a6a50' },
+  { g: 'Bosses', id: 'wardenB', ch: 'W', label: 'Grave Warden', icon: 'W', bg: '#3a3f5a' },
+  { g: 'Bosses', id: 'lichB', ch: 'L', label: 'Lich', icon: 'L', bg: '#3a1a4a' },
   { g: 'Monsters', id: 'rat', ch: 'r', label: 'Giant rat', icon: 'R', bg: '#5a4636' },
   { g: 'Monsters', id: 'skeleton', ch: 'k', label: 'Skeleton', icon: 'S', bg: '#8a826e' },
   { g: 'Monsters', id: 'bones', ch: 'b', label: 'Bone pile', icon: 'B', bg: '#6e6656', hint: 'A skeleton lying in wait. It looks dead until the hero steps next to it, then rises and attacks.' },
@@ -5521,7 +6113,7 @@ const TOOLS = [
   { g: 'Monsters', id: 'warden', ch: 'W', label: 'Grave Warden', icon: 'W', bg: '#3a3f5a' },
   { g: 'Monsters', id: 'dummy', ch: 'm', label: 'Training dummy', icon: 'D', bg: '#7a6a4a' },
 ];
-for (const t of TOOLS) if (t.g === 'Monsters' && !t.hint) { const m = MONSTERS[CREATURE_CHARS[t.ch]]; t.hint = `${m.name}: ${m.hp} HP, AC ${m.ac}${m.atk ? `, ${m.dmg[0]}d${m.dmg[1]}${m.dmg[2] ? '+' + m.dmg[2] : ''} ${m.dmgType}${m.ai === 'ranged' ? ', ranged' : ''}` : ''}.${m.summon ? ' Raises skeletons every few turns.' : ''}${m.float ? ' Floats.' : ''} Wakes when it sees the hero.`; }
+for (const t of TOOLS) if ((t.g === 'Monsters' || t.g === 'Bosses') && !t.hint) { const m = MONSTERS[CREATURE_CHARS[t.ch]]; t.hint = `${m.name}: ${m.hp} HP, AC ${m.ac}${m.atk ? `, ${m.dmg[0]}d${m.dmg[1]}${m.dmg[2] ? '+' + m.dmg[2] : ''} ${m.dmgType}${m.ai === 'ranged' ? ', ranged' : ''}` : ''}.${m.summon ? ' Raises skeletons every few turns.' : ''}${m.float ? ' Floats.' : ''} ${m.boss ? ` Boss: a versus card plays when the party meets it${m.summon ? ', and it calls for help every few turns' : ''}${m.blessAllies ? ', and it blesses its allies' : ''}.` : ' Wakes when it sees the hero.'}${m.onHit ? ` Its hits can leave you ${STATUS[m.onHit.status].name.toLowerCase()}.` : ''}`; }
 const toolById = id => TOOLS.find(t => t.id === id);
 const CH_NAME = Object.fromEntries(TOOLS.filter(t => t.ch).map(t => [t.ch, t.label]));
 
@@ -5753,6 +6345,7 @@ function renderEdPanel() {
     insp = `<div class="section ed-insp"><h3>Read-aloud area</h3>
       <label class="field"><span>Name</span><input type="text" id="arName" maxlength="60" value="${esc(a.name)}"></label>
       <label class="field"><span>What the players hear when they first walk in</span><textarea id="arText" rows="5" maxlength="600">${esc(a.text)}</textarea></label>
+      <label class="toggle"><input type="checkbox" id="arBoss" ${a.boss ? 'checked' : ''}><span><b>Boss arena</b><br><span class="muted">When the party walks in, a versus card introduces the boss waiting here.</span></span></label>
       <div class="row"><button class="btn small" data-ed="delArea">Delete area</button><button class="btn small" data-ed="closeInsp">Done</button></div></div>`;
   } else if (ed.sel) {
     const { x, z } = ed.sel, ch = edGet(x, z), k = keyOf(x, z);
@@ -5821,6 +6414,7 @@ $('edPanel').addEventListener('input', e => {
 $('edPanel').addEventListener('change', e => {
   const m = ed.map, id = e.target.id;
   if (e.target.dataset.order) m.puzzleOrder[+e.target.dataset.order] = e.target.value;
+  if (id === 'arBoss' && m.rooms[ed.area]) m.rooms[ed.area].boss = e.target.checked;
   if (id === 'edNext') { if (e.target.value) m.next = e.target.value; else delete m.next; }
   if (ed.sel && (id === 'goldIn' || id === 'dcIn')) {
     const { x, z } = ed.sel, k = keyOf(x, z), ch = edGet(x, z), v = Math.max(0, +e.target.value | 0);
@@ -5854,6 +6448,8 @@ window.battleBoard = {
   overview() { state.explored.fill(1); const s = Math.max(W, H); controls.target.set(0, 0, 0); camera.position.set(0, s * 0.8, s * 0.55); controls.update(); refresh(); },
   walk(x, z) { refresh(); if (!reachable(x, z)) return false; moveTo(x, z); return true; },
   party() { return state.party.map(m => ({ name: m.char.name, hp: m.char.hp, pos: m.pos, done: !!m.done })) },
+  cast(key, x, z) { cast(key, x, z); },
+  combat() { const cb = state.combat; return cb && { i: cb.i, order: cb.order.map(e => `${e.t}:${e.t === 'h' ? state.party.find(m => m.id === e.id)?.char.name : creatureById(e.id)?.type}:${e.init}`) }; },
   wanderers() { const m = spawnWanderers(6, 13); if (m && exploring() === false) startCombat(); refresh(); return m && m.map(c => c.type); },
 };
 showBackdrop('crypt');
