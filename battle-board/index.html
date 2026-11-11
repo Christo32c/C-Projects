@@ -6693,6 +6693,7 @@ window.battleBoard = {
   cast(key, x, z) { cast(key, x, z); },
   combat() { const cb = state.combat; return cb && { i: cb.i, order: cb.order.map(e => `${e.t}:${e.t === 'h' ? state.party.find(m => m.id === e.id)?.char.name : creatureById(e.id)?.type}:${e.init}`) }; },
   xp(n) { gainXp(n); refresh(); },
+  holdNotice() { clearTimeout(showNextNotice.t); },
   wanderers() { const m = spawnWanderers(6, 13); if (m && exploring() === false) startCombat(); refresh(); return m && m.map(c => c.type); },
 };
 showBackdrop('crypt');
