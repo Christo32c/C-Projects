@@ -46,18 +46,55 @@ A seven-floor campaign, picked as one entry in the Adventure menu. Goblins have 
 6. **The Burning Halls**: a river of lava with two bridges, wraiths, and the Grave Warden guarding the last stair.
 7. **The Throne of Vael Morrow**: the lich on an island in a lake of fire. It raises skeletons every few turns. Defeat everything to win.
 
-Exit stairs lead to the next floor. You keep your hit points and gear, and your spell slots come back on the stairs. Each floor has its own read-aloud text and its own wandering monsters. `tools/floors.py` generates the floors and checks that each one can be finished: the exit and every monster are reachable, and the puzzle plates can be reached before the portcullis. Paste its output into `MAPS` after changing it.
+Exit stairs lead to the next floor. You keep your hit points and gear, and your mana comes back on the stairs. Each floor has its own read-aloud text and its own wandering monsters. `tools/floors.py` generates the floors and checks that each one can be finished: the exit and every monster are reachable, and the puzzle plates can be reached before the portcullis. Paste its output into `MAPS` after changing it.
 
-## Parties
+## Parties and initiative
 
-Take up to four adventurers into a dungeon. Choose them on the **Where will … go?** screen: bring other heroes from your roster, or **Hire a companion** (a new level-1 hero with rolled stats). Then pick how the party plays:
+Take up to four adventurers into a dungeon. Choose them on the **Where will … go?** screen: bring other heroes from your roster, or **Hire a companion** (a new level-1 hero with rolled stats).
 
-- **Command the party**: in a fight, switch between adventurers freely (click one, use their portrait, or press **Tab**). Each has their own movement and action. **End turn** ends everyone's turn, then the monsters act.
-- **Take turns**: each adventurer acts in order. **End turn** passes to the next adventurer, and the camera moves to them. This suits friends sharing one screen.
+When a fight breaks out, **everyone in it rolls initiative**: d20 + Dexterity for adventurers, d20 + their Dex bonus for monsters. Turns go from highest to lowest, shown in the tracker at the top of the screen. On an adventurer's turn the camera moves to them and you control them. On a monster's turn the camera shows who it goes for. Monsters that wake up mid-fight, and skeletons a lich raises, roll and join the order. Fallen adventurers are skipped.
 
-Switch modes between fights with **P**. Out of combat, whoever you control leads and the others follow. The fog of war clears around everyone. Monsters go for the closest adventurer still standing. Everyone still standing shares the XP from each kill. Your fireballs can hit your friends.
+Out of a fight, whoever you control leads and the others follow (**Tab** switches leader). The fog of war clears around everyone. Monsters attack the closest adventurer still standing. Everyone still standing shares the XP from each kill. Your fireballs can hit your friends.
 
-An adventurer at 0 HP falls unconscious. Click them from an adjacent square to help them up (with a potion if you carry one; that uses your action). When the fight ends they get back up with 1 HP. The run is lost only if the whole party falls. Camping and resting restore everyone. The leader's roster card holds the expedition, and companions show "Adventuring with …" and can continue it too.
+An adventurer at 0 HP falls unconscious. Click them from an adjacent square to help them up (with a potion if you carry one; that uses your action). When the fight ends they get back up with 1 HP. The run is lost only if the whole party falls.
+
+## Magic: mana, buffs and debuffs
+
+Spells cost **mana** instead of spell slots. Max mana is 6 + 4 per level + 2 × Intelligence modifier. You regain 1 at the start of each of your turns in a fight and 1 for every few squares you walk. Resting, camping, taking the stairs and Potions of Mana restore more. You learn new spells as you level:
+
+| Level | Spells |
+|---|---|
+| 1 | Fire Bolt, Ray of Frost, Hex, Bless, Healing Word, Arcane Ward, Vine Growth |
+| 2 | Enfeeble, Elemental Weapon, Poison Cloud, Haste |
+| 3 | Wall of Fire, Wall of Ice, Regeneration |
+| 4 | Fireball, Hold Monster |
+
+Effects last a few rounds and show as icons on portraits, health bars and the initiative tracker. Each also has its own particles on the board:
+
+- **Debuffs**: Burning (1d6 fire a turn), Poisoned (1d4 a turn, -2 to attack), Bleeding (1d4 a turn), Chilled (half movement, -1 AC), Stunned (lose a turn), Weakened (half damage), Hexed (+1d6 necrotic from every hit).
+- **Buffs**: Blessed (+2 to attacks and saves), Hasted (+15 ft, +2 AC), Warded (+4 AC), Regenerating (heal 1d6 a turn), Empowered (+1d6 on weapon hits).
+
+Monsters use them too: spiders poison, cultists hex, wraiths weaken, the lich chills, and the High Priest blesses his followers. Effects end when the fight does.
+
+**Magic weapons** stream flame, frost, venom, sparks or light from the blade: Flametongue, Frostbrand, Venom Fang, Stormcaller, Dawnbringer (extra damage against the undead) and Bloodthirst (heals you as it hits). **Magic arrows** come in tens and have their own glowing trails: Arrows of Burning, Frostbite Arrows, Venom Arrows and Thunderclap Arrows. Equip them in the Arrows slot and they're used when you shoot with a bow.
+
+## Bosses
+
+Every floor of The Lich's Descent has a boss in a boss arena. When the party walks in, or the boss spots you, a **versus card** slams in with your party on one side and the boss's name and title on the other. A boss health bar then stays at the top of the screen.
+
+| Floor | Boss | Special |
+|---|---|---|
+| 1 | Grak the Wolf-Rider | his hits make you bleed |
+| 2 | Chief Grizzlegut | bleeding cleaves |
+| 3 | Mother of Webs | poisons, calls her brood |
+| 4 | The Drowned Abbot | weakens you, raises zombies |
+| 5 | High Priest Ossian | hexes you, blesses and wards his followers |
+| 6 | Grave Warden | stunning blows |
+| 7 | Vael Morrow | chilling bolts, raises skeletons |
+
+Bosses carry the best loot: the magic weapons and arrows above.
+
+In the creator, every new creature and boss is in the palette (Monsters and Bosses). Every new item can go into chests, treasure and hidden caches with Inspect. The Read-aloud tool has a **Boss arena** option.
 
 ## Terrain, props and creatures
 
@@ -84,7 +121,7 @@ The default map is a dungeon (switch maps from the selector at the top left):
 
 The crypt plays by the real rules, and it fights back:
 
-- **No free casting** in the dungeon. Every spell costs a slot and your action. The manual Damage and Heal buttons are only in the Training Yard.
+- **No free casting** in the dungeon. Every spell costs mana and your action. The manual Damage and Heal buttons are only in the Training Yard.
 - **Wandering monsters**: every ten squares you walk, the crypt rolls to see whether something finds you. Fireballs, traps and fights make noise, which makes it likelier. You hear them coming first, and the log tells you which direction.
 - **Ambushes**: some of the bone piles are skeletons lying in wait. Step next to one and it rises and attacks.
 - **Making camp** replaces the long rest. It can restore you fully, but something may find you while you sleep, and each camp is riskier than the last.
@@ -106,9 +143,9 @@ Maps are plain ASCII grids in `MAPS` with a legend at the top of the script, so 
 - **Character sheet**: six ability scores (click one to roll a check, or edit them), HP, AC, speed, initiative, proficiency, XP and levelling.
 - **Inventory**: equip a weapon, armor and shield. AC, attack and the miniature's look update to match. Two-handed weapons and shields exclude each other. Drink potions, drop items, add items.
 - **Training dummy**: attack rolls against AC with crits, damage dice and XP when it falls.
-- **Spells** (keys 1–4, or the Spells tab): Fireball, Wall of Fire, Wall of Ice and Vine Growth. They use spell slots, a save DC from Intelligence, and saving throws for half damage.
+- **Spells** (number keys, or the Spells tab): sixteen spells, described under Magic above. They use mana, a save DC and spell attack from Intelligence, and saving throws.
   - Walls of ice block movement. Fire walls burn anyone who walks through and scorch nearby creatures each round. Vines make difficult terrain and can restrain the target, which gives your attacks advantage. All of them last 3 rounds.
-  - "Free casting" (on by default) skips the action and slot cost so you can try the effects back to back.
+  - "Free casting" (Training Yard only) skips the action and mana cost and unlocks every spell, so you can try the effects back to back.
 - **Effects pipeline**: HDR rendering with bloom and filmic tone mapping. The fire uses noise shaders, the ice is refractive glass-like material that shatters into physics shards, and the vines grow procedurally with leaves and flowers. There are also pooled dynamic lights, about 11,000 particles, scorch/frost/moss marks on the ground, and camera shake. An effects quality setting (High/Medium/Low) is there for slower devices.
 - **Dice tray** and an action log. Progress saves in the browser (localStorage).
 

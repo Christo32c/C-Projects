@@ -299,7 +299,7 @@
   .sbtn b { width: 20px; height: 20px; border-radius: 5px; display: grid; place-items: center; font-size: 11px; background: var(--panel-2); color: var(--brass); }
   .sbtn:hover, .sbtn[aria-pressed="true"] { border-color: var(--brass); }
   #soundBtn.sbtn { padding-left: 10px; }
-  .hotbar-wrap { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); display: flex; align-items: stretch; gap: 8px;
+  .hotbar-wrap { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); display: flex; align-items: flex-end; gap: 8px;
                  width: max-content; max-width: calc(100% - 24px); flex-wrap: wrap; justify-content: center; }
   .vitals-card { display: flex; gap: 10px; align-items: center; text-align: left; padding: 8px 12px 8px 8px; min-width: 220px; border-radius: 12px;
                  border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 92%, transparent); }
@@ -332,7 +332,6 @@
   .turnbox .btn { padding: 9px 12px; }
   .turninfo { font-size: 11px; color: var(--muted); text-align: center; font-variant-numeric: tabular-nums; }
   .turninfo b { color: var(--sky); }
-  body[data-mode="play"] .narr { bottom: 96px; }
   @media (max-width: 760px) {
     body[data-mode="play"] #panel { top: auto; left: 0; width: 100%; height: 72vh; transform: translateY(105%); border-left: 0; border-top: 1px solid var(--brass); }
     .sidebtns { flex-direction: row; flex-wrap: wrap; justify-content: flex-end; top: 52px; left: 12px; }
@@ -368,13 +367,15 @@
   .stlegend { display: flex; flex-direction: column; gap: 5px; font-size: 13px; } .stlegend div { display: flex; gap: 6px; align-items: baseline; }
   .spellcard.locked { opacity: .5; }
   .hotbar { flex-wrap: wrap; max-width: min(760px, calc(100vw - 380px)); }
-  .slot.sp { width: 58px; height: 54px; font-size: 9.5px; }
+  .slot.sp { width: 54px; height: 52px; font-size: 9px; }
+  body[data-mode="play"] .narr { top: 100px; bottom: auto; }
   .hpbar { overflow: visible; } .hpbar > i { border-radius: 2px; }
   .hpbar::after { content: attr(data-st); position: absolute; bottom: 9px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 12px; color: #ffe6b0; text-shadow: 0 1px 3px #000, 0 0 2px #000; }
   .initbar { position: absolute; top: 52px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; padding: 5px 8px; border-radius: 12px; cursor: pointer;
              background: color-mix(in srgb, var(--panel) 88%, transparent); border: 1px solid var(--line); max-width: calc(100% - 480px); overflow-x: auto; }
   .ini { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 2px 4px; border-radius: 8px; font-size: 10px; color: var(--muted); }
   .ini .por { width: 26px; height: 26px; border-radius: 50%; background: var(--c); display: grid; place-items: center; font: 700 12px var(--display); color: #fff; text-shadow: 0 1px 2px #000; border: 2px solid var(--line); }
+  .ini-r { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; color: var(--muted); padding: 0 6px 0 2px; border-right: 1px solid var(--line); margin-right: 2px; } .ini-r b { font: 700 16px var(--display); color: var(--ink); }
   .ini.hero .por { border-color: var(--brass); } .ini.foe .por { border-color: #8a3a2a; }
   .ini.on { background: color-mix(in srgb, var(--brass) 22%, transparent); color: var(--ink); } .ini.on .por { box-shadow: 0 0 0 2px var(--brass), 0 0 12px var(--brass); }
   .ini .ist { position: absolute; top: -2px; right: -3px; font-size: 9px; display: flex; gap: 1px; text-shadow: 0 1px 2px #000; }
@@ -407,6 +408,7 @@
   @keyframes vsSlam { to { opacity: 1; transform: scale(1); } }
   @keyframes vsOut { to { opacity: 0; } }
   @media (prefers-reduced-motion: reduce) { .vs.on .vs-l, .vs.on .vs-r, .vs.on .vs-mid { animation-duration: .01s; } .vs.on .vs-slash { animation: none; } }
+  body[data-mode="play"] .hud .chip.target { position: absolute; top: 108px; left: 50%; transform: translateX(-50%); }
   @media (max-width: 760px) { .vs { grid-template-columns: 1fr; text-align: center; padding: 10%; } .vs-l, .vs-r { align-items: center; } .initbar { max-width: calc(100% - 24px); top: 96px; } .bossbar { width: calc(100% - 140px); } .hotbar { max-width: calc(100vw - 24px); } }
 
   /* the creator */
@@ -3370,7 +3372,7 @@ function setTile(x, z, ch, rebuild = false) {
 const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
 const solidAt = (x, z) => !WALKABLE.has(tileAt(x, z)) || !!(fxGrid[z * W + x] & ICE);
 function occupied(x, z, mover) {
-  for (let i = 0; i < state.party.length; i++) { const q = state.party[i].pos; if (q.x === x && q.z === z && (mover !== 'hero' || i !== state.active)) return true; }
+  for (let i = 0; i < state.party.length; i++) { const q = state.party[i].pos; if (q.x === x && q.z === z && (mover !== 'hero' || i !== state.active) && state.party[i].char.hp > 0) return true; }
   return state.creatures.some(c => c.alive && c !== mover && c.x === x && c.z === z);
 }
 function dijkstra(sx, sz, budget, mover) {
@@ -5024,10 +5026,10 @@ function renderHud() {
   const t = state.turn, ex = exploring();
   const foes = state.creatures.filter(c => c.alive && c.aware && MONSTERS[c.type].ai !== 'none').length;
   const hc = ui.hover && creatureById(ui.hover);
-  $('hudChips').innerHTML = ex ? '' : `<span class="chip combat"><i class="dot"></i>Combat · ${foes} ${foes === 1 ? 'foe' : 'foes'} · Round <b>${state.round}</b></span>`;
+  $('hudChips').innerHTML = '';
   if (hc && !hc.alive && hc.loot && !hc.looted) $('hudChips').innerHTML += `<span class="chip">${MONSTERS[hc.type].name} remains · click to search</span>`;
   if (hc && hc.alive) { const m = MONSTERS[hc.type];
-    $('hudChips').innerHTML += `<span class="chip target">${m.name} <b>${hc.hp}/${m.hp}</b> HP · AC ${m.ac}${hc.restrained ? ' · <b style="color:#a6e07a">Restrained</b>' : ''}</span>`; }
+    $('hudChips').innerHTML += `<span class="chip target">${m.name} <b>${hc.hp}/${m.hp}</b> HP · AC ${acOf(hc)}${hc.restrained ? ' · <b style="color:#a6e07a">Restrained</b>' : ''}</span>`; }
   // the vitals card: portrait, HP and spell slots
   const c = state.char, d = derived(), f = c.hp / d.maxHp;
   $('vitals').innerHTML = `<span class="por" style="--c:${esc(c.color)}">${esc((c.name || '?')[0])}</span>
@@ -5057,7 +5059,7 @@ function renderHud() {
   // initiative tracker and boss health
   const cb = state.combat;
   $('initBar').hidden = !cb || ex;
-  if (cb && !ex) $('initBar').innerHTML = cb.order.filter(entryAlive).map(e => {
+  if (cb && !ex) $('initBar').innerHTML = `<span class="ini-r">Round<b>${state.round}</b></span>` + cb.order.filter(entryAlive).map(e => {
     const tg = entryTarget(e), on = e === cur, isH = e.t === 'h';
     const col = isH ? tg.color : (MONSTERS[tg.type].boss ? '#a83a2a' : '#5a4a3a'), lbl = isH ? tg.name : MONSTERS[tg.type].name;
     return `<span class="ini ${on ? 'on' : ''} ${isH ? 'hero' : 'foe'}" title="${esc(lbl)}: initiative ${e.init}${tg.status?.length ? ' · ' + tg.status.map(s => STATUS[s.id].name).join(', ') : ''}">
