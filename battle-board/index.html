@@ -6674,7 +6674,7 @@ function growthHtml(c) {
   const pend = [...new Set(c.pendingTalents)];
   return `
     ${c.statPoints > 0 ? `<div class="growth-banner"><b>${c.statPoints}</b> stat point${c.statPoints > 1 ? 's' : ''} to spend. Raise an ability to an even score (12, 14, 16, 18, 20) to unlock a talent.</div>` : ''}
-    ${pend.map(k => `<div class="talent-pick"><h3>Choose a ${ABIL_NAME[k]} talent</h3>
+    ${pend.map(k => `<div class="talent-pick"><h3>Choose ${/^[AEIOU]/.test(ABIL_NAME[k]) ? 'an' : 'a'} ${ABIL_NAME[k]} talent</h3>
       <div class="tchoices">${talentChoices(c, k).map(id => `<button class="tchoice" data-act="talent" data-k="${id}"><b>${talentDef(id).name}</b><span>${talentDef(id).desc}</span></button>`).join('')}</div></div>`).join('')}
     ${c.talents.length ? `<div class="section"><h3>Talents</h3><div class="tlist">${c.talents.map(id => `<div class="tl"><b>${talentDef(id)?.name}</b> <span class="muted">${ABIL_NAME[TALENT_STAT[id]]} · ${talentDef(id)?.desc}</span></div>`).join('')}</div></div>` : ''}`;
 }
