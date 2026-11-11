@@ -226,6 +226,78 @@
     .spell .lv { display: none; }
   }
   @media (prefers-reduced-motion: reduce) { .bar > i, .toast { transition: none; } }
+
+  /* Modes: menu (board orbits behind the screens), play, edit */
+  body[data-mode="menu"] .app { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+  body[data-mode="menu"] .panel, body[data-mode="menu"] .hud, body[data-mode="menu"] .actions, body[data-mode="menu"] .narr { display: none !important; }
+  body[data-mode="edit"] #panel, body[data-mode="edit"] #playBar, body[data-mode="edit"] #hudChips, body[data-mode="edit"] .narr,
+  body[data-mode="edit"] .vignette, body[data-mode="edit"] .blood { display: none !important; }
+  body:not([data-mode="edit"]) #edPanel, body:not([data-mode="edit"]) #edBar { display: none !important; }
+  .chip.menu { cursor: pointer; font-family: var(--display); letter-spacing: .04em; }
+  .chip.menu:hover { border-color: var(--brass); }
+
+  .screen { position: fixed; inset: 0; z-index: 30; overflow-y: auto; padding: 40px 16px;
+            background: radial-gradient(ellipse 90% 70% at 50% 35%, rgba(18, 13, 9, .45), rgba(10, 8, 6, .93) 80%); }
+  .menu { max-width: 820px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+  .menu.title { min-height: calc(100% - 20px); justify-content: center; align-items: center; text-align: center; }
+  .menu h1 { margin: 0; font: 700 clamp(44px, 9vw, 84px)/1 var(--display); color: var(--brass); letter-spacing: .04em; text-shadow: 0 6px 40px #000; }
+  .menu .sub { margin: -6px 0 0; color: var(--muted); }
+  .menu .sub.small { font-size: 13px; margin: 0; }
+  .menu h3 { margin-top: 6px; }
+  .choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; width: 100%; max-width: 640px; }
+  .choice { text-align: left; display: flex; flex-direction: column; gap: 6px; padding: 20px; color: var(--muted);
+            background: color-mix(in srgb, var(--panel) 90%, transparent); border: 1px solid var(--line); border-radius: 12px; }
+  .choice:hover { border-color: var(--brass); transform: translateY(-1px); }
+  .choice .ct { font: 700 28px/1.1 var(--display); color: var(--ink); }
+  .btn.big { padding: 11px 18px; font-size: 16px; }
+  .btn.danger { border-color: var(--blood); color: #ffb3a6; }
+  .mhead { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .mhead h2 { margin: 0; font: 700 30px/1.1 var(--display); color: var(--brass); text-wrap: balance; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+  .card2 { background: color-mix(in srgb, var(--panel) 95%, transparent); border: 1px solid var(--line); border-radius: 12px; padding: 14px;
+           display: flex; flex-direction: column; gap: 8px; text-align: left; }
+  .card2.new { border-style: dashed; align-items: center; justify-content: center; min-height: 150px; color: var(--muted); font: 600 19px var(--display); }
+  .card2.new:hover { border-color: var(--brass); color: var(--ink); }
+  .card2 .who { display: flex; gap: 10px; align-items: center; }
+  .card2 .dotc { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--brass); background: var(--c); flex: none; }
+  .card2 .nm { font: 700 20px/1.15 var(--display); overflow-wrap: anywhere; }
+  .card2 .st { color: var(--muted); font-size: 13px; }
+  .card2 .row { margin-top: auto; }
+  .form { background: color-mix(in srgb, var(--panel) 95%, transparent); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .field > span { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+  .field input[type=text], .field textarea, .field input[type=number], select, .row input[type=number] {
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; max-width: 100%; box-sizing: border-box; }
+  .row input[type=number] { width: 70px; }
+  textarea { resize: vertical; font: inherit; color: inherit; }
+  .pb { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+  .pb > div { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; display: flex; align-items: center; gap: 6px; }
+  .pb b { flex: 1; font-weight: 600; } .pb .v { font: 700 21px var(--display); min-width: 26px; text-align: center; } .pb .m { color: var(--muted); font-size: 12px; min-width: 22px; text-align: right; }
+  .dlist { display: flex; flex-direction: column; gap: 8px; }
+  .dopt { display: flex; gap: 12px; align-items: flex-start; background: color-mix(in srgb, var(--panel) 95%, transparent); border: 1px solid var(--line); border-radius: 10px; padding: 12px; cursor: pointer; }
+  .dopt:has(input:checked) { border-color: var(--brass); box-shadow: 0 0 0 1px var(--brass); }
+  .dopt input { margin-top: 4px; accent-color: var(--brass); }
+  .seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; align-self: flex-start; }
+  .seg button { background: var(--panel-2); border: 0; border-right: 1px solid var(--line); padding: 7px 11px; }
+  .seg button:last-child { border-right: 0; }
+  .seg button[aria-pressed="true"] { background: var(--brass); color: #20180d; font-weight: 700; }
+
+  /* the creator */
+  .pal { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 6px; }
+  .pal button { display: flex; align-items: center; gap: 7px; padding: 5px 7px; background: var(--panel-2); border: 1px solid var(--line);
+                border-radius: 8px; font-size: 13px; text-align: left; line-height: 1.15; min-height: 34px; }
+  .pal button:hover { border-color: var(--muted); }
+  .pal button[aria-pressed="true"] { border-color: var(--brass); box-shadow: 0 0 0 1px var(--brass); background: color-mix(in srgb, var(--brass) 14%, var(--panel-2)); }
+  .pal i { width: 22px; height: 22px; flex: none; border-radius: 5px; display: grid; place-items: center; font: 700 12px/1 var(--body); font-style: normal;
+           background: var(--bg); color: var(--fg); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); }
+  .ed-insp { background: var(--panel-2); border: 1px solid var(--brass); border-radius: 10px; padding: 12px; }
+  .ed-insp .lootlist li { background: var(--panel); }
+  .checks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+  .checks li { padding: 6px 9px; border-radius: 6px; border-left: 3px solid var(--brass); background: var(--panel-2); }
+  .checks li.bad { border-left-color: var(--blood); } .checks li.info { border-left-color: var(--sky); }
+  #edBar .tool { color: var(--ink); font-size: 13px; text-shadow: 0 1px 3px #000; background: color-mix(in srgb, var(--panel) 80%, transparent);
+                 border-radius: 8px; padding: 6px 10px; max-width: 560px; pointer-events: none !important; }
+  #edBar .tool b { color: var(--brass); }
 </style>
 <script type="importmap">
 { "imports": {
@@ -235,6 +307,7 @@
 </script>
 </head>
 <body>
+<div class="screen" id="screen" hidden></div>
 <div class="app">
   <main class="stage" id="stage">
     <canvas id="c" aria-label="3D battle board"></canvas>
@@ -243,11 +316,22 @@
     <div class="hitflash" id="hitflash"></div>
     <div id="fx"></div>
     <div class="narr" id="narr" hidden><h3 id="narrT"></h3><p id="narrP"></p></div>
-    <div class="hud" id="hud"><select class="chip map" id="mapSel" aria-label="Map"></select><span class="hud-chips" id="hudChips"></span></div>
+    <div class="hud" id="hud"><button class="chip menu" id="menuBtn">Menu</button><span class="hud-chips" id="hudChips"></span></div>
     <div class="aim" id="aim" hidden></div>
     <div class="toast off" id="toast" role="status" aria-live="polite"></div>
     <div class="modal" id="modal" hidden><div class="card" role="dialog" aria-modal="true" aria-labelledby="mTitle"><h2 id="mTitle"></h2><div id="mBody"></div><div class="row" id="mBtns"></div></div></div>
-    <div class="actions">
+    <div class="actions" id="edBar">
+      <div class="row"><span class="tool" id="edTool"></span></div>
+      <div class="row">
+        <button class="btn" id="edUndo" title="Undo (Ctrl+Z)">Undo</button>
+        <button class="btn" id="edRedo" title="Redo (Ctrl+Y)">Redo</button>
+        <button class="btn" id="edTop">Top view</button>
+        <button class="btn" id="edLight">Preview lighting</button>
+        <button class="btn primary" id="edPlay">Playtest</button>
+        <span class="hint">Left-drag paints · Right-drag turns · WASD or Shift+right-drag pans · Scroll zooms</span>
+      </div>
+    </div>
+    <div class="actions" id="playBar">
       <div class="row" id="spellbar"></div>
       <div class="row">
         <button class="btn" id="searchBtn" title="Wisdom (Perception) check to find secret doors, traps and hidden caches within 15 ft">Search</button>
@@ -260,6 +344,7 @@
     </div>
   </main>
 
+  <aside class="panel" id="edPanel" aria-label="Dungeon creator"></aside>
   <aside class="panel" id="panel" aria-label="Character sheet">
     <div class="sheet-head">
       <label class="swatch" title="Miniature colour"><input type="color" id="charColor" aria-label="Miniature colour"></label>
@@ -307,7 +392,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
  * ================================================================== */
 const MAPS = {
   crypt: {
-    name: 'Sunken Crypt', dark: true, fog: true, sight: 7, rev: 3,
+    name: 'Sunken Crypt', desc: 'A flooded crypt full of the restless dead, a cursed crown, and a Grave Warden guarding the only way out.', dark: true, fog: true, sight: 7, rev: 3,
     rows: [
       '##########################',
       '#############.C.##########',
@@ -352,7 +437,7 @@ const MAPS = {
     tablet: `When the Drowned King slept, the <b>moon</b> rose first. The <b>sun</b> followed, hunting her across the sky. Only when both had passed were the <b>stars</b> allowed to shine.`,
   },
   trainingYard: {
-    name: 'Training Yard', dark: false, fog: false,
+    name: 'Training Yard', desc: 'A sunny practice yard with a training dummy. Try out spells and gear with nothing on the line.', dark: false, fog: false,
     rows: [
       '..............',
       '..##......~~..',
@@ -506,8 +591,7 @@ function migrateChar(c) {
   return c;
 }
 
-function freshState(mapKey, carryChar) {
-  const map = MAPS[mapKey];
+function freshState(mapKey, carryChar, map = MAPS[mapKey]) {
   const char = carryChar ? migrateChar(JSON.parse(JSON.stringify(carryChar))) : newCharacter();
   if (carryChar) { char.slots = freshSlots(); }
   char.hp = Math.max(char.hp, 1);
@@ -522,10 +606,10 @@ function freshState(mapKey, carryChar) {
         creatures.push({ id: id++, type: t, x, z, hp: MONSTERS[t].hp, alive: true, aware: false, restrained: false, ...(ch === 'b' ? { dormant: true } : {}) });
         return '.';
       }
-      if (ch === '$') { loot[k] = { items: [...map.loot[k].items], gold: map.loot[k].gold || 0 }; return '.'; }
-      if (ch === 'H') { stash[k] = { ...map.stash[k], items: [...map.stash[k].items], found: false }; return '.'; }
+      if (ch === '$') { const L = map.loot?.[k] || { items: [] }; loot[k] = { items: [...L.items], gold: L.gold || 0 }; return '.'; }
+      if (ch === 'H') { const S = map.stash?.[k] || { items: [], gold: 20, dc: 13 }; stash[k] = { ...S, items: [...S.items], found: false }; return '.'; }
       if (ch === 'T' || ch === 'Y' || ch === 'Z') { traps[k] = { kind: { T: 'darts', Y: 'fire', Z: 'spikes' }[ch], dc: 13, found: false }; return '.'; }
-      if (ch === 'C') chests[k] = { ...map.chests[k], items: [...map.chests[k].items], opened: false };
+      if (ch === 'C') { const C = map.chests?.[k] || { items: [], gold: 10 }; chests[k] = { ...C, items: [...C.items], opened: false }; }
       return ch;
     }));
   });
@@ -554,13 +638,18 @@ function load() {
   } catch (e) {}
   return null;
 }
-function save() {
-  try { state.log = state.log.slice(-90); localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) {}
+function save() {   // only real expeditions are saved, into the hero's slot in the roster
+  if (mode !== 'play' || !curHero) return;
+  const h = heroes.find(h => h.id === curHero); if (!h) return;
+  state.log = state.log.slice(-90); h.char = state.char; h.run = state; h.updated = Date.now();
+  saveHeroes();
 }
 function loadPrefs() { try { return JSON.parse(localStorage.getItem(PREF_KEY)) || {}; } catch (e) { return {}; } }
 function savePrefs() { try { localStorage.setItem(PREF_KEY, JSON.stringify({ sandbox: ui.sandbox, quality: qName, sound: SFX.on })); } catch (e) {} }
 
-let state = load() || freshState('crypt');
+let state = freshState('crypt');
+let mode = 'menu', curHero = null;
+const playing = () => mode === 'play' || mode === 'test';
 let MAP = MAPS[state.mapKey], W = MAP.rows[0].length, H = MAP.rows.length;
 const prefs = loadPrefs();
 const ui = { tab: 'sheet', editScores: false, spell: null, aim: null, sandbox: prefs.sandbox ?? true, hover: null };
@@ -670,7 +759,7 @@ function los(x0, z0, x1, z1) {
 }
 function computeVisibility() {
   vis = new Uint8Array(W * H);
-  if (!MAP.fog) { vis.fill(1); return; }
+  if (!MAP.fog || !playing()) { vis.fill(1); return; }
   const R = MAP.sight || 7, hx = state.pos.x, hz = state.pos.z;
   for (let z = Math.max(0, hz - R); z <= Math.min(H - 1, hz + R); z++)
     for (let x = Math.max(0, hx - R); x <= Math.min(W - 1, hx + R); x++) {
@@ -2764,11 +2853,12 @@ function narrate(title, text) {
   SFX.sting();
 }
 function updateDread() {
-  $('vignette').hidden = !MAP.dark;
-  const f = state.char.hp / derived().maxHp, b = $('blood');
+  $('vignette').hidden = !MAP.dark || !playing();
+  const f = playing() ? state.char.hp / derived().maxHp : 1, b = $('blood');
   b.classList.toggle('low', state.char.hp > 0 && f <= 0.5 && f > 0.25);
   b.classList.toggle('dying', state.char.hp > 0 && f <= 0.25);
   $('soundBtn').textContent = SFX.on ? 'Sound on' : 'Sound off';
+  $('menuBtn').textContent = mode === 'edit' ? `☰ Menu · ${ed.map.name}` : mode === 'test' ? '← Back to the editor' : `☰ Menu · ${MAP.name}`;
 }
 function startCombat() {
   state.turn = { round: state.turn.round, move: derived().speedSq, action: state.turn.action };
@@ -2856,7 +2946,7 @@ function useFont(x, z) {
 }
 function readTablet() {
   addLog('', 'You read the weathered inscription.');
-  showModal('A Weathered Inscription', `<p class="inscription">${MAP.tablet}</p><p class="muted">Three pressure plates are set into the floor of this chamber, carved with a sun, a moon and a star.</p>`, [{ label: 'Close', primary: true }]);
+  showModal('A Weathered Inscription', `<p class="inscription">${esc(MAP.tablet).replace(/&lt;(\/?b)&gt;/g, '<$1>')}</p>${MAP.puzzle ? '<p class="muted">Three pressure plates are set into the floor nearby, carved with a sun, a moon and a star.</p>' : ''}`, [{ label: 'Close', primary: true }]);
 }
 
 /* --- traps --- */
@@ -2961,6 +3051,7 @@ function disarm(k, x, z) {
 /* --- the plate puzzle --- */
 function pressPlate(ch, x, z) {
   const pz = state.puzzle, name = PLATE_NAMES[ch];
+  if (!MAP.puzzle) return false;
   if (pz.solved || pz.seq.includes(ch)) return false;
   const p = worldOf(x, z);
   if (MAP.puzzle.order[pz.seq.length] === ch) {
@@ -3054,7 +3145,11 @@ function killCreature(c) {
   gainXp(m.xp);
   views.get(c.id).bar.hidden = true;
   checkFightOver(wasCombat);
+  // a dungeon without exit stairs is won by clearing it
+  if (playing() && !mapHasExit() && !state.won && state.creatures.some(c => MONSTERS[c.type].ai !== 'none')
+      && !state.creatures.some(c => c.alive && MONSTERS[c.type].ai !== 'none')) { state.won = true; after(1.4, victory); }
 }
+const mapHasExit = () => MAP.rows.some(r => r.includes('X'));
 
 function attack(c) {
   if (state.over) return;
@@ -3283,7 +3378,7 @@ function hurtHero(n, what, cls = 'dmg') {
   const hf = $('hitflash'); hf.classList.remove('go'); void hf.offsetWidth; hf.classList.add('go');
   addLog('hit', `${what}: ${c.name} takes <b>${n}</b> (${c.hp}/${derived().maxHp}).`);
   if (c.hp === 0) {
-    if (state.creatures.some(cr => MONSTERS[cr.type].ai !== 'none') || state.mapKey === 'crypt') after(0.6, defeat);
+    if (state.creatures.some(cr => MONSTERS[cr.type].ai !== 'none') || MAP.dark) after(0.6, defeat);
     else toast(`${c.name} is at 0 HP. Heal or take a long rest from the sheet.`);
   }
 }
@@ -3294,22 +3389,23 @@ function defeat() {
   state.over = 'defeat'; busy = false; save(); SFX.doom();
   showModal('You have fallen', `<p>${state.char.name} collapses on the cold stones of the ${MAP.name}. Somewhere in the dark, something laughs.</p>`, [
     { label: 'Try again', primary: true, fn: () => restartMap(state.mapKey, state.startChar) },
-    { label: 'New character', fn: () => restartMap(state.mapKey, null) },
+    mode === 'test' ? { label: 'Back to the editor', fn: () => openEditor(ed.id, true) } : { label: 'Main menu', fn: () => toMenu() },
   ]);
 }
 function victory() {
-  const s = state.stats, foes = state.creatures.filter(c => MONSTERS[c.type].ai !== 'none').length;
-  addLog('sys', `<b>${state.char.name} escapes the ${MAP.name}!</b>`);
+  const s = state.stats, foes = state.creatures.filter(c => MONSTERS[c.type].ai !== 'none').length, cleared = !mapHasExit();
+  addLog('sys', `<b>${state.char.name} ${cleared ? 'clears' : 'escapes'} the ${MAP.name}!</b>`);
   save();
-  showModal(`You escape the ${MAP.name}`, `
-    <p>The stairs spiral down into fresh air and grey morning light. You made it out.</p>
+  showModal(cleared ? `The ${MAP.name} is cleared` : `You escape the ${MAP.name}`, `
+    <p>${cleared ? 'The last of its guardians falls. The dungeon is silent, and it is yours.' : 'The stairs spiral down into fresh air and grey morning light. You made it out.'}</p>
     <div class="stats">
       <div><span>Enemies defeated</span><b>${s.kills} / ${foes}</b></div>
-      <div><span>Secrets found</span><b>${s.secrets} / 3</b></div>
+      <div><span>Secrets found</span><b>${s.secrets}</b></div>
       <div><span>Gold found</span><b>${s.gold} gp</b></div>
       <div><span>Level</span><b>${state.char.level} (${state.char.xp} XP)</b></div>
     </div>`, [
-    { label: 'Play again with this character', primary: true, fn: () => restartMap(state.mapKey, state.char) },
+    ...(mode === 'test' ? [{ label: 'Back to the editor', primary: true, fn: () => openEditor(ed.id, true) }]
+      : [{ label: 'Play again with this character', primary: true, fn: () => restartMap(state.mapKey, state.char) }, { label: 'Main menu', fn: () => toMenu() }]),
     { label: 'Keep exploring' },
   ]);
 }
@@ -3318,7 +3414,6 @@ function restartMap(key, char) {
   state = freshState(key, char);
   MAP = MAPS[key]; W = MAP.rows[0].length; H = MAP.rows.length;
   state.char.hp = derived().maxHp;
-  $('mapSel').value = key;
   bootBoard();
   addLog('sys', `${MAP.name}: ${state.char.name} starts fresh.`);
   refresh(); save();
@@ -3700,6 +3795,7 @@ function renderPanel() {
 }
 
 function refreshBoard() {
+  if (!playing()) { computeVisibility(); applyFog(); for (const o of overlays) if (o) o.visible = false; if (mode === 'edit') edHighlight(); return; }
   rebuildFxGrid();
   computeVisibility(); applyFog();
   if (exploring()) { state.turn.move = 40; state.turn.action = true; }
@@ -3732,13 +3828,6 @@ $('charName').addEventListener('input', e => { state.char.name = e.target.value 
 $('charName').addEventListener('change', () => renderPanel());
 $('charColor').addEventListener('input', e => { state.char.color = e.target.value; dressHero(); save(); });
 $('spellbar').addEventListener('click', e => { const b = e.target.closest('[data-spell]'); if (b) selectSpell(b.dataset.spell); });
-$('mapSel').innerHTML = Object.entries(MAPS).map(([k, m]) => `<option value="${k}">${m.name}</option>`).join('');
-$('mapSel').addEventListener('change', e => {
-  const key = e.target.value; e.target.value = state.mapKey;
-  if (busy || anim) return;
-  showModal(`Travel to the ${MAPS[key].name}?`, `<p>Progress on this map resets. ${state.char.name} keeps their level, gear and gold.</p>`, [
-    { label: 'Travel', primary: true, fn: () => restartMap(key, state.char) }, { label: 'Stay here' }]);
-});
 
 $('panel').addEventListener('change', e => {
   if (e.target.id === 'sandbox') { ui.sandbox = e.target.checked; savePrefs(); refresh(); }
@@ -3793,7 +3882,7 @@ $('viewBtn').addEventListener('click', resetView);
 $('soundBtn').addEventListener('click', () => { SFX.toggle(); savePrefs(); updateDread(); });
 $('narr').addEventListener('click', () => { narrT = Math.min(narrT, 0.01); });
 window.addEventListener('keydown', e => {
-  if (e.target.closest('input, select, textarea') || !$('modal').hidden) return;
+  if (!playing() || e.target.closest('input, select, textarea') || !$('modal').hidden) return;
   const k = Object.keys(SPELLS).find(k => SPELLS[k].key === e.key);
   if (k) { selectSpell(k); e.preventDefault(); }
   else if (e.key === 'Escape') cancelSpell();
@@ -3846,10 +3935,10 @@ function showPath(x, z) {
 const reachable = (x, z) => { const d = reach && reach.dist[z * W + x]; return d > 0 && d <= heroBudget(); };
 
 let down = null;
-canvas.addEventListener('contextmenu', e => { if (ui.spell) { e.preventDefault(); cancelSpell(); } });
+canvas.addEventListener('contextmenu', e => { if (playing() && ui.spell) { e.preventDefault(); cancelSpell(); } });
 canvas.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY, b: e.button }; });
 canvas.addEventListener('pointermove', e => {
-  if (anim || busy || e.pointerType === 'touch' || state.over) return;
+  if (!playing() || anim || busy || e.pointerType === 'touch' || state.over) return;
   const p = pick(e);
   const hov = p && (p.kind === 'creature' || p.kind === 'corpse') ? p.cid : null;
   if (hov !== ui.hover) { ui.hover = hov; renderHud(); }
@@ -3863,7 +3952,7 @@ canvas.addEventListener('pointermove', e => {
   if ((p.kind === 'tile' || p.kind === 'prop') && reachable(p.x, p.z)) { showPath(p.x, p.z); canvas.style.cursor = 'pointer'; }
 });
 canvas.addEventListener('pointerup', e => {
-  if (!down || down.b !== 0 || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6 || anim || busy || state.over) { down = null; return; }
+  if (!playing() || !down || down.b !== 0 || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6 || anim || busy || state.over) { down = null; return; }
   down = null;
   const p = pick(e);
   if (ui.spell) {
@@ -3901,19 +3990,19 @@ function resize() {
 }
 new ResizeObserver(resize).observe(stage);
 
-function bootBoard() {
+function bootBoard(keepView) {
   buildBoard(); rebuildCreatures(); dressHero(); placeHero();
   rebuildFxGrid();
   for (const e of state.effects) spawnVisual(e, true);
-  computeVisibility(); applyFog(); resetView();
-  SFX.setAmbient(MAP.dark ? 1 : 0);
+  computeVisibility(); applyFog(); if (!keepView) resetView();
+  SFX.setAmbient(MAP.dark ? (mode === 'edit' ? 0.35 : 1) : 0);
   $('narr').hidden = true; narrT = 0;
-  if (!state.over) after(1.2, () => enterRoom(state.pos.x, state.pos.z));
+  if (!state.over && playing()) after(1.2, () => { if (playing()) enterRoom(state.pos.x, state.pos.z); });
 }
 
 const clock = new THREE.Clock(), tmp = new THREE.Vector3(), shakeOff = new THREE.Vector3(), follow = new THREE.Vector3();
 const RED = new THREE.Color('#ff2a10');
-let moteT = 0, torchT = 0, heartT = 0;
+let moteT = 0, torchT = 0, heartT = 0, menuT = 0.6;
 function tick() {
   const dt = Math.min(clock.getDelta(), 0.05), time = clock.elapsedTime;
   fxTime.value = time;
@@ -3925,13 +4014,14 @@ function tick() {
   // the six torch lights sit on whichever explored torches are closest to the hero
   if ((torchT -= dt) <= 0) {
     torchT = 0.3;
-    const near = torchSpots.filter(t => state.explored[t.i]).sort((a, b) => a.pos.distanceToSquared(hero.position) - b.pos.distanceToSquared(hero.position));
+    const ref = playing() ? hero.position : controls.target;
+    const near = torchSpots.filter(t => state.explored[t.i]).sort((a, b) => a.pos.distanceToSquared(ref) - b.pos.distanceToSquared(ref));
     torchLights.forEach((l, k) => { l.userData.spot = near[k] || null; if (near[k]) l.position.copy(near[k].pos); });
   }
   SFX.tick(dt);
   if (narrT > 0 && (narrT -= dt) <= 0) { $('narr').classList.add('fade'); after(0.8, () => { if (narrT <= 0) $('narr').hidden = true; }); }
   const hpF = state.char.hp / derived().maxHp;
-  if (state.char.hp > 0 && hpF <= 0.5 && !state.over && (heartT -= dt) <= 0) { heartT = 0.55 + hpF * 1.2; SFX.heartbeat(hpF <= 0.25 ? 1 : 0.6); }
+  if (playing() && state.char.hp > 0 && hpF <= 0.5 && !state.over && (heartT -= dt) <= 0) { heartT = 0.55 + hpF * 1.2; SFX.heartbeat(hpF <= 0.25 ? 1 : 0.6); }
   for (const l of torchLights) { const t = l.userData.spot; l.intensity = t ? 9 + Math.sin(time * 9 + t.n) * 1.5 + Math.sin(time * 23 + t.n * 3) : 0; }
   if (MAP.dark) stream(smoke, 0.1, dt, () => { const c = hero.position; return { p: [c.x + rnd(-7, 7), rnd(.25, .45), c.z + rnd(-6, 6)], v: [rnd(-.08, .08), rnd(0, .02), rnd(-.08, .08)],
     life: rnd(6, 9), s: [1.4, 2.6], c0: hdr('#39404c'), c1: hdr('#2a2f38'), a: .1, fi: .4 }; });
@@ -4031,7 +4121,12 @@ function tick() {
   }
 
   // the camera drifts after the hero on big maps
-  if (MAP.fog) {
+  if (mode === 'menu') {
+    menuT += dt * 0.05; const s = Math.max(W, H);
+    controls.target.set(0, 0, 0); camera.position.set(Math.sin(menuT) * s * 0.6, s * 0.42 + 4, Math.cos(menuT) * s * 0.6);
+  }
+  if (mode === 'edit') edPan(dt);
+  if (MAP.fog && playing()) {
     follow.copy(hero.position).setY(0).sub(controls.target); follow.y = 0;
     const d = follow.length();
     if (d > 1.5) { follow.multiplyScalar((1 - 1.5 / d) * Math.min(1, dt * 3)); controls.target.add(follow); camera.position.add(follow); }
@@ -4046,6 +4141,693 @@ function tick() {
   requestAnimationFrame(tick);
 }
 
+
+/* ================================================================== *
+ * MODES: title menu, hero roster, dungeon picker and the dungeon creator
+ * ================================================================== */
+const HERO_KEY = 'battleboard.heroes.v1', DUNGEON_KEY = 'battleboard.dungeons.v1';
+const store = {
+  get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } },
+};
+const uid = () => Math.random().toString(36).slice(2, 10);
+const clone = o => JSON.parse(JSON.stringify(o));
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const maxHpOf = c => Math.max(1, 10 + mod(c.abilities.con) + (c.level - 1) * (6 + mod(c.abilities.con)));
+
+let heroes = store.get(HERO_KEY, null);
+if (!heroes) {   // first launch with the roster: the old single save becomes the first hero
+  heroes = [];
+  const old = load();
+  if (old) heroes.push({ id: uid(), char: old.char, run: old, updated: Date.now() });
+  store.set(HERO_KEY, heroes);
+}
+let dungeons = store.get(DUNGEON_KEY, {});
+function registerDungeons() {
+  for (const k of Object.keys(MAPS)) if (k.startsWith('c_')) delete MAPS[k];
+  for (const [id, m] of Object.entries(dungeons)) MAPS['c_' + id] = finalizeMap(m);
+}
+const saveHeroes = () => store.set(HERO_KEY, heroes) || toast('Could not save: browser storage is full.');
+const heroById = id => heroes.find(h => h.id === id);
+const mapKeys = () => Object.keys(MAPS).filter(k => k !== '_test');
+
+// fill in what a hand-made dungeon needs to be playable
+function finalizeMap(m) {
+  m.loot ||= {}; m.chests ||= {}; m.stash ||= {}; m.secrets ||= {}; m.torches ||= []; m.rooms ||= [];
+  m.puzzleOrder ||= m.puzzle?.order || ['1', '2', '3'];
+  let gate = null; const plates = new Set();
+  m.rows.forEach((r, z) => [...r].forEach((ch, x) => { if (ch === 'G' && !gate) gate = [x, z]; if ('123'.includes(ch)) plates.add(ch); }));
+  m.puzzle = gate && plates.size === 3 ? { order: m.puzzleOrder, gate } : null;
+  m.tablet ||= 'The letters are worn almost smooth. Whatever warning they held is lost.';
+  m.sight ||= 7; m.fog = !!m.dark;
+  const at = k => { const [x, z] = k.split(',').map(Number); return m.rows[z]?.[x]; };
+  for (const [field, ch] of [['loot', '$'], ['chests', 'C'], ['stash', 'H'], ['secrets', 'S']])
+    for (const k of Object.keys(m[field])) if (at(k) !== ch) delete m[field][k];
+  return m;
+}
+const monsterCount = m => m.rows.join('').split('').filter(ch => CREATURE_CHARS[ch] && ch !== 'm').length;
+
+/* --- switching modes --- */
+function setMode(m) {
+  mode = m; document.body.dataset.mode = m === 'test' ? 'play' : m;
+  const ed = m === 'edit';
+  controls.enabled = m !== 'menu';
+  controls.mouseButtons = ed ? { LEFT: -1, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE }
+                             : { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
+  controls.touches = ed ? { ONE: -1, TWO: THREE.TOUCH.DOLLY_PAN } : { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
+  controls.maxDistance = ed ? 70 : 30;
+  scene.fog.near = ed || m === 'menu' ? 60 : 20; scene.fog.far = ed || m === 'menu' ? 140 : 42;
+  $('narr').hidden = true; narrT = 0; clearPath(); edBox.visible = false;
+  setTimeout(resize, 0);
+}
+function useMap(key, map = MAPS[key]) { MAP = map; W = MAP.rows[0].length; H = MAP.rows.length; }
+function stopPlay() { cancelSpell(); clearVisuals(); anim = null; busy = false; timers.length = 0; hideModal(); }
+
+function enterPlay(st, m = 'play', fresh = false) {
+  stopPlay(); hideScreens();
+  setMode(m);
+  state = st; useMap(state.mapKey);
+  migrateChar(state.char);
+  if (fresh) state.char.hp = derived().maxHp;
+  bootBoard(); hero.visible = true;
+  refresh(); save();
+}
+function showBackdrop(key) {
+  stopPlay(); setMode('menu');
+  if (!MAPS[key]) key = 'crypt';
+  useMap(key); state = freshState(key); state.explored.fill(1);
+  bootBoard(); hero.visible = false; refresh();
+}
+function toMenu(screen = 'title', opts) {
+  save();
+  showBackdrop(MAPS[state.mapKey] && state.mapKey !== '_test' ? state.mapKey : 'crypt');
+  showScreen(screen, opts);
+}
+function menuButton() {
+  if (mode === 'edit') { edSave(); return toMenu('creator'); }
+  if (mode === 'test') return openEditor(ed.id, true);
+  if (busy || anim) return;
+  showModal('Leave the dungeon?', `<p>Your expedition is saved. Pick it up again any time from the Adventure menu.</p>`, [
+    { label: 'Main menu', primary: true, fn: () => toMenu() }, { label: 'Stay' }]);
+}
+
+/* --- screens --- */
+let scr = { name: 'title' };
+function showScreen(name, opts = {}) { scr = { name, ...opts }; $('screen').hidden = false; renderScreen(); $('screen').scrollTop = 0; }
+function hideScreens() { $('screen').hidden = true; }
+function renderScreen() { $('screen').innerHTML = SCREENS[scr.name](); }
+
+const POINT_COST = { 8: 0, 9: 1, 10: 2, 11: 3, 12: 4, 13: 5, 14: 7, 15: 9 };
+const MAP_DESC = {
+  crypt: 'A flooded crypt full of the restless dead, a cursed crown and a Grave Warden guarding the only way out.',
+  trainingYard: 'A sunny practice yard with a training dummy. Test your spells and gear with nothing on the line.',
+};
+function heroStatus(h) {
+  const r = h.run;
+  if (!r) return 'Ready for an expedition';
+  if (!MAPS[r.mapKey]) return 'Their dungeon no longer exists';
+  if (r.over === 'defeat') return `Fell in the ${esc(MAPS[r.mapKey].name)}`;
+  return `In the ${esc(MAPS[r.mapKey].name)} · ${r.char.hp}/${maxHpOf(r.char)} HP`;
+}
+const canContinue = h => h.run && !h.run.over && MAPS[h.run.mapKey];
+const back = (to = 'title') => `<button class="btn" data-go="${to}">Back</button>`;
+const swatches = (list, cur, act) => list.map(t => `<button class="sw ${cur === t ? 'on' : ''}" style="--sw:${t}" data-act="${act}" data-k="${t}" aria-label="${t}"></button>`).join('');
+const seg = (act, cur, opts) => `<div class="seg" role="group">${opts.map(([k, l]) => `<button data-act="${act}" data-k="${k}" aria-pressed="${cur === k}">${l}</button>`).join('')}</div>`;
+
+const SCREENS = {
+  title() {
+    const live = heroes.filter(canContinue).sort((a, b) => b.updated - a.updated)[0];
+    return `<div class="menu title">
+      <h1>Battle Board</h1>
+      <p class="sub">A tabletop dungeon crawl in your browser</p>
+      ${live ? `<button class="btn primary big" data-act="continue" data-id="${live.id}">Continue: ${esc(live.char.name)} in the ${esc(MAPS[live.run.mapKey].name)}</button>` : ''}
+      <div class="choices">
+        <button class="choice" data-go="heroes"><span class="ct">Adventure</span><span>Choose a hero or make a new one, then take them into a dungeon.</span></button>
+        <button class="choice" data-go="creator"><span class="ct">Create</span><span>Build your own dungeon: rooms, doors, traps, treasure and monsters.</span></button>
+      </div>
+      <p class="sub small">Sound starts after your first click.</p>
+    </div>`;
+  },
+  heroes() {
+    return `<div class="menu">
+      <div class="mhead">${back()}<h2>Choose your hero</h2></div>
+      <div class="cards">
+        ${heroes.slice().sort((a, b) => b.updated - a.updated).map(h => `
+          <div class="card2">
+            <div class="who"><span class="dotc" style="--c:${esc(h.char.color)}"></span>
+              <div><div class="nm">${esc(h.char.name)}</div><div class="st">Level ${h.char.level} ${esc(h.char.species)} ${esc(h.char.cls)}</div></div></div>
+            <div class="st">${heroStatus(h)}</div>
+            <div class="row">
+              ${canContinue(h) ? `<button class="btn primary small" data-act="continue" data-id="${h.id}">Continue</button>` : ''}
+              <button class="btn small" data-act="expedition" data-id="${h.id}">${h.run ? 'Start over' : 'Choose a dungeon'}</button>
+              ${scr.confirmDel === h.id ? `<button class="btn small danger" data-act="delHero" data-id="${h.id}">Delete for good?</button>`
+                : `<button class="btn small" data-act="askDelHero" data-id="${h.id}">Delete</button>`}
+            </div>
+          </div>`).join('')}
+        <button class="card2 new" data-act="newHero">+ Create a new hero</button>
+      </div>
+    </div>`;
+  },
+  newHero() {
+    const d = scr.draft, buy = !d.rolled;
+    const final = k => buy ? d.base[k] + 1 : d.rolled[k];
+    const left = 27 - ABILITIES.reduce((s, [k]) => s + POINT_COST[d.base[k]], 0);
+    return `<div class="menu">
+      <div class="mhead">${back('heroes')}<h2>Create a hero</h2></div>
+      <div class="form">
+        <label class="field"><span>Name</span><input type="text" id="hName" maxlength="40" value="${esc(d.name)}"></label>
+        <div class="field"><span>Look</span>
+          <div class="row">${seg('hModel', d.model, [['adventurer', 'Adventurer'], ['paladin', 'Paladin sculpt']])}
+            <label class="row muted">Colour <input type="color" id="hColor" value="${d.color}"></label></div>
+          <div class="row"><span class="label" style="width:36px">Skin</span>${swatches(SKIN_TONES, d.skin, 'hSkin')}</div>
+          <div class="row"><span class="label" style="width:36px">Hair</span>${swatches(HAIR_COLORS, d.hair, 'hHair')}</div>
+        </div>
+        <div class="field"><span>Ability scores</span>
+          <div class="row between"><span class="muted">${buy ? `Point buy: <b style="color:var(--ink)">${left}</b> of 27 points left. Humans get +1 to every score.` : 'Rolled 4d6, dropping the lowest die.'}</span>
+            <span class="row">${buy ? '' : '<button class="btn small" data-act="pointBuy">Use point buy</button>'}<button class="btn small" data-act="rollScores">${buy ? 'Roll 4d6 instead' : 'Roll again'}</button></span></div>
+          <div class="pb">${ABILITIES.map(([k, label]) => `<div>
+            <b>${label}</b>
+            ${buy ? `<button class="btn small" data-act="pb" data-k="${k}" data-d="-1" ${d.base[k] <= 8 ? 'disabled' : ''} aria-label="Lower ${label}">−</button>` : ''}
+            <span class="v">${final(k)}</span>
+            ${buy ? `<button class="btn small" data-act="pb" data-k="${k}" data-d="1" ${d.base[k] >= 15 || POINT_COST[d.base[k] + 1] - POINT_COST[d.base[k]] > left ? 'disabled' : ''} aria-label="Raise ${label}">+</button>` : ''}
+            <span class="m">${fmt(mod(final(k)))}</span></div>`).join('')}</div>
+          <p class="muted">A Spellblade fights with steel and casts with Intelligence. Constitution sets hit points (${10 + mod(final('con'))} at level 1), Dexterity helps dodge, Wisdom spots traps.</p>
+        </div>
+        <div class="row"><button class="btn primary" data-act="createHero">Create hero</button></div>
+      </div>
+    </div>`;
+  },
+  pick() {
+    const h = heroById(scr.hero);
+    return `<div class="menu">
+      <div class="mhead">${back('heroes')}<h2>Where will ${esc(h.char.name)} go?</h2></div>
+      <div class="dlist">${mapKeys().map(k => { const m = MAPS[k]; return `
+        <label class="dopt"><input type="radio" name="dmap" value="${k}" ${k === scr.map ? 'checked' : ''}>
+          <span><b>${esc(m.name)}</b>${m.custom ? ' <span class="tag">Yours</span>' : ''}<br>
+          <span class="muted">${esc(m.desc || MAP_DESC[k] || '')}</span><br>
+          <span class="muted">${m.rows[0].length}×${m.rows.length} squares · ${m.dark ? 'dark, fog of war' : 'lit'} · ${monsterCount(m)} monsters</span></span></label>`; }).join('')}</div>
+      ${h.char.level > 1 || h.run ? `<label class="toggle"><input type="checkbox" id="freshStart" ${scr.fresh ? 'checked' : ''}>
+        <span><b>Start again at level 1</b><br><span class="muted">Off: ${esc(h.char.name)} keeps their level, gear and gold.</span></span></label>` : ''}
+      ${canContinue(h) ? `<p class="muted">This ends the expedition in progress.</p>` : ''}
+      <div class="row"><button class="btn primary" data-act="embark">Enter the dungeon</button></div>
+    </div>`;
+  },
+  creator() {
+    const d = scr.nd ||= { name: '', from: 'blank', size: '24x18', dark: true };
+    const list = Object.entries(dungeons).sort((a, b) => (b[1].updated || 0) - (a[1].updated || 0));
+    return `<div class="menu">
+      <div class="mhead">${back()}<h2>Create a dungeon</h2></div>
+      <div class="form">
+        <h3>New dungeon</h3>
+        <label class="field"><span>Name</span><input type="text" id="ndName" maxlength="40" value="${esc(d.name)}"></label>
+        <div class="field"><span>Start from</span>${seg('ndFrom', d.from, [['blank', 'Solid rock'], ['crypt', 'Copy of the Sunken Crypt'], ['trainingYard', 'Copy of the Training Yard']])}</div>
+        ${d.from === 'blank' ? `
+        <div class="field"><span>Size</span>${seg('ndSize', d.size, [['16x12', 'Small 16×12'], ['24x18', 'Medium 24×18'], ['32x24', 'Large 32×24'], ['40x30', 'Huge 40×30']])}</div>
+        <div class="field"><span>Mood</span>${seg('ndDark', d.dark ? 'dark' : 'lit', [['dark', 'Dark, with fog of war'], ['lit', 'Lit, everything visible']])}</div>` : ''}
+        <div class="row"><button class="btn primary" data-act="ndCreate">Create and edit</button>
+          <label class="btn">Import a dungeon file<input type="file" id="impFile" accept=".json,application/json" hidden></label></div>
+      </div>
+      <h3>Your dungeons</h3>
+      ${list.length ? `<div class="cards">${list.map(([id, m]) => `
+        <div class="card2">
+          <div class="nm">${esc(m.name)}</div>
+          <div class="st">${m.rows[0].length}×${m.rows.length} · ${m.dark ? 'dark' : 'lit'} · ${monsterCount(m)} monsters</div>
+          <div class="row">
+            <button class="btn primary small" data-act="edit" data-id="${id}">Edit</button>
+            <button class="btn small" data-act="dup" data-id="${id}">Duplicate</button>
+            <button class="btn small" data-act="export" data-id="${id}">Export</button>
+            ${scr.confirmDel === id ? `<button class="btn small danger" data-act="delDungeon" data-id="${id}">Delete for good?</button>`
+              : `<button class="btn small" data-act="askDelDungeon" data-id="${id}">Delete</button>`}
+          </div>
+        </div>`).join('')}</div>` : '<p class="muted">Nothing yet. Dungeons you make are saved in this browser and show up in the Adventure menu.</p>'}
+    </div>`;
+  },
+};
+
+function draftHero() {
+  return { name: '', color: '#3f6f8f', skin: SKIN_TONES[1], hair: HAIR_COLORS[1], model: 'adventurer',
+           base: { str: 13, dex: 13, con: 13, int: 15, wis: 9, cha: 8 }, rolled: null };
+}
+function charFromDraft(d) {
+  const c = newCharacter();
+  Object.assign(c, { name: d.name.trim() || 'Nameless wanderer', color: d.color, skin: d.skin, hair: d.hair, model: d.model });
+  for (const [k] of ABILITIES) c.abilities[k] = d.rolled ? d.rolled[k] : d.base[k] + 1;
+  c.hp = maxHpOf(c);
+  return c;
+}
+const roll4d6 = () => { const r = roll(4, 6).sort((a, b) => a - b); return r[1] + r[2] + r[3]; };
+function blankDungeon(name, w, h, dark) {
+  const rows = Array.from({ length: h }, () => '#'.repeat(w).split(''));
+  const rx = Math.floor(w / 2) - 3, rz = Math.floor(h / 2) - 2;
+  for (let z = rz; z < rz + 5; z++) for (let x = rx; x < rx + 7; x++) rows[z][x] = '.';
+  rows[rz + 2][rx + 3] = '@';
+  return { name, desc: '', dark, fog: dark, sight: 7, custom: true, rev: 1, rows: rows.map(r => r.join('')),
+    torches: [[rx + 1, rz - 1, 0, 1], [rx + 5, rz - 1, 0, 1]], loot: {}, chests: {}, stash: {}, secrets: {}, rooms: [], puzzleOrder: ['1', '2', '3'] };
+}
+
+$('screen').addEventListener('input', e => {
+  if (e.target.id === 'hName') scr.draft.name = e.target.value;
+  if (e.target.id === 'hColor') scr.draft.color = e.target.value;
+  if (e.target.id === 'ndName') scr.nd.name = e.target.value;
+});
+$('screen').addEventListener('change', e => {
+  if (e.target.name === 'dmap') scr.map = e.target.value;
+  if (e.target.id === 'freshStart') scr.fresh = e.target.checked;
+  if (e.target.id === 'impFile' && e.target.files[0]) importDungeon(e.target.files[0]);
+});
+$('screen').addEventListener('click', e => {
+  const go = e.target.closest('[data-go]');
+  if (go) return showScreen(go.dataset.go, go.dataset.go === 'creator' ? { nd: { name: '', from: 'blank', size: '24x18', dark: true } } : {});
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const id = b.dataset.id, k = b.dataset.k, h = id && heroById(id);
+  switch (b.dataset.act) {
+    case 'continue': {
+      let run = h.run;
+      migrateChar(run.char);
+      if ((run.rev || 1) !== (MAPS[run.mapKey].rev || 1)) { run = h.run = freshState(run.mapKey, run.char); toast('The dungeon has changed since your last visit, so this expedition starts from the entrance.'); }
+      curHero = h.id; enterPlay(run, 'play');
+      return;
+    }
+    case 'expedition': return showScreen('pick', { hero: id, map: h.run && MAPS[h.run.mapKey] ? h.run.mapKey : 'crypt', fresh: false });
+    case 'askDelHero': scr.confirmDel = id; break;
+    case 'delHero': heroes = heroes.filter(x => x !== h); saveHeroes(); scr.confirmDel = null; break;
+    case 'newHero': return showScreen('newHero', { draft: draftHero() });
+    case 'hModel': scr.draft.model = k; break;
+    case 'hSkin': scr.draft.skin = k; break;
+    case 'hHair': scr.draft.hair = k; break;
+    case 'pb': { const d = scr.draft; d.base[k] = Math.max(8, Math.min(15, d.base[k] + +b.dataset.d)); break; }
+    case 'rollScores': scr.draft.rolled = Object.fromEntries(ABILITIES.map(([a]) => [a, roll4d6()])); break;
+    case 'pointBuy': scr.draft.rolled = null; break;
+    case 'createHero': {
+      const nh = { id: uid(), char: charFromDraft(scr.draft), run: null, updated: Date.now() };
+      heroes.push(nh); saveHeroes();
+      return showScreen('pick', { hero: nh.id, map: 'crypt', fresh: false });
+    }
+    case 'embark': {
+      const hero = heroById(scr.hero), key = scr.map;
+      let c = hero.char;
+      if (scr.fresh) { const fresh = newCharacter(); for (const f of ['name', 'color', 'skin', 'hair', 'model', 'abilities', 'species', 'cls']) fresh[f] = clone(c[f]); c = fresh; }
+      c = clone(c); c.hp = maxHpOf(c); c.curseSteps = 0;
+      hero.run = freshState(key, c); hero.char = hero.run.char; hero.updated = Date.now();
+      curHero = hero.id; enterPlay(hero.run, 'play', true);
+      return;
+    }
+    case 'ndFrom': scr.nd.from = k; break;
+    case 'ndSize': scr.nd.size = k; break;
+    case 'ndDark': scr.nd.dark = k === 'dark'; break;
+    case 'ndCreate': {
+      const d = scr.nd; let m;
+      if (d.from === 'blank') { const [w, hh] = d.size.split('x').map(Number); m = blankDungeon(d.name.trim() || 'Untitled dungeon', w, hh, d.dark); }
+      else { m = clone(MAPS[d.from]); m.name = d.name.trim() || `${m.name} (my version)`; m.custom = true; m.rev = 1; m.desc = ''; m.puzzleOrder = m.puzzle?.order; }
+      const nid = uid(); m.updated = Date.now(); dungeons[nid] = finalizeMap(m); store.set(DUNGEON_KEY, dungeons); registerDungeons();
+      return openEditor(nid);
+    }
+    case 'edit': return openEditor(id);
+    case 'dup': { const m = clone(dungeons[id]); m.name += ' (copy)'; m.updated = Date.now(); dungeons[uid()] = m; store.set(DUNGEON_KEY, dungeons); registerDungeons(); break; }
+    case 'export': exportDungeon(dungeons[id]); return;
+    case 'askDelDungeon': scr.confirmDel = id; break;
+    case 'delDungeon': delete dungeons[id]; store.set(DUNGEON_KEY, dungeons); registerDungeons(); scr.confirmDel = null; break;
+  }
+  renderScreen();
+});
+function exportDungeon(m) {
+  const blob = new Blob([JSON.stringify({ battleBoardDungeon: 1, map: m }, null, 1)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = (m.name || 'dungeon').replace(/[^\w -]+/g, '').trim().replace(/\s+/g, '-').toLowerCase() + '.json';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  toast('Dungeon file saved. Send it to a friend; they can import it in the Create menu.');
+}
+function importDungeon(file) {
+  file.text().then(t => {
+    const j = JSON.parse(t), m = j.map || j;
+    const okRows = Array.isArray(m.rows) && m.rows.length >= 4 && m.rows.length <= 60 && m.rows.every(r => typeof r === 'string' && r.length === m.rows[0].length && r.length <= 60);
+    if (!okRows) throw new Error('bad');
+    const legal = new Set('#.~DSGXCFI123$HTYZPp@rkbaWmdg'.split(''));
+    m.rows = m.rows.map(r => [...r].map(ch => legal.has(ch) ? ch : '#').join(''));
+    m.name = String(m.name || 'Imported dungeon').slice(0, 40); m.custom = true; m.rev = 1; m.updated = Date.now();
+    m.rooms = (m.rooms || []).filter(a => a && Number.isInteger(a.x0)).map(a => ({ ...a, name: String(a.name || '').slice(0, 60), text: String(a.text || '').slice(0, 600) }));
+    for (const f of ['loot', 'chests', 'stash']) for (const v of Object.values(m[f] || {})) v.items = (v.items || []).filter(i => ITEMS[i]);
+    dungeons[uid()] = finalizeMap(m); store.set(DUNGEON_KEY, dungeons); registerDungeons();
+    toast(`Imported ${m.name}.`); renderScreen();
+  }).catch(() => toast('That file isn\'t a Battle Board dungeon.'));
+}
+
+/* ================================================================== *
+ * THE CREATOR
+ * ================================================================== */
+const TOOLS = [
+  { g: 'Build', id: 'room', label: 'Carve room', icon: '▭', bg: '#8a7a64', hint: 'Drag a rectangle to dig a room out of the rock.' },
+  { g: 'Build', id: 'select', label: 'Inspect', icon: '?', bg: '#3e3429', hint: 'Click a square to see it and change what\'s inside: chest contents, gold, search DCs.' },
+  { g: 'Build', id: 'area', label: 'Read-aloud', icon: '❝', bg: '#5b3f7a', hint: 'Drag over a room, then write what players hear the first time they walk in.' },
+  { g: 'Build', id: 'torch', label: 'Torch', icon: '♨', bg: '#a8541c', hint: 'Click a wall next to floor to hang a torch on that face. Click again to take it down.' },
+  { g: 'Terrain', id: 'floor', ch: '.', label: 'Floor', icon: '', bg: '#b3a796', hint: 'Open floor. Also clears anything placed on a square.' },
+  { g: 'Terrain', id: 'wall', ch: '#', label: 'Wall', icon: '', bg: '#2c2622', hint: 'Solid rock. Walls appear wherever rock meets floor.' },
+  { g: 'Terrain', id: 'rough', ch: '~', label: 'Rubble', icon: '∴', bg: '#6a6156', hint: 'Difficult terrain: moving through it costs double. Brush on lit maps.' },
+  { g: 'Terrain', id: 'pillar', ch: 'P', label: 'Pillar', icon: '●', bg: '#c9beae', fg: '#2c2622', hint: 'Blocks movement and line of sight. Good cover.' },
+  { g: 'Terrain', id: 'broken', ch: 'p', label: 'Broken pillar', icon: '◐', bg: '#9d9282', fg: '#2c2622', hint: 'Fallen stone: difficult terrain.' },
+  { g: 'Doors', id: 'door', ch: 'D', label: 'Door', icon: '▯', bg: '#5a3b22', hint: 'A closed wooden door. Blocks sight until opened. Place it in a gap in a wall.' },
+  { g: 'Doors', id: 'secret', ch: 'S', label: 'Secret door', icon: '▤', bg: '#4b4540', hint: 'Looks like wall until a hero finds it with Search (Perception vs its DC).' },
+  { g: 'Doors', id: 'gate', ch: 'G', label: 'Portcullis', icon: '▥', bg: '#2c2b2a', hint: 'Iron bars that rise when the sun, moon and star plates are pressed in the right order.' },
+  { g: 'Traps', id: 'darts', ch: 'T', label: 'Dart trap', icon: '➶', bg: '#6b2c1f', hint: 'Hidden. 2d6 piercing, Dex save DC 13 for half. Search finds it, then it can be disarmed.' },
+  { g: 'Traps', id: 'fire', ch: 'Y', label: 'Fire trap', icon: '▲', bg: '#a8381c', hint: 'Hidden. A jet of flame: 2d6 fire, Dex save DC 13 for half.' },
+  { g: 'Traps', id: 'spikes', ch: 'Z', label: 'Spike trap', icon: '✱', bg: '#5a4a3a', hint: 'Hidden. Spikes from the floor: 2d6 piercing, Dex save DC 13 for half.' },
+  { g: 'Traps', id: 'sun', ch: '1', label: 'Sun plate', icon: '☼', bg: '#8a6a2f', hint: 'Pressure plate. Step on the three plates in the order set under Dungeon to raise every portcullis.' },
+  { g: 'Traps', id: 'moon', ch: '2', label: 'Moon plate', icon: '☾', bg: '#3f5470', hint: 'Pressure plate. The wrong order fires darts at the hero.' },
+  { g: 'Traps', id: 'star', ch: '3', label: 'Star plate', icon: '★', bg: '#5b4a78', hint: 'Pressure plate. Put an Inscription nearby to hint at the order.' },
+  { g: 'Objects', id: 'start', ch: '@', label: 'Hero start', icon: '◎', bg: '#d3aa55', fg: '#20180d', hint: 'Where the hero begins. There is only one.' },
+  { g: 'Objects', id: 'exit', ch: 'X', label: 'Exit stairs', icon: '⇲', bg: '#4a6a8a', hint: 'Reaching these wins the dungeon. With no exit, the hero wins by defeating every monster.' },
+  { g: 'Objects', id: 'chest', ch: 'C', label: 'Chest', icon: '▣', bg: '#7a5a2a', hint: 'Use Inspect to choose what\'s inside.' },
+  { g: 'Objects', id: 'loot', ch: '$', label: 'Treasure', icon: '◆', bg: '#b08a2a', hint: 'Items lying on the floor, picked up by walking over them. Use Inspect to set them.' },
+  { g: 'Objects', id: 'stash', ch: 'H', label: 'Hidden cache', icon: '◇', bg: '#5a4a2a', hint: 'Invisible until found with Search. Use Inspect to set contents and DC.' },
+  { g: 'Objects', id: 'font', ch: 'F', label: 'Healing font', icon: '◍', bg: '#2a6a8a', hint: 'Heals the hero fully once, and breaks curses.' },
+  { g: 'Objects', id: 'tablet', ch: 'I', label: 'Inscription', icon: '≡', bg: '#4a4a52', hint: 'A stone tablet. Write its text under Dungeon.' },
+  { g: 'Monsters', id: 'rat', ch: 'r', label: 'Giant rat', icon: 'R', bg: '#5a4636' },
+  { g: 'Monsters', id: 'skeleton', ch: 'k', label: 'Skeleton', icon: 'S', bg: '#8a826e' },
+  { g: 'Monsters', id: 'bones', ch: 'b', label: 'Bone pile', icon: 'B', bg: '#6e6656', hint: 'A skeleton lying in wait. It looks dead until the hero steps next to it, then rises and attacks.' },
+  { g: 'Monsters', id: 'archer', ch: 'a', label: 'Goblin archer', icon: 'G', bg: '#4a6a32' },
+  { g: 'Monsters', id: 'warden', ch: 'W', label: 'Grave Warden', icon: 'W', bg: '#3a3f5a' },
+  { g: 'Monsters', id: 'dummy', ch: 'm', label: 'Training dummy', icon: 'D', bg: '#7a6a4a' },
+];
+for (const t of TOOLS) if (t.g === 'Monsters' && !t.hint) { const m = MONSTERS[CREATURE_CHARS[t.ch]]; t.hint = `${m.name}: ${m.hp} HP, AC ${m.ac}${m.atk ? `, ${m.dmg[0]}d${m.dmg[1]}+${m.dmg[2]} ${m.dmgType}` : ''}. Wakes when it sees the hero.`; }
+const toolById = id => TOOLS.find(t => t.id === id);
+const CH_NAME = Object.fromEntries(TOOLS.filter(t => t.ch).map(t => [t.ch, t.label]));
+
+let ed = null;
+const edBox = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints([[-.5, -.5], [.5, -.5], [.5, .5], [-.5, .5]].map(([a, b]) => new THREE.Vector3(a, 0, b))),
+  new THREE.LineBasicMaterial({ color: '#ffd27a', toneMapped: false, depthTest: false }));
+edBox.renderOrder = 10; edBox.visible = false; scene.add(edBox);
+const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.2), hitPt = new THREE.Vector3();
+
+function openEditor(id, keepHistory = false) {
+  stopPlay(); hideScreens();
+  if (!keepHistory || !ed || ed.id !== id) ed = { id, map: clone(dungeons[id]), undo: [], redo: [], tool: 'room', sel: null, area: null, light: 'work' };
+  finalizeMap(ed.map);
+  setMode('edit');
+  edRefresh(null, true); edResetView(); renderEdPanel(); refresh();
+}
+const edGet = (x, z) => ed.map.rows[z][x];
+function edSet(x, z, ch) {
+  const prev = edGet(x, z); if (prev === ch) return false;
+  const m = ed.map, k = keyOf(x, z), r = m.rows[z];
+  m.rows[z] = r.slice(0, x) + ch + r.slice(x + 1);
+  if (prev === 'C') delete m.chests[k]; if (prev === '$') delete m.loot[k]; if (prev === 'H') delete m.stash[k]; if (prev === 'S') delete m.secrets[k];
+  if (ch === 'C') m.chests[k] = { items: ['potion'], gold: 25 };
+  if (ch === '$') m.loot[k] = { items: ['potion'], gold: 0 };
+  if (ch === 'H') m.stash[k] = { items: [], gold: 40, dc: 13 };
+  if (ch === 'S') m.secrets[k] = { dc: 13 };
+  return true;
+}
+const inB = (x, z) => x >= 0 && z >= 0 && x < W && z < H;
+function edCleanTorches() {
+  const m = ed.map, n = m.torches.length;
+  m.torches = m.torches.filter(([x, z, dx, dz]) => inB(x, z) && isWall(edGet(x, z)) && inB(x + dx, z + dz) && !isWall(edGet(x + dx, z + dz)));
+  return m.torches.length !== n;
+}
+let edCreatureSig = '';
+function edRefresh(tiles, full) {
+  state = freshState('_edit', null, ed.map); state.explored.fill(1);
+  useMap('_edit', ed.map);
+  if (edCleanTorches()) full = true;
+  const sig = state.creatures.map(c => `${c.type}${c.x},${c.z}${c.dormant ? 'd' : ''}`).join('|');
+  if (full) { bootBoard(true); edCreatureSig = sig; }
+  else {
+    const todo = new Set();
+    for (const [x, z] of tiles) for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) if (inB(x + dx, z + dz)) todo.add((z + dz) * W + x + dx);
+    for (const i of todo) buildTile(i % W, (i / W) | 0);
+    if (sig !== edCreatureSig) { rebuildCreatures(); edCreatureSig = sig; }
+    placeHero(); computeVisibility(); applyFog();
+  }
+  hero.visible = ed.map.rows.some(r => r.includes('@'));
+  edLights(); edHighlight();
+}
+function edLights() {
+  if (mode !== 'edit' || ed.light !== 'work') return;
+  hemi.intensity = 1.0; sun.intensity = 1.8; sun.color.set('#fff0d8'); heroLight.intensity = 0; renderer.toneMappingExposure = 1.0;
+}
+function edHighlight() {
+  if (mode !== 'edit') return;
+  for (const o of overlays) if (o) o.visible = false;
+  const a = ed.area != null && ed.map.rooms[ed.area];
+  if (a) for (let z = a.z0; z <= a.z1; z++) for (let x = a.x0; x <= a.x1; x++) { const o = overlays[z * W + x]; if (o) { o.visible = true; o.material.color.set('#b78cff'); o.material.opacity = 0.35; } }
+  if (ed.sel) { const o = overlays[ed.sel.z * W + ed.sel.x]; if (o) { o.visible = true; o.material.color.set('#ffd27a'); o.material.opacity = 0.45; } }
+}
+function edResetView() {
+  const s = Math.max(W, H);
+  controls.target.set(0, 0, 0); camera.position.set(0, s * 0.85 + 4, s * 0.5 + 3); controls.update();
+}
+function tileUnder(e) {
+  const r = canvas.getBoundingClientRect();
+  ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  raycaster.setFromCamera(ndc, camera);
+  // whatever you point at (a wall top, a monster) wins; empty space falls through to the floor plane
+  const targets = tileMeshes.filter(Boolean); for (const v of views.values()) targets.push(v.g);
+  const hit = raycaster.intersectObjects(targets, true).find(h => h.object.userData.x !== undefined || h.object.userData.cid !== undefined);
+  if (hit) {
+    const u = hit.object.userData, c = u.cid !== undefined ? creatureById(u.cid) : null, x = c ? c.x : u.x, z = c ? c.z : u.z, w = worldOf(x, z);
+    if (inB(x, z)) return { x, z, fx: hit.point.x - w.x, fz: hit.point.z - w.z };
+  }
+  if (!raycaster.ray.intersectPlane(groundPlane, hitPt)) return null;
+  const fx = hitPt.x + W / 2, fz = hitPt.z + H / 2, x = Math.floor(fx), z = Math.floor(fz);
+  return inB(x, z) ? { x, z, fx: fx - x - 0.5, fz: fz - z - 0.5 } : null;
+}
+function boxAt(x0, z0, x1 = x0, z1 = z0) {
+  const a = worldOf(Math.min(x0, x1), Math.min(z0, z1)), b = worldOf(Math.max(x0, x1), Math.max(z0, z1));
+  edBox.position.set((a.x + b.x) / 2, 1.16, (a.z + b.z) / 2); edBox.scale.set(b.x - a.x + 1, 1, b.z - a.z + 1); edBox.visible = true;
+}
+function pushUndo() { ed.undo.push(JSON.stringify(ed.map)); if (ed.undo.length > 80) ed.undo.shift(); ed.redo = []; }
+function edUndo() { if (!ed.undo.length) return toast('Nothing to undo.'); ed.redo.push(JSON.stringify(ed.map)); ed.map = JSON.parse(ed.undo.pop()); edAfterHistory(); }
+function edRedo() { if (!ed.redo.length) return toast('Nothing to redo.'); ed.undo.push(JSON.stringify(ed.map)); ed.map = JSON.parse(ed.redo.pop()); edAfterHistory(); }
+function edAfterHistory() { ed.sel = null; ed.area = null; const sameSize = ed.map.rows.length === H && ed.map.rows[0].length === W; edRefresh(null, true); if (!sameSize) edResetView(); edSave(); renderEdPanel(); }
+
+function edPaint(x, z, changed) {
+  const t = toolById(ed.tool); if (!t.ch) return;
+  if (t.ch === '@') ed.map.rows.forEach((r, zz) => { const xx = r.indexOf('@'); if (xx >= 0 && (xx !== x || zz !== z)) { edSet(xx, zz, '.'); changed.push([xx, zz]); } });
+  if (edSet(x, z, t.ch)) changed.push([x, z]);
+}
+function edTorch(t) {
+  const DIRS4 = [[1, 0], [-1, 0], [0, 1], [0, -1]], m = ed.map;
+  let best = null, bestS = -Infinity;
+  for (const [dx, dz] of DIRS4) {
+    let cand = null;
+    if (isWall(edGet(t.x, t.z))) { if (inB(t.x + dx, t.z + dz) && !isWall(edGet(t.x + dx, t.z + dz))) cand = [t.x, t.z, dx, dz]; }
+    else if (inB(t.x + dx, t.z + dz) && isWall(edGet(t.x + dx, t.z + dz))) cand = [t.x + dx, t.z + dz, -dx, -dz];
+    if (!cand) continue;
+    const s = isWall(edGet(t.x, t.z)) ? dx * t.fx + dz * t.fz : dx * t.fx + dz * t.fz;
+    if (s > bestS) { bestS = s; best = cand; }
+  }
+  if (!best) return toast('Torches hang on a wall that faces open floor.');
+  const i = m.torches.findIndex(q => q.join() === best.join());
+  pushUndo();
+  if (i >= 0) m.torches.splice(i, 1); else m.torches.push(best);
+  edRefresh(null, true); edSave();
+}
+let stroke = null;
+canvas.addEventListener('pointerdown', e => {
+  if (mode !== 'edit' || e.button !== 0) return;
+  const t = tileUnder(e); if (!t) return;
+  canvas.setPointerCapture(e.pointerId);
+  const tool = toolById(ed.tool);
+  if (tool.id === 'torch') return edTorch(t);
+  if (tool.id === 'select') { ed.sel = { x: t.x, z: t.z }; ed.area = null; edHighlight(); renderEdPanel(); return; }
+  if (tool.id === 'area') {
+    const hit = ed.map.rooms.findIndex(a => t.x >= a.x0 && t.x <= a.x1 && t.z >= a.z0 && t.z <= a.z1);
+    stroke = { rect: true, start: t, cur: t, hit };
+    boxAt(t.x, t.z); return;
+  }
+  pushUndo();
+  stroke = { rect: tool.id === 'room', start: t, cur: t, last: t, changed: [] };
+  if (stroke.rect) boxAt(t.x, t.z);
+  else { edPaint(t.x, t.z, stroke.changed); edRefresh(stroke.changed.splice(0), false); }
+});
+canvas.addEventListener('pointermove', e => {
+  if (mode !== 'edit') return;
+  const t = tileUnder(e);
+  canvas.style.cursor = t ? 'crosshair' : 'default';
+  if (!stroke) { if (t) boxAt(t.x, t.z); else edBox.visible = false; return; }
+  if (!t) return;
+  stroke.cur = t;
+  if (stroke.rect) return boxAt(stroke.start.x, stroke.start.z, t.x, t.z);
+  const l = stroke.last, n = Math.max(Math.abs(t.x - l.x), Math.abs(t.z - l.z));
+  for (let s = 1; s <= n; s++) edPaint(Math.round(l.x + (t.x - l.x) * s / n), Math.round(l.z + (t.z - l.z) * s / n), stroke.changed);
+  stroke.last = t;
+  if (stroke.changed.length) edRefresh(stroke.changed.splice(0), false);
+});
+function endStroke() {
+  if (mode !== 'edit' || !stroke) return;
+  const s = stroke; stroke = null;
+  const x0 = Math.min(s.start.x, s.cur.x), x1 = Math.max(s.start.x, s.cur.x), z0 = Math.min(s.start.z, s.cur.z), z1 = Math.max(s.start.z, s.cur.z);
+  if (ed.tool === 'area') {
+    if (x0 === x1 && z0 === z1 && s.hit >= 0) ed.area = s.hit;
+    else { pushUndo(); ed.map.rooms.push({ x0, z0, x1, z1, name: 'New area', text: '' }); ed.area = ed.map.rooms.length - 1; edSave(); }
+    ed.sel = null; edHighlight(); renderEdPanel(); return;
+  }
+  if (s.rect) {
+    const changed = [];
+    for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++) if (isWall(edGet(x, z)) && edSet(x, z, '.')) changed.push([x, z]);
+    if (changed.length) edRefresh(changed, changed.length > 60);
+  }
+  edSave(); renderEdPanel();
+}
+canvas.addEventListener('pointerup', endStroke);
+canvas.addEventListener('pointercancel', endStroke);
+canvas.addEventListener('pointerleave', () => { if (mode === 'edit' && !stroke) edBox.visible = false; });
+canvas.addEventListener('contextmenu', e => { if (mode === 'edit') e.preventDefault(); });
+
+const edKeys = new Set();
+window.addEventListener('keydown', e => {
+  if (mode !== 'edit' || e.target.closest('input, select, textarea')) return;
+  const key = e.key.toLowerCase();
+  if ((e.ctrlKey || e.metaKey) && key === 'z') { e.preventDefault(); e.shiftKey ? edRedo() : edUndo(); }
+  else if ((e.ctrlKey || e.metaKey) && key === 'y') { e.preventDefault(); edRedo(); }
+  else if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) { edKeys.add(key); e.preventDefault(); }
+});
+window.addEventListener('keyup', e => edKeys.delete(e.key.toLowerCase()));
+window.addEventListener('blur', () => edKeys.clear());
+const panF = new THREE.Vector3(), panR = new THREE.Vector3();
+function edPan(dt) {
+  if (!edKeys.size) return;
+  camera.getWorldDirection(panF); panF.y = 0; panF.normalize(); panR.crossVectors(panF, camera.up).normalize();
+  const sp = dt * Math.max(6, camera.position.distanceTo(controls.target) * 0.8), mv = new THREE.Vector3();
+  if (edKeys.has('w') || edKeys.has('arrowup')) mv.add(panF); if (edKeys.has('s') || edKeys.has('arrowdown')) mv.sub(panF);
+  if (edKeys.has('d') || edKeys.has('arrowright')) mv.add(panR); if (edKeys.has('a') || edKeys.has('arrowleft')) mv.sub(panR);
+  mv.setLength(sp); controls.target.add(mv); camera.position.add(mv);
+}
+
+function edSave() {
+  if (!ed) return;
+  ed.map.updated = Date.now(); ed.map.rev = (ed.map.rev || 1) + 1;
+  dungeons[ed.id] = finalizeMap(clone(ed.map));
+  if (!store.set(DUNGEON_KEY, dungeons)) toast('Could not save: browser storage is full.');
+  registerDungeons();
+}
+function edProblems() {
+  const all = ed.map.rows.join(''), has = ch => all.includes(ch), out = [];
+  if (!has('@')) out.push({ fatal: true, text: 'Place a Hero start before you can play.' });
+  const plates = ['1', '2', '3'].filter(has).length;
+  if (plates && !has('G')) out.push({ text: 'The plates have nothing to open: add a Portcullis.' });
+  if (has('G') && plates < 3) out.push({ text: 'A portcullis only rises when all three plates (sun, moon, star) are in the dungeon.' });
+  const monsters = [...all].some(ch => CREATURE_CHARS[ch] && ch !== 'm');
+  if (!has('X') && !monsters) out.push({ text: 'There\'s no way to win yet: add Exit stairs or some monsters.' });
+  else if (!has('X')) out.push({ info: true, text: 'No exit stairs, so the hero wins by defeating every monster.' });
+  if (has('I') && ed.map.tablet.startsWith('The letters are worn')) out.push({ info: true, text: 'Your inscription has no text yet. Write it under Dungeon.' });
+  return out;
+}
+function edResize(w, h) {
+  w = Math.max(8, Math.min(48, w | 0)); h = Math.max(8, Math.min(48, h | 0));
+  const m = ed.map; if (w === W && h === H) return;
+  pushUndo();
+  m.rows = Array.from({ length: h }, (_, z) => (m.rows[z] || '').slice(0, w).padEnd(w, '#'));
+  m.rooms = m.rooms.filter(a => a.x0 < w && a.z0 < h).map(a => ({ ...a, x1: Math.min(a.x1, w - 1), z1: Math.min(a.z1, h - 1) }));
+  ed.sel = null; ed.area = null;
+  edRefresh(null, true); edResetView(); edSave(); renderEdPanel();
+}
+function playtest() {
+  edSave();
+  const bad = edProblems().find(p => p.fatal); if (bad) return toast(bad.text);
+  MAPS._test = finalizeMap(clone(ed.map));
+  const c = newCharacter(); c.name = 'Test hero';
+  enterPlay(freshState('_test', c), 'test', true);
+  toast('Playtest: nothing here is saved. Use "Back to editor" to keep building.');
+}
+
+function renderEdPanel() {
+  if (!ed) return;
+  const m = ed.map, t = toolById(ed.tool), groups = [...new Set(TOOLS.map(t => t.g))];
+  const all = m.rows.join(''), probs = edProblems();
+  let insp = '';
+  if (ed.area != null && m.rooms[ed.area]) {
+    const a = m.rooms[ed.area];
+    insp = `<div class="section ed-insp"><h3>Read-aloud area</h3>
+      <label class="field"><span>Name</span><input type="text" id="arName" maxlength="60" value="${esc(a.name)}"></label>
+      <label class="field"><span>What the players hear when they first walk in</span><textarea id="arText" rows="5" maxlength="600">${esc(a.text)}</textarea></label>
+      <div class="row"><button class="btn small" data-ed="delArea">Delete area</button><button class="btn small" data-ed="closeInsp">Done</button></div></div>`;
+  } else if (ed.sel) {
+    const { x, z } = ed.sel, ch = edGet(x, z), k = keyOf(x, z);
+    const box = ch === 'C' ? m.chests[k] : ch === '$' ? m.loot[k] : ch === 'H' ? m.stash[k] : null;
+    let body = '';
+    if (box) body = `<ul class="lootlist">${box.items.map((it, n) => `<li><span>${esc(ITEMS[it]?.name || it)}</span><button class="btn small" data-ed="rmItem" data-n="${n}">Remove</button></li>`).join('') || '<li><span class="muted">No items</span></li>'}</ul>
+      <div class="row"><select id="addItemSel">${Object.entries(ITEMS).map(([key, it]) => `<option value="${key}">${esc(it.name)}${it.cursed ? ' (cursed)' : it.weird ? ' (weird)' : ''}</option>`).join('')}</select><button class="btn small" data-ed="addItem">Add item</button></div>
+      <label class="field"><span>Gold</span><input type="number" id="goldIn" min="0" max="9999" value="${box.gold || 0}"></label>
+      ${ch === 'H' ? `<label class="field"><span>Search DC to find it</span><input type="number" id="dcIn" min="5" max="25" value="${box.dc}"></label>` : ''}`;
+    else if (ch === 'S') body = `<label class="field"><span>Search DC to find it</span><input type="number" id="dcIn" min="5" max="25" value="${m.secrets[k]?.dc ?? 13}"></label>`;
+    else body = `<p class="muted">${esc(toolById(TOOLS.find(q => q.ch === ch)?.id || 'wall')?.hint || '')}</p>`;
+    insp = `<div class="section ed-insp"><h3>${esc(CH_NAME[ch] || 'Square')} <span class="muted">at ${x}, ${z}</span></h3>${body}
+      <div class="row"><button class="btn small" data-ed="closeInsp">Done</button></div></div>`;
+  }
+  $('edPanel').innerHTML = `
+    <div class="section">
+      <input id="edName" class="name-input" aria-label="Dungeon name" maxlength="40" value="${esc(m.name)}">
+      <div class="muted">Saved as you build · ${W}×${H} squares</div>
+    </div>
+    ${insp}
+    ${groups.map(g => `<div class="section"><h3>${g}</h3><div class="pal">${TOOLS.filter(q => q.g === g).map(q =>
+      `<button data-tool="${q.id}" aria-pressed="${ed.tool === q.id}" title="${esc(q.hint || '')}"><i style="--bg:${q.bg};--fg:${q.fg || '#f3ead8'}">${q.icon}</i>${q.label}</button>`).join('')}</div></div>`).join('')}
+    <div class="section">
+      <h3>Dungeon</h3>
+      <div class="field"><span>Mood</span>${seg('edDark', m.dark ? 'dark' : 'lit', [['dark', 'Dark, fog of war'], ['lit', 'Lit']])}</div>
+      <div class="field"><span>Size</span><div class="row"><input type="number" id="edW" min="8" max="48" value="${W}" aria-label="Width"> × <input type="number" id="edH" min="8" max="48" value="${H}" aria-label="Height"><button class="btn small" data-ed="resize">Resize</button></div></div>
+      ${['1', '2', '3'].some(c => all.includes(c)) ? `<div class="field"><span>Plate order</span><div class="row">${[0, 1, 2].map(n => `<select data-order="${n}">${['1', '2', '3'].map(c => `<option value="${c}" ${m.puzzleOrder[n] === c ? 'selected' : ''}>${PLATE_NAMES[c]}</option>`).join('')}</select>`).join('')}</div></div>` : ''}
+      ${all.includes('I') ? `<label class="field"><span>Inscription text</span><textarea id="edTablet" rows="4" maxlength="600">${esc(m.tablet)}</textarea></label>` : ''}
+      <label class="field"><span>Description (shown when choosing a dungeon)</span><textarea id="edDesc" rows="2" maxlength="200">${esc(m.desc || '')}</textarea></label>
+      ${m.rooms.length ? `<div class="field"><span>Read-aloud areas</span><div class="row">${m.rooms.map((a, n) => `<button class="btn small" data-ed="pickArea" data-n="${n}">${esc(a.name)}</button>`).join('')}</div></div>` : ''}
+    </div>
+    <div class="section">
+      <h3>Checks</h3>
+      ${probs.length ? `<ul class="checks">${probs.map(p => `<li class="${p.fatal ? 'bad' : p.info ? 'info' : 'warn'}">${esc(p.text)}</li>`).join('')}</ul>` : '<p class="muted">Ready to play.</p>'}
+    </div>`;
+  $('edTool').innerHTML = `<b>${esc(t.label)}</b> ${esc(t.hint || '')}`;
+  $('edUndo').disabled = !ed.undo.length; $('edRedo').disabled = !ed.redo.length;
+  $('edLight').textContent = ed.light === 'work' ? 'Preview lighting' : 'Work light';
+}
+$('edPanel').addEventListener('click', e => {
+  const tb = e.target.closest('[data-tool]');
+  if (tb) { ed.tool = tb.dataset.tool; if (ed.tool !== 'select') ed.sel = null; if (ed.tool !== 'area') ed.area = null; edHighlight(); return renderEdPanel(); }
+  const b = e.target.closest('[data-ed], [data-act]'); if (!b) return;
+  const m = ed.map, act = b.dataset.ed || b.dataset.act;
+  const box = () => { const { x, z } = ed.sel, k = keyOf(x, z), ch = edGet(x, z); return ch === 'C' ? m.chests[k] : ch === '$' ? m.loot[k] : m.stash[k]; };
+  switch (act) {
+    case 'closeInsp': ed.sel = null; ed.area = null; edHighlight(); break;
+    case 'delArea': pushUndo(); m.rooms.splice(ed.area, 1); ed.area = null; edHighlight(); edSave(); break;
+    case 'pickArea': ed.area = +b.dataset.n; ed.sel = null; ed.tool = 'area'; edHighlight(); break;
+    case 'rmItem': pushUndo(); box().items.splice(+b.dataset.n, 1); edRefresh([[ed.sel.x, ed.sel.z]], false); edSave(); break;
+    case 'addItem': pushUndo(); box().items.push($('addItemSel').value); edRefresh([[ed.sel.x, ed.sel.z]], false); edSave(); break;
+    case 'resize': return edResize(+$('edW').value, +$('edH').value);
+    case 'edDark': pushUndo(); m.dark = b.dataset.k === 'dark'; m.fog = m.dark; edRefresh(null, true); edSave(); break;
+  }
+  renderEdPanel();
+});
+$('edPanel').addEventListener('input', e => {
+  const m = ed.map, id = e.target.id;
+  if (id === 'edName') { m.name = e.target.value || 'Untitled dungeon'; updateDread(); }
+  if (id === 'edDesc') m.desc = e.target.value;
+  if (id === 'edTablet') m.tablet = e.target.value;
+  if (id === 'arName' && m.rooms[ed.area]) m.rooms[ed.area].name = e.target.value;
+  if (id === 'arText' && m.rooms[ed.area]) m.rooms[ed.area].text = e.target.value;
+});
+$('edPanel').addEventListener('change', e => {
+  const m = ed.map, id = e.target.id;
+  if (e.target.dataset.order) m.puzzleOrder[+e.target.dataset.order] = e.target.value;
+  if (ed.sel && (id === 'goldIn' || id === 'dcIn')) {
+    const { x, z } = ed.sel, k = keyOf(x, z), ch = edGet(x, z), v = Math.max(0, +e.target.value | 0);
+    const tgt = ch === 'C' ? m.chests[k] : ch === '$' ? m.loot[k] : ch === 'H' ? m.stash[k] : m.secrets[k];
+    if (id === 'goldIn') tgt.gold = v; else tgt.dc = Math.max(5, Math.min(25, v));
+  }
+  edSave();
+  if (['edTablet', 'edDesc', 'arName', 'arText', 'edName'].includes(id)) { if (id === 'arName') renderEdPanel(); return; }
+  renderEdPanel();
+});
+$('edUndo').addEventListener('click', edUndo);
+$('edRedo').addEventListener('click', edRedo);
+$('edTop').addEventListener('click', edResetView);
+$('edPlay').addEventListener('click', playtest);
+$('edLight').addEventListener('click', () => {
+  ed.light = ed.light === 'work' ? 'dungeon' : 'work';
+  if (ed.light === 'dungeon') edRefresh(null, true); else edLights();
+  renderEdPanel();
+});
+$('menuBtn').addEventListener('click', menuButton);
+registerDungeons();
+
 // handy for debugging from the browser console
 window.battleBoard = {
   camera, controls, get state() { return state; },
@@ -4055,8 +4837,8 @@ window.battleBoard = {
   hit(id, n) { const c = creatureById(id); if (c) damageCreature(c, n, 'dmg'); refresh(); },
   wanderers() { const m = spawnWanderers(6, 13); if (m && exploring() === false) startCombat(); refresh(); return m && m.map(c => c.type); },
 };
-bootBoard();
-refresh();
+showBackdrop('crypt');
+showScreen('title');
 resize();
 tick();
 </script>

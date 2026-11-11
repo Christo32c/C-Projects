@@ -12,6 +12,28 @@ cd battle-board && python3 -m http.server 8000
 
 Three.js loads from jsDelivr, so the first load needs an internet connection.
 
+## Menus
+
+The game opens on a title screen with the dungeon slowly turning behind it.
+
+- **Adventure**: pick a hero from your roster, or create one. A new hero gets a name, a look (adventurer or paladin sculpt, colour, skin, hair) and ability scores, from 27-point buy or by rolling 4d6 and dropping the lowest die. Each hero keeps their own expedition: **Continue** picks up exactly where you left off, and **Start over** sends them into any dungeon again, either keeping their level and gear or back at level 1. The title screen also offers to continue your most recent expedition.
+- **Create**: the dungeon creator (below).
+- In a dungeon, the **Menu** button at the top left saves and returns to the title screen.
+
+Heroes and dungeons are saved in the browser's local storage. A save from before the roster existed becomes your first hero.
+
+## The dungeon creator
+
+Start from solid rock (small to huge) or from a copy of a built-in map. Then build in the 3D view:
+
+- **Left-drag** paints with the selected tool. **Right-drag** turns the camera, **Shift+right-drag** or **WASD** pans, and the wheel zooms. **Ctrl+Z** and **Ctrl+Y** undo and redo.
+- **Build tools**: *Carve room* (drag a rectangle out of the rock), *Inspect* (set chest, treasure and hidden-cache contents, gold, and search DCs), *Read-aloud* (drag over an area and write the text players get the first time they walk in) and *Torch* (click a wall face).
+- **Palette**: floor, wall, rubble, pillars; doors, secret doors and portcullises; dart, fire and spike traps; sun, moon and star pressure plates; hero start, exit stairs, chests, treasure, hidden caches, healing fonts and inscriptions; and every monster, including bone-pile skeletons that lie in wait.
+- **Dungeon settings**: name, description, dark (fog of war) or lit, size, the plate order that opens the portcullis, and the inscription text.
+- **Checks** warn about problems, such as a missing hero start, or plates with no portcullis to open. A dungeon with no exit stairs is won by defeating every monster.
+- **Playtest** drops a level-1 test hero into the dungeon without saving anything. **Back to the editor** returns you where you were.
+- Everything saves as you build. Your dungeons appear in the Adventure dungeon list. **Export** saves a dungeon as a `.json` file, and **Import** loads one.
+
 ## The Sunken Crypt
 
 The default map is a dungeon (switch maps from the selector at the top left):
