@@ -411,6 +411,35 @@
   body[data-mode="play"] .hud .chip.target { position: absolute; top: 108px; left: 50%; transform: translateX(-50%); }
   @media (max-width: 760px) { .vs { grid-template-columns: 1fr; text-align: center; padding: 10%; } .vs-l, .vs-r { align-items: center; } .initbar { max-width: calc(100% - 24px); top: 96px; } .bossbar { width: calc(100% - 140px); } .hotbar { max-width: calc(100vw - 24px); } }
 
+  .notice { position: absolute; top: 14%; left: 50%; transform: translate(-50%, -30px); width: min(460px, calc(100% - 32px)); z-index: 35; box-sizing: border-box; cursor: pointer;
+            padding: 14px 18px 12px; border-radius: 6px; background: linear-gradient(#141018, #0c0a0e); color: var(--ink); opacity: 0;
+            border: 2px solid #c79bff; box-shadow: 0 0 0 1px #000, 0 0 30px rgba(199,155,255,.35), 0 18px 50px rgba(0,0,0,.7); font-family: var(--body); }
+  .notice.in { animation: noticeIn .45s cubic-bezier(.2,1.3,.4,1) forwards; }
+  .notice.level { border-color: #ffd36a; box-shadow: 0 0 0 1px #000, 0 0 40px rgba(255,211,106,.45), 0 18px 50px rgba(0,0,0,.7); }
+  .notice.talent { border-color: #7ad8ff; box-shadow: 0 0 0 1px #000, 0 0 30px rgba(122,216,255,.4), 0 18px 50px rgba(0,0,0,.7); }
+  .notice .nk { font: 700 11px/1.2 var(--body); letter-spacing: .14em; text-transform: uppercase; color: #c79bff; }
+  .notice.level .nk { color: #ffd36a; } .notice.talent .nk { color: #7ad8ff; }
+  .notice .nt { font: 900 26px/1.1 var(--display); margin: 3px 0 6px; letter-spacing: .02em; text-transform: uppercase; }
+  .notice.level .nt { color: #ffd36a; text-shadow: 0 0 18px rgba(255,190,80,.6); }
+  .notice p { margin: 0 0 8px; font-size: 14px; line-height: 1.45; font-style: italic; color: #e6dccb; }
+  .notice ul { margin: 0 0 8px; padding: 8px 10px 8px 26px; background: rgba(255,255,255,.04); border-radius: 4px; font-size: 13px; }
+  .notice li { margin: 2px 0; } .notice li::marker { content: '▸ '; color: var(--brass); }
+  .notice .nx { display: block; text-align: right; font-size: 10px; color: var(--muted); margin-top: 4px; }
+  @keyframes noticeIn { 0% { opacity: 0; transform: translate(-50%, -30px) scale(.92); } 60% { opacity: 1; } 100% { opacity: 1; transform: translate(-50%, 0) scale(1); } }
+  .growth-banner { background: color-mix(in srgb, #ffd36a 14%, var(--panel-2)); border: 1px solid #ffd36a; border-radius: 8px; padding: 9px 11px; font-size: 13px; }
+  .growth-banner b { color: #ffd36a; font-size: 16px; }
+  .talent-pick { border: 1px solid #7ad8ff; border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 8px; background: color-mix(in srgb, #7ad8ff 8%, var(--panel)); }
+  .talent-pick h3 { color: #7ad8ff; }
+  .tchoices { display: flex; flex-direction: column; gap: 6px; }
+  .tchoice { text-align: left; display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); }
+  .tchoice:hover { border-color: #7ad8ff; } .tchoice b { color: var(--ink); } .tchoice span { font-size: 12.5px; color: var(--muted); }
+  .tlist { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+  .ab.spend { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 6px; }
+  .ab.spend .nt { grid-column: 1 / -1; font-size: 10px; color: #7ad8ff; }
+  .lvlup { color: #ffd36a; font-weight: 700; font-size: 10.5px; margin-right: 4px; animation: lvlPulse 1.4s ease-in-out infinite; }
+  .lvlstar { color: #ffd36a; }
+  @keyframes lvlPulse { 50% { opacity: .5; } }
+
   /* the creator */
   .pal { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 6px; }
   .pal button { display: flex; align-items: center; gap: 7px; padding: 5px 7px; background: var(--panel-2); border: 1px solid var(--line);
@@ -461,6 +490,7 @@
       </div>
     </div>
     <div class="partyframes" id="partyFrames" hidden></div>
+    <div class="notice" id="notice" hidden role="status" aria-live="polite"></div>
     <div class="bossbar" id="bossBar" hidden></div>
     <div class="initbar" id="initBar" hidden title="Initiative order"></div>
     <div class="vs" id="vs" hidden><div class="vs-slash"></div><div class="vs-l" id="vsL"></div><div class="vs-mid">VS</div><div class="vs-r" id="vsR"></div></div>
@@ -745,7 +775,7 @@ function newCharacter() {
       { key: 'rope', qty: 1 }, { key: 'torch', qty: 3 }, { key: 'rations', qty: 5 },
     ],
     equipped: { weapon: 'longsword', armor: 'chain', shield: 'shield', head: null, neck: null, ammo: null },
-    model: 'adventurer', skin: '#d6a982', hair: '#5a3a20', mp: 16, status: [],
+    model: 'adventurer', skin: '#d6a982', hair: '#5a3a20', mp: 16, status: [], talents: [], statPoints: 0, pendingTalents: [],
   };
 }
 function freshSlots() { const s = {}; for (const l in SLOT_TABLE) s[l] = { max: SLOT_TABLE[l], left: SLOT_TABLE[l] }; return s; }
@@ -765,22 +795,24 @@ const keyOf = (x, z) => x + ',' + z;
 function derived() {
   const c = state.char, m = k => mod(c.abilities[k]);
   const prof = 2 + Math.floor((c.level - 1) / 4);
-  const maxHp = Math.max(1, 10 + m('con') + (c.level - 1) * (6 + m('con')));
+  const maxHp = Math.max(1, 10 + m('con') + (c.level - 1) * (6 + m('con')) + (c.talents?.includes('tough') ? 2 * c.level : 0));
   const armor = c.equipped.armor ? ITEMS[c.equipped.armor] : null;
   let ac = armor ? armor.ac + Math.min(m('dex'), armor.maxDex) : 10 + m('dex');
   if (c.equipped.shield) ac += ITEMS.shield.ac;
   if (c.equipped.head) ac += ITEMS[c.equipped.head].acBonus || 0;
-  const weapon = c.equipped.weapon ? ITEMS[c.equipped.weapon] : UNARMED;
+  let weapon = c.equipped.weapon ? ITEMS[c.equipped.weapon] : UNARMED;
+  const tl = id => c.talents?.includes(id);
+  if (weapon.ranged && tl('sharpshooter')) weapon = { ...weapon, range: weapon.range + 4 };
   const am = weapon.ability === 'finesse' ? Math.max(m('str'), m('dex')) : m(weapon.ability);
   const weight = c.inventory.reduce((s, i) => s + ITEMS[i.key].weight * i.qty, 0);
   const cm = m(c.castAbility || 'int'), st = id => c.status?.some(s => s.id === id);
   ac += (st('shielded') ? 4 : 0) + (st('hasted') ? 2 : 0) - (st('chilled') ? 1 : 0);
   const atkMod = (st('blessed') ? 2 : 0) - (st('poisoned') ? 2 : 0);
-  let speedSq = Math.floor(c.speed / 5) + (st('hasted') ? 3 : 0); if (st('chilled')) speedSq = Math.floor(speedSq / 2);
-  return { prof, maxHp, ac, weapon, atk: am + prof + atkMod, dmgMod: am, init: m('dex'),
+  let speedSq = Math.floor(c.speed / 5) + (st('hasted') ? 3 : 0) + (tl('quickstep') ? 2 : 0); if (st('chilled')) speedSq = Math.floor(speedSq / 2);
+  return { prof, maxHp, ac, weapon, atk: am + prof + atkMod + (weapon.ranged && tl('sharpshooter') ? 2 : 0), dmgMod: am, init: m('dex'),
            speedSq, weight, cap: c.abilities.str * 15,
-           spellDc: 8 + prof + cm, spellAtk: prof + cm + atkMod,
-           perception: m('wis') + prof + (c.equipped.neck ? ITEMS[c.equipped.neck].perception || 0 : 0),
+           spellDc: 8 + prof + cm, spellAtk: prof + cm + atkMod + (tl('spellSniper') ? 2 : 0),
+           perception: m('wis') + prof + (c.equipped.neck ? ITEMS[c.equipped.neck].perception || 0 : 0) + (tl('keenSenses') ? 3 : 0),
            passive: 10 + m('wis') + prof + (c.equipped.neck ? ITEMS[c.equipped.neck].perception || 0 : 0) };
 }
 // end-of-fight cleanup also clears buffs and debuffs (see endCombat)
@@ -794,6 +826,7 @@ const SAVE_KEY = 'battleboard.v2', OLD_KEY = 'battleboard.v1', PREF_KEY = 'battl
 function migrateChar(c) {
   c.slots ||= freshSlots(); c.castAbility ||= 'int';
   if (!('ammo' in c.equipped)) c.equipped.ammo = null;
+  growthInit(c);
   c.status ||= []; if (c.mp == null) c.mp = 6 + 4 * c.level + 2 * Math.max(0, Math.floor((c.abilities.int - 10) / 2));
   if (c.cls === 'Fighter') c.cls = 'Spellblade';
   if (!('head' in c.equipped)) c.equipped.head = null;
@@ -2168,6 +2201,11 @@ const SFX = (() => {
     },
     heartbeat(v = 1) { tone({ dur: 0.13, f0: 62, f1: 42, vol: 0.55 * v, wet: 0.05 }); tone({ t: 0.24, dur: 0.12, f0: 58, f1: 40, vol: 0.38 * v, wet: 0.05 }); },
     doom() { tone({ dur: 3.5, wave: 'sawtooth', f0: 58, f1: 32, vol: 0.2, lp: 300, a: 0.4, wet: 0.8 }); noise({ dur: 3.5, f0: 140, f1: 50, vol: 0.4, a: 0.5, wet: 0.8 }); },
+    fanfare(big = 0) {
+      const notes = big === 2 ? [523, 659, 784, 1047, 1319] : big === 1 ? [587, 740, 880, 1175] : [659, 880, 1109];
+      notes.forEach((f, i) => { tone({ t: i * 0.09, dur: 0.5 + (i === notes.length - 1 ? 0.6 : 0), wave: 'triangle', f0: f, vol: 0.09, wet: 0.6 }); tone({ t: i * 0.09, dur: 0.3, f0: f * 2, vol: 0.025, wet: 0.6 }); });
+      noise({ t: notes.length * 0.09, dur: 0.6, type: 'highpass', f0: 6000, vol: 0.06, a: 0.02, wet: 0.8 });
+    },
     sting() { tone({ dur: 3, f0: 98, vol: 0.09, a: 0.8, wet: 0.9 }); tone({ dur: 3, f0: 103.8, vol: 0.06, a: 1.1, wet: 0.9 }); tone({ t: 0.4, dur: 2.4, f0: 196, f1: 185, vol: 0.03, a: 0.8, wet: 1 }); },
     // random noises of the deep: drips, far rumbles, moans and chains
     tick(dt) {
@@ -3103,11 +3141,12 @@ function smashProp(c) {
     buildTile(c.x, c.z); applyFog();
   }
   c.loot = null; c.looted = true;
+  if ((state.smashed = (state.smashed || 0) + 1) >= 10) achieve('crateSmasher');
   if (c.type === 'keg') kegBlast(c);
 }
 function kegBlast(c) {
   const p = worldOf(c.x, c.z).add(new THREE.Vector3(0, 0.45, 0));
-  explodeFire(p, 1.6); makeNoise(3);
+  explodeFire(p, 1.6); makeNoise(3); after(1, () => achieve('kegBoom'));
   addLog('hit', '<b>The powder keg explodes!</b>');
   after(0.15, () => {
     const dice = roll(3, 6), full = sum(dice);
@@ -3120,7 +3159,7 @@ function kegBlast(c) {
     state.party.forEach((m, i) => {
       if (cheb(m.pos, c) > 1 || m.char.hp <= 0) return;
       const sv = roll(1, 20)[0] + mod(m.char.abilities.dex) >= 13;
-      hurtMember(i, sv ? Math.floor(full / 2) : full, `Caught in the keg blast${sv ? ' (Dex save, half)' : ''}`);
+      hurtMember(i, evade(m.char, sv, full), `Caught in the keg blast${sv ? ' (Dex save, half)' : ''}`);
     });
     refresh(); save();
   });
@@ -3334,7 +3373,7 @@ function descend() {
       st.partyMode = state.partyMode; st.party.forEach((m, i) => { m.heroId = state.party[i].heroId; });
       st.stats = { ...state.stats }; st.danger = { steps: 0, noise: 0, waves: 0, rests: state.danger?.rests || 0 };
       enterPlay(st, mode === 'test' ? 'test' : 'play');
-      SFX.door();
+      SFX.door(); after(1.5, () => achieve('descend'));
     } },
     { label: 'Not yet' },
   ]);
@@ -3430,6 +3469,10 @@ function onHeroStep(cell) {
   computeVisibility(); applyFog();
   SFX.step();
   const wasExploring = exploring();
+  if (hasT(state.char, 'dangerSense')) for (const [k, tr] of Object.entries(state.traps)) {
+    const [tx, tz] = k.split(',').map(Number);
+    if (!tr.found && cheb(state.pos, { x: tx, z: tz }) <= 2) { tr.found = true; buildTile(tx, tz); addLog('', `<b>Danger Sense:</b> ${state.char.name} spots a hidden ${TRAP_TEXT[tr.kind][2]} trap.`); toast('Danger Sense: a hidden trap!'); stop = true; }
+  }
   if (wasExploring && (state.stepCount = (state.stepCount || 0) + 1) % 4 === 0) for (const m of state.party) if (m.char.hp > 0) restoreMp(m.char, 1);
   const rose = riseCheck();
   if ((wakeCreatures() || rose) && wasExploring) { startCombat(); stop = true; }
@@ -3591,7 +3634,7 @@ const partyAt = (x, z) => state.party.some(m => m.pos.x === x && m.pos.z === z);
 const partyUp = () => state.party.some(m => m.char.hp > 0);
 const partyChars = () => state.party.map(m => m.char);
 const firstUp = () => state.party.findIndex(m => m.char.hp > 0);
-const freshTurn = c => { let mv = Math.floor(c.speed / 5) + (c.status?.some(s => s.id === 'hasted') ? 3 : 0); if (c.status?.some(s => s.id === 'chilled')) mv = Math.floor(mv / 2); return { move: mv, action: true }; };
+const freshTurn = c => { let mv = Math.floor(c.speed / 5) + (c.status?.some(s => s.id === 'hasted') ? 3 : 0) + (c.talents?.includes('quickstep') ? 2 : 0); if (c.status?.some(s => s.id === 'chilled')) mv = Math.floor(mv / 2); return { move: mv, action: true }; };
 // a painted copy of an adventurer's mini, posed and dressed as they are now
 function snapshotMember(idx) {
   const keep = state.active, saved = [anim, lunge, castT, heroFlash];
@@ -3655,17 +3698,25 @@ function helpAlly(idx) {
   if (!exploring()) state.turn.action = false;
   const pk = ['potion', 'greater', 'goblinStew'].find(k => invEntry(k));
   let amount = 1;
-  if (pk) { const [n, d, b] = ITEMS[pk].heal; amount = sum(roll(n, d)) + b; removeOne(pk); }
+  if (pk) { const [n, d, b] = ITEMS[pk].heal; amount = sum(roll(n, d)) + b + (hasT(state.char, 'healer') ? 4 : 0); removeOne(pk); }
+  if (m.char.hp <= 0) after(0.5, () => achieve('backFromBrink'));
   m.char.hp = Math.min(maxHpOf(m.char), Math.max(0, m.char.hp) + amount);
   addLog('heal', pk ? `${state.char.name} pours a ${ITEMS[pk].name} down ${m.char.name}'s throat: <b>+${amount}</b> HP.` : `${state.char.name} hauls ${m.char.name} back to their feet (1 HP).`);
   floatText(`+${amount}`, worldOf(m.pos.x, m.pos.z).add(new THREE.Vector3(0, 1.2, 0)), 'heal');
   SFX.coins();
   buildAllies(); refresh(); save();
 }
+// Unbreakable and Second Wind: once per fight each
+function toughOut(c) {
+  const f = (c.fight ||= {});
+  if (c.hp === 0 && hasT(c, 'unbreakable') && !f.unbreak) { f.unbreak = true; c.hp = 1; addLog('heal', `<b>Unbreakable!</b> ${c.name} refuses to fall and stays up at 1 HP.`); }
+  if (c.hp > 0 && c.hp < maxHpOf(c) / 2 && hasT(c, 'secondWind') && !f.wind) { f.wind = true; const n = roll(1, 10)[0] + c.level; c.hp = Math.min(maxHpOf(c), c.hp + n); addLog('heal', `<b>Second Wind!</b> ${c.name} catches their breath and regains ${n} HP.`); }
+}
+const evade = (c, saved, full) => hasT(c, 'evasion') ? (saved ? 0 : Math.floor(full / 2)) : (saved ? Math.floor(full / 2) : full);
 function hurtMember(idx, n, what) {
   if (idx === state.active) return hurtHero(n, what);
   const m = state.party[idx]; if (m.char.hp <= 0) return;
-  m.char.hp = Math.max(0, m.char.hp - n);
+  m.char.hp = Math.max(0, m.char.hp - n); toughOut(m.char);
   floatText(`-${n}`, worldOf(m.pos.x, m.pos.z).add(new THREE.Vector3(0, 1.2, 0)), 'dmg');
   addLog('hit', `${what}: ${m.char.name} takes <b>${n}</b> (${m.char.hp}/${maxHpOf(m.char)}).`);
   const v = allyViews.get(m.id); if (v) v.pivot.rotation.z = 0.2;
@@ -3788,6 +3839,8 @@ function stPos(t) {
 const tName = t => isHeroT(t) ? t.name : foeName(MONSTERS[t.type]);
 function addStatus(t, id, rounds) {
   if (!t || (isHeroT(t) ? t.hp <= 0 : !t.alive)) return;
+  if (isHeroT(t) && ((id === 'poisoned' && hasT(t, 'ironStomach')) || (id === 'stunned' && hasT(t, 'ironWill')))) { const p = stPos(t); if (p) floatText('Immune', p.add(new THREE.Vector3(0, 1.4, 0)), 'xp'); return; }
+  if (!isHeroT(t) && id === 'burning' && (state.burned = (state.burned || 0) + 1) >= 5) after(0.5, () => achieve('pyromaniac'));
   const S = STATUS[id], list = stList(t), cur = list.find(s => s.id === id);
   if (cur) cur.rounds = Math.max(cur.rounds, rounds); else list.push({ id, rounds });
   const p = stPos(t);
@@ -3862,12 +3915,14 @@ const stIcons = t => (t.status || []).map(s => `<i class="sti" style="--c:${STAT
 /* ================================================================== *
  * MANA
  * ================================================================== */
-const maxMpOf = c => 6 + 4 * c.level + 2 * Math.max(0, mod(c.abilities[c.castAbility || 'int']));
+const maxMpOf = c => 6 + 4 * c.level + 2 * Math.max(0, mod(c.abilities[c.castAbility || 'int'])) + (hasT(c, 'reservoir') ? 6 : 0);
 function restoreMp(c, n, why) {
   const before = c.mp ?? 0; c.mp = Math.min(maxMpOf(c), before + n);
   return c.mp - before;
 }
 // spells you know grow with your level; free casting (Training Yard) shows them all
+const costOf = (sp, c = state.char) => freeCast() ? 0 : Math.max(1, sp.cost - (hasT(c, 'efficient') ? 1 : 0));
+const rangeOf = (sp, c = state.char) => sp.range + (hasT(c, 'spellSniper') ? 4 : 0);
 const knownSpells = (c = state.char) => Object.keys(SPELLS).filter(k => freeCast() || (SPELLS[k].unlock || 1) <= c.level);
 
 /* ================================================================== *
@@ -3881,7 +3936,7 @@ function entryAlive(e) {
 }
 const entryTarget = e => e.t === 'h' ? entryChar(e)?.char : creatureById(e.id);
 function initFor(t, id, kind) {
-  const r = roll(1, 20)[0], b = kind === 'h' ? mod(t.abilities.dex) : (MONSTERS[t.type].saves?.dex ?? 0);
+  const r = roll(1, 20)[0], b = kind === 'h' ? mod(t.abilities.dex) + (hasT(t, 'reflexes') ? 5 : 0) + (partyHas('commanding') ? 3 : 0) : (MONSTERS[t.type].saves?.dex ?? 0);
   return { t: kind, id, init: r + b, roll: r, bonus: b };
 }
 function sortInsert(order, e) { let i = order.findIndex(o => o.init < e.init); if (i < 0) i = order.length; order.splice(i, 0, e); return i; }
@@ -3904,6 +3959,8 @@ function startCombat() {
   for (const c of state.creatures) if (c.alive && c.aware && MONSTERS[c.type].ai !== 'none') order.push(initFor(c, c.id, 'm'));
   order.sort((a, b) => b.init - a.init || (a.t === 'h' ? -1 : 1));
   state.combat = { order, i: -1 };
+  for (const m of state.party) m.char.fight = {};
+  if (partyHas('inspiring')) after(0.4, () => { for (const m of state.party) if (m.char.hp > 0) addStatus(m.char, 'blessed', 2); });
   const nm = e => e.t === 'h' ? entryChar(e).char.name : MONSTERS[creatureById(e.id).type].name;
   addLog('sys', `<b>Combat! Roll for initiative.</b> ${order.map(e => `${nm(e)} <b>${e.init}</b> <span class="r">(d20 ${e.roll}${fmt(e.bonus)})</span>`).join(', ')}.`);
   toast('Roll for initiative!');
@@ -3945,7 +4002,7 @@ async function beginTurn(e) {
     const idx = state.party.findIndex(m => m.id === e.id), m = state.party[idx];
     switchTo(idx);
     m.turn = freshTurn(m.char); m.done = false;
-    restoreMp(m.char, 1);
+    restoreMp(m.char, hasT(m.char, 'manaSpring') ? 2 : 1);
     const skip = statusTurnStart(m.char);
     if (state.over) return;
     if (m.char.hp <= 0 || skip) {
@@ -4072,7 +4129,7 @@ function spellTargetError(sp, x, z) {
   return null;
 }
 function castMagic(key, x, z, tiles, finish) {
-  const sp = SPELLS[key], d = derived(), from = above(hero, 0.95), to = worldOf(x, z).add(new THREE.Vector3(0, 0.6, 0));
+  const sp = SPELLS[key], sr = sp.status ? sp.status[1] + (hasT(state.char, 'lingering') ? 1 : 0) : 0, boost = hasT(state.char, 'mastery') ? 3 : 0, d = derived(), from = above(hero, 0.95), to = worldOf(x, z).add(new THREE.Vector3(0, 0.6, 0));
   const provoke = c => { if (MONSTERS[c.type].ai !== 'none' && !c.aware) { const was = exploring(); c.aware = true; if (was) startCombat(); } };
   if (sp.shape === 'single' && sp.target === 'enemy') {
     const c = creatureAt(x, z);
@@ -4082,17 +4139,17 @@ function castMagic(key, x, z, tiles, finish) {
         const r = roll(1, 20)[0], total = r + d.spellAtk, crit = r === 20, hit = crit || (r !== 1 && total >= acOf(c));
         const txt = `<span class="r">spell attack d20 ${r} ${fmt(d.spellAtk)} = ${total} vs AC ${acOf(c)}</span>`;
         if (!hit) { floatText('Miss', creatureTop(c), 'miss'); addLog('spell', `${sp.name} misses ${name}. ${txt}`); provoke(c); return finish(); }
-        let dmg = sum(roll(sp.damage[0] * (crit ? 2 : 1), sp.damage[1]));
+        let dmg = sum(roll(sp.damage[0] * (crit ? 2 : 1), sp.damage[1])) + boost;
         if (hasSt(c, 'hexed')) dmg += rollFor(c, 6);
         addLog('spell', `<b>${sp.name}</b> hits ${name} for <b>${dmg}</b> ${sp.dmgType}${crit ? ' (critical!)' : ''}. ${txt}`);
         damageCreature(c, dmg, sp.dmgType === 'cold' ? 'cold' : 'dmg');
-        if (c.alive && sp.status && Math.random() < sp.status[2]) addStatus(c, sp.status[0], sp.status[1]);
+        if (c.alive && sp.status && Math.random() < sp.status[2]) addStatus(c, sp.status[0], sr);
       } else if (sp.save) {
         const r = roll(1, 20)[0], b = saveOf(c, sp.save), saved = r + b >= d.spellDc;
         addLog('spell', `${sp.name}: ${name} makes a ${sp.save.toUpperCase()} save. <span class="r">d20 ${r}${fmt(b)} = ${r + b} vs DC ${d.spellDc}: ${saved ? 'success' : 'fail'}</span>`);
         provoke(c);
-        if (saved) floatText('Resisted', creatureTop(c), 'miss'); else addStatus(c, sp.status[0], sp.status[1]);
-      } else { provoke(c); addStatus(c, sp.status[0], sp.status[1]); }
+        if (saved) floatText('Resisted', creatureTop(c), 'miss'); else addStatus(c, sp.status[0], sr);
+      } else { provoke(c); addStatus(c, sp.status[0], sr); }
       SFX.hit(); finish();
     });
   }
@@ -4100,10 +4157,10 @@ function castMagic(key, x, z, tiles, finish) {
     const i = memberAt(x, z), m = state.party[i];
     return moteArc(from, (i === state.active ? hero.position : (allyViews.get(m.id)?.g.position || to)).clone().add(new THREE.Vector3(0, 0.8, 0)), sp.color).then(() => {
       if (sp.heal) {
-        const n = sum(roll(...sp.heal)) + Math.max(0, mod(state.char.abilities.int));
+        const n = sum(roll(...sp.heal)) + Math.max(0, mod(state.char.abilities.int)) + (hasT(state.char, 'healer') ? 4 : 0);
         if (i === state.active) heal(n, sp.name);
         else { const was = m.char.hp; m.char.hp = Math.min(maxHpOf(m.char), Math.max(0, m.char.hp) + n); floatText(`+${n}`, worldOf(m.pos.x, m.pos.z).add(new THREE.Vector3(0, 1.2, 0)), 'heal'); addLog('heal', `${sp.name}: ${m.char.name} regains <b>${n}</b> HP.`); if (was <= 0) buildAllies(); }
-      } else addStatus(m.char, sp.status[0], sp.status[1]);
+      } else addStatus(m.char, sp.status[0], sr);
       SFX.coins(); finish();
     });
   }
@@ -4112,15 +4169,15 @@ function castMagic(key, x, z, tiles, finish) {
   burst(smoke, key === 'poison' ? 120 : 30, () => { const t = tiles[Math.floor(Math.random() * tiles.length)], w = worldOf(t.x, t.z); return { p: [w.x + rnd(-.4, .4), w.y + rnd(.1, .6), w.z + rnd(-.4, .4)], v: [rnd(-.2, .2), rnd(.05, .4), rnd(-.2, .2)], life: rnd(1.5, 3), s: [.5, 1.4], c0: [c0.r * .7, c0.g * .7, c0.b * .7], c1: [c0.r * .3, c0.g * .3, c0.b * .3], a: .45, drag: 1 }; });
   burst(glow, 60, () => { const t = tiles[Math.floor(Math.random() * tiles.length)], w = worldOf(t.x, t.z); return { p: [w.x + rnd(-.4, .4), w.y + .1, w.z + rnd(-.4, .4)], v: [0, rnd(.4, 1.4), 0], life: rnd(.6, 1.2), s: [.08, .01], c0: [c0.r * 4, c0.g * 4, c0.b * 4], c1: [c0.r, c0.g, c0.b], a: 1 }; });
   after(0.5, () => {
-    if (sp.target === 'ally') state.party.forEach(m => { if (m.char.hp > 0 && inTiles(m.pos)) addStatus(m.char, sp.status[0], sp.status[1]); });
+    if (sp.target === 'ally') state.party.forEach(m => { if (m.char.hp > 0 && inTiles(m.pos)) addStatus(m.char, sp.status[0], sr); });
     else {
       const dice = roll(...sp.damage);
       for (const c of state.creatures) {
         if (!c.alive || !inTiles(c) || MONSTERS[c.type].object) continue;
-        const r = roll(1, 20)[0], b = saveOf(c, sp.save), saved = r + b >= d.spellDc, dmg = saved ? Math.floor(sum(dice) / 2) : sum(dice);
+        const r = roll(1, 20)[0], b = saveOf(c, sp.save), saved = r + b >= d.spellDc, dmg = saved ? Math.floor((sum(dice) + boost) / 2) : sum(dice) + boost;
         addLog('spell', `${sp.name} chokes ${foeName(MONSTERS[c.type])} for <b>${dmg}</b> poison. <span class="r">${sp.save.toUpperCase()} save ${r + b} vs DC ${d.spellDc}: ${saved ? 'success' : 'fail'}</span>`);
         damageCreature(c, dmg, 'dmg');
-        if (c.alive && !saved) addStatus(c, sp.status[0], sp.status[1]);
+        if (c.alive && !saved) addStatus(c, sp.status[0], sr);
       }
     }
     finish();
@@ -4137,7 +4194,10 @@ function heroHitBonus(c, w, ammo, crit, dmg, extraTxt) {
   if (ammo?.extra) add(...ammo.extra);
   if (w.undeadBane && UNDEAD.has(c.type)) add(...w.undeadBane);
   if (hasSt(state.char, 'empowered')) add(1, 6, 'arcane');
+  if (!w.ranged && hasT(state.char, 'heavyHitter')) { dmg += 2; extraTxt += ' + 2 (heavy hitter)'; }
+  if (w.twoHanded && !w.ranged && hasT(state.char, 'ironGrip')) add(1, 4, 'iron grip');
   if (hasSt(c, 'hexed')) add(1, 6, 'necrotic (hex)');
+  if (dmg >= 25) after(0.6, () => achieve('overkill'));
   if (hasSt(state.char, 'weakened')) { dmg = Math.max(1, Math.floor(dmg / 2)); extraTxt += ' (weakened: half)'; }
   return { dmg, extraTxt };
 }
@@ -4277,6 +4337,7 @@ function grant(items, gold, at) {
   const names = [];
   items.forEach((key, n) => { addItem(key, true); names.push(ITEMS[key].name); after(n * 0.35, () => floatText(`+ ${ITEMS[key].name}`, at.clone().add(new THREE.Vector3(0, 0.6 + n * 0.05, 0)), ITEMS[key].weird ? 'cold' : 'xp')); });
   if (gold || items.length) SFX.coins();
+  if (gold && hasT(state.char, 'fortune')) gold = Math.round(gold * 1.25);
   if (gold) { state.char.gold += gold; state.stats.gold += gold; names.push(`${gold} gp`); after(items.length * 0.35, () => floatText(`+${gold} gp`, at.clone().add(new THREE.Vector3(0, 0.6, 0)), 'xp')); }
   return names.join(', ');
 }
@@ -4413,7 +4474,7 @@ function spikeBurst(x, z) {
 function triggerTrap(k, x, z) {
   const tr = state.traps[k]; tr.found = true; buildTile(x, z); applyFog();
   const r = roll(1, 20)[0], dex = mod(state.char.abilities.dex), saved = r + dex >= tr.dc;
-  const dice = roll(2, 6), dmg = saved ? Math.floor(sum(dice) / 2) : sum(dice);
+  const dice = roll(2, 6), dmg = evade(state.char, saved, sum(dice));
   trapFx(tr.kind, x, z); SFX.trap(tr.kind); makeNoise(1);
   const what = TRAP_TEXT[tr.kind][0];
   after(0.3, () => {
@@ -4530,7 +4591,8 @@ function killCreature(c) {
   SFX.death(c.type);
   const nm = m.boss ? m.name : `${foeName(m, true)}`;
   addLog('sys', m.object ? `${nm} ${m.breakText}.` : `${nm} ${m.ai === 'none' ? 'is destroyed' : 'falls'}. +${m.xp} XP.`);
-  if (m.ai !== 'none') state.stats.kills++;
+  if (m.ai !== 'none') { state.stats.kills++; after(0.8, () => achieve('firstBlood')); }
+  if (m.boss) after(1.2, () => achieve('firstBoss'));
   if (m.boss) { toast(`${nm} falls!`); shakeCam(0.3); }
   c.loot = rollLoot(c.type);
   if (m.object) smashProp(c);
@@ -4564,8 +4626,14 @@ function attack(c) {
   const tac = acOf(c);
   const disadv = w.ranged && dist <= 1, adv = c.restrained;
   const n = adv !== disadv ? 2 : 1, r = roll(n, 20);
-  const nat = n === 1 ? r[0] : adv ? Math.max(...r) : Math.min(...r), total = nat + d.atk;
-  const crit = nat === 20, hit = crit || (nat !== 1 && total >= tac);
+  let nat = n === 1 ? r[0] : adv ? Math.max(...r) : Math.min(...r), total = nat + d.atk;
+  const critAt = hasT(state.char, 'brute') && !w.ranged ? 19 : 20;
+  let crit = nat >= critAt, hit = crit || (nat !== 1 && total >= tac);
+  if (!hit && hasT(state.char, 'lucky') && !state.char.fight?.lucky) {
+    (state.char.fight ||= {}).lucky = true; const r2 = roll(1, 20)[0];
+    addLog('', `<b>Lucky!</b> ${state.char.name} shrugs off the miss and rolls again: ${r2}.`);
+    nat = r2; total = nat + d.atk; crit = nat >= critAt; hit = crit || (nat !== 1 && total >= tac);
+  }
   state.turn.action = false; faceAt = worldOf(c.x, c.z);
   lungeDir.subVectors(worldOf(c.x, c.z), worldOf(state.pos.x, state.pos.z)).setY(0).normalize();
   if (!w.ranged) lunge = 1;
@@ -4629,18 +4697,21 @@ function takeLoot(c, what) {
   dressHero(); refresh(); save();
 }
 
-function gainXp(n) {   // everyone still standing shares in the victory
-  floatText(`+${n} XP`, above(hero, 1.3), 'xp');
+function gainXp(n, quiet) {   // everyone still standing shares in the victory
+  if (!quiet) floatText(`+${n} XP`, above(hero, 1.3), 'xp');
   for (const m of state.party) {
     const c = m.char; if (c.hp <= 0) continue;
     c.xp += n;
     while (c.level < 20 && c.xp >= XP_TABLE[c.level]) {
+      growthInit(c);
       const before = maxHpOf(c), mb = maxMpOf(c); c.level++;
-      c.hp += maxHpOf(c) - before; c.mp = (c.mp ?? 0) + maxMpOf(c) - mb;
+      c.hp += maxHpOf(c) - before; c.mp = (c.mp ?? 0) + maxMpOf(c) - mb; c.statPoints += 2;
       const learned = Object.keys(SPELLS).filter(k => SPELLS[k].unlock === c.level);
       if (learned.length) addLog('spell', `${c.name} learns <b>${learned.map(k => SPELLS[k].name).join(', ')}</b>.`);
       addLog('sys', `<b>Level up!</b> ${c.name} is now level ${c.level}.`);
-      toast(`${c.name} reaches level ${c.level}! Max HP is now ${maxHpOf(c)}.`);
+      announceLevel(c, [`+${maxHpOf(c) - before} maximum HP (${maxHpOf(c)})`, `+${maxMpOf(c) - mb} maximum mana (${maxMpOf(c)})`, `<b>2 stat points</b> to spend`,
+        ...(learned.length ? [`New spell${learned.length > 1 ? 's' : ''}: ${learned.map(k => SPELLS[k].name).join(', ')}`] : []),
+        ...(c.level % 4 === 1 && c.level > 1 ? ['Proficiency bonus increased'] : [])]);
     }
   }
 }
@@ -4690,7 +4761,7 @@ async function creatureAttack(c) {
   if (m.ai === 'ranged') await shootProjectile(creatureTop(c).add(new THREE.Vector3(0, -0.35, 0)), above(hero, 0.5), m.proj || 'arrow');
   else { v.lunge = 1; await sleep(0.14); }
   const dist = cheb(c, state.pos), disadv = c.restrained || (m.ai === 'ranged' && dist <= 1);
-  const ak = atkOf(c), r = roll(disadv ? 2 : 1, 20), nat = disadv ? Math.min(...r) : r[0], total = nat + ak;
+  const ak = atkOf(c) - (hasT(state.char, 'dread') ? 1 : 0) - (hasT(state.char, 'bulwark') && state.char.equipped.shield ? 1 : 0), r = roll(disadv ? 2 : 1, 20), nat = disadv ? Math.min(...r) : r[0], total = nat + ak;
   const crit = nat === 20, hit = crit || (nat !== 1 && total >= d.ac);
   const rollTxt = `<span class="r">d20${disadv ? ` (disadv. ${r.join(', ')})` : ''} ${nat} ${fmt(ak)} = ${total} vs AC ${d.ac}</span>`;
   if (hit) {
@@ -4763,6 +4834,7 @@ function heal(amount, source) {
 function hurtHero(n, what, cls = 'dmg') {
   const c = state.char;
   c.hp = Math.max(0, c.hp - n); heroFlash = 1;
+  toughOut(c);
   floatText(`-${n}`, above(hero, 1.2), cls);
   SFX.hurt(); shakeCam(0.1);
   const hf = $('hitflash'); hf.classList.remove('go'); void hf.offsetWidth; hf.classList.add('go');
@@ -4839,7 +4911,7 @@ function spellHit(sp, c, what, dice) {
   const saveTxt = `<span class="r">${sp.save.toUpperCase()} save ${r}${fmt(bonus)} = ${r + bonus} vs DC ${d.spellDc}: ${saved ? 'success' : 'fail'}</span>`;
   const name = foeName(MONSTERS[c.type]);
   if (sp.damage) {
-    const full = sum(dice), dmg = saved ? Math.floor(full / 2) : full;
+    const full = sum(dice) + (hasT(state.char, 'mastery') ? 3 : 0), dmg = saved ? Math.floor(full / 2) : full;
     addLog('hit', `${what} ${name} for <b>${dmg}</b> ${sp.dmgType}${saved ? ' (half)' : ''}. ${saveTxt}`);
     damageCreature(c, dmg, sp.dmgType === 'cold' ? 'cold' : 'dmg');
   } else {
@@ -4856,7 +4928,7 @@ function selectSpell(key) {
   const sp = SPELLS[key];
   if (!freeCast()) {
     if (!state.turn.action) return toast('Casting a spell uses your action, and it is already spent.');
-    if ((state.char.mp ?? 0) < sp.cost) return toast(`${sp.name} costs ${sp.cost} mana. You have ${state.char.mp}.`);
+    if ((state.char.mp ?? 0) < costOf(sp)) return toast(`${sp.name} costs ${costOf(sp)} mana. You have ${state.char.mp}.`);
   }
   ui.spell = key; ui.aim = null; clearPath();
   const aim = $('aim'); aim.hidden = false; aim.style.setProperty('--c', sp.color);
@@ -4869,7 +4941,7 @@ function previewSpell(t) {
   for (const o of overlays) if (o) o.visible = false;
   ui.aim = t;
   if (!t) { hoverBox.visible = false; return; }
-  const sp = SPELLS[ui.spell], inRange = cheb(state.pos, t) <= sp.range;
+  const sp = SPELLS[ui.spell], inRange = cheb(state.pos, t) <= rangeOf(sp);
   const { tiles } = templateTiles(ui.spell, t.x, t.z);
   for (const tl of tiles) {
     const o = overlays[tl.z * W + tl.x]; if (!o || !state.explored[tl.z * W + tl.x]) continue;
@@ -4880,20 +4952,20 @@ function previewSpell(t) {
 
 function cast(key, x, z) {
   const sp = SPELLS[key];
-  if (cheb(state.pos, { x, z }) > sp.range) return toast(`Out of range. ${sp.name} reaches ${sp.range * 5} ft.`);
+  if (cheb(state.pos, { x, z }) > rangeOf(sp)) return toast(`Out of range. ${sp.name} reaches ${rangeOf(sp) * 5} ft.`);
   const { tiles, axis } = templateTiles(key, x, z);
   if (!tiles.length) return toast('There is no open ground there.');
   const why = spellTargetError(sp, x, z); if (why) return toast(why);
   if (!freeCast()) {
     if (!state.turn.action) return toast('Casting a spell uses your action, and it is already spent.');
-    if ((state.char.mp ?? 0) < sp.cost) return toast(`${sp.name} costs ${sp.cost} mana. You have ${state.char.mp}.`);
-    state.char.mp -= sp.cost; state.turn.action = false;
+    if ((state.char.mp ?? 0) < costOf(sp)) return toast(`${sp.name} costs ${costOf(sp)} mana. You have ${state.char.mp}.`);
+    state.char.mp -= costOf(sp); state.turn.action = false;
   }
   ui.spell = null; ui.aim = null; $('aim').hidden = true; clearPath();
   busy = true; faceAt = worldOf(x, z); castT = key === 'fireball' ? 1.3 : 1.0;
   SFX.cast(NEW_SPELLS[key] ? (sp.target === 'enemy' ? 'fireball' : 'vines') : key); makeNoise(key === 'fireball' ? 3 : 1);
   castCircle(worldOf(state.pos.x, state.pos.z), sp.color, key === 'fireball' ? (reduceMotion ? 0.3 : 1.0) : 0.7);
-  addLog('spell', `<b>${state.char.name}</b> casts <b>${sp.name}</b>${freeCast() ? '' : ` (${sp.cost} MP)`}.`);
+  addLog('spell', `<b>${state.char.name}</b> casts <b>${sp.name}</b>${freeCast() ? '' : ` (${costOf(sp)} MP)`}.`);
   const inTiles = p => tiles.some(t => t.x === p.x && t.z === p.z);
   const finish = () => { busy = false; refresh(); save(); };
   if (NEW_SPELLS[key]) { castMagic(key, x, z, tiles, finish); refresh(); return; }
@@ -4906,7 +4978,7 @@ function cast(key, x, z) {
       state.party.forEach((m, i) => {
         if (!inTiles(m.pos) || m.char.hp <= 0) return;
         const saved = roll(1, 20)[0] + mod(m.char.abilities.dex) >= dc;
-        hurtMember(i, saved ? Math.floor(sum(dice) / 2) : sum(dice), `${i === state.active ? 'Caught in your own fireball' : `Caught in ${caster}'s fireball`}${saved ? ' (Dex save, half)' : ''}`);
+        hurtMember(i, evade(m.char, saved, sum(dice)), `${i === state.active ? 'Caught in your own fireball' : `Caught in ${caster}'s fireball`}${saved ? ' (Dex save, half)' : ''}`);
       });
       finish();
     });
@@ -4986,7 +5058,7 @@ function useItem(key) {
   if (state.char.hp >= derived().maxHp) return toast('You are already at full health.');
   if (!exploring()) state.turn.action = false;
   const [n, d, b] = item.heal, dice = roll(n, d);
-  heal(sum(dice) + b, `${item.name} [${dice.join(', ')}] +${b}`);
+  heal(sum(dice) + b + (hasT(state.char, 'healer') ? 4 : 0), `${item.name} [${dice.join(', ')}] +${b}${hasT(state.char, 'healer') ? ' +4 healer' : ''}`);
   removeOne(key);
 }
 function addItem(key, silent) {
@@ -5036,16 +5108,16 @@ function renderHud() {
     <span class="vt"><span class="nm"><b>${esc(c.name)}</b><span class="muted">Lv ${c.level} · AC ${d.ac}</span></span>
     <span class="hpbar2 ${f <= 0.35 ? 'low' : ''}"><i style="width:${Math.max(0, f * 100)}%"></i><span>${c.hp} / ${d.maxHp}</span></span>
     <span class="mpbar"><i style="width:${Math.max(0, (c.mp ?? 0) / maxMpOf(c) * 100)}%"></i><span>${c.mp ?? 0} / ${maxMpOf(c)} MP</span></span>
-    <span class="slots-mini">${stIcons(c) || '<span class="muted">No effects</span>'}
+    <span class="slots-mini">${(c.statPoints > 0 || c.pendingTalents?.length) ? `<span class="lvlup">★ ${c.pendingTalents?.length ? 'Choose a talent' : `${c.statPoints} stat points`}</span>` : ''}${stIcons(c) || (c.statPoints > 0 || c.pendingTalents?.length ? '' : '<span class="muted">No effects</span>')}
       <span style="margin-left:auto">${c.gold} gp</span></span></span>`;
   // the hotbar: spells, then a potion, search and dash
   const potion = ['potion', 'greater', 'goblinStew'].map(k => invEntry(k)).find(Boolean);
   const actOk = ex || t.action;
   const known = knownSpells(c), cur = entryOf(), heroTurn = ex || (cur?.t === 'h' && !busy);
   $('spellbar').innerHTML = known.map((k, n) => {
-    const sp = SPELLS[k], off = busy || !heroTurn || (!freeCast() && ((!ex && !t.action) || (c.mp ?? 0) < sp.cost));
+    const sp = SPELLS[k], off = busy || !heroTurn || (!freeCast() && ((!ex && !t.action) || (c.mp ?? 0) < costOf(sp, c)));
     return `<button class="slot sp" style="--c:${sp.color}" data-spell="${k}" aria-pressed="${ui.spell === k}" ${off ? 'disabled' : ''}
-      title="${sp.name} (${n < 10 ? (n + 1) % 10 : 'click'}): ${sp.cost} MP · ${sp.area} · ${sp.range * 5} ft. ${esc(sp.desc)}">${n < 10 ? `<span class="k">${(n + 1) % 10}</span>` : ''}<span class="q">${sp.cost}</span>
+      title="${sp.name} (${n < 10 ? (n + 1) % 10 : 'click'}): ${sp.cost} MP · ${sp.area} · ${sp.range * 5} ft. ${esc(sp.desc)}">${n < 10 ? `<span class="k">${(n + 1) % 10}</span>` : ''}<span class="q">${costOf(sp, c)}</span>
       <span class="ic">${sp.icon || '✦'}</span>${sp.name}</button>`;
   }).join('') + `
     <button class="slot gap" style="--c:#e0605a" data-hot="potion" ${!potion || busy || !actOk ? 'disabled' : ''} title="Drink ${potion ? ITEMS[potion.key].name : 'a healing potion'} (Q)">
@@ -5076,7 +5148,7 @@ function renderHud() {
     const mf = m.char.hp / maxHpOf(m.char), st = m.char.hp <= 0 ? 'Down' : i === state.active ? (ex ? 'Leading' : 'Acting') : '';
     return `<button class="pf ${i === state.active ? 'on' : ''} ${m.char.hp <= 0 ? 'down' : ''}" data-member="${i}" title="${esc(m.char.name)}">
       <span class="por" style="--c:${esc(m.char.color)}">${esc((m.char.name || '?')[0])}</span>
-      <span class="vt"><span class="nm"><b>${esc(m.char.name)}</b><span class="muted">${st}</span></span>
+      <span class="vt"><span class="nm"><b>${esc(m.char.name)}${(m.char.statPoints > 0 || m.char.pendingTalents?.length) ? ' <span class="lvlstar">★</span>' : ''}</b><span class="muted">${st}</span></span>
       <span class="hpbar2 ${mf <= 0.35 ? 'low' : ''}"><i style="width:${Math.max(0, mf * 100)}%"></i><span>${Math.max(0, m.char.hp)} / ${maxHpOf(m.char)}</span></span>
       <span class="mpbar thin"><i style="width:${Math.max(0, (m.char.mp ?? 0) / maxMpOf(m.char) * 100)}%"></i></span>${m.char.status?.length ? `<span class="pfst">${stIcons(m.char)}</span>` : ''}</span></button>`;
   }).join('');
@@ -5129,15 +5201,19 @@ function renderSheet() {
       : '<span class="muted">The sculpt keeps its own armour; weapons recolour the blade and shields hang on the back.</span>'}
     </div>
     <div class="section">
+      ${growthHtml(c)}
       <div class="row between"><h3>Ability scores</h3>
-        <button class="btn small" data-act="editScores">${ui.editScores ? 'Done' : 'Edit scores'}</button></div>
+        ${grim() ? '' : `<button class="btn small" data-act="editScores">${ui.editScores ? 'Done' : 'Edit scores'}</button>`}</div>
       <div class="abilities">
-        ${ABILITIES.map(([k, label]) => ui.editScores ? `
+        ${ABILITIES.map(([k, label]) => c.statPoints > 0 && !ui.editScores ? `
+          <div class="ab spend"><span class="label">${k.toUpperCase()}</span><span class="m">${fmt(mod(c.abilities[k]))}</span><span class="s">${c.abilities[k]}</span>
+            <button class="btn small" data-act="spend" data-k="${k}" ${c.abilities[k] >= 20 ? 'disabled' : ''} aria-label="Raise ${label}">+1</button>
+            <span class="nt">${nextTalentAt(c, k) ? `talent at ${nextTalentAt(c, k)}` : 'maxed'}</span></div>` : (ui.editScores && !grim()) ? `
           <div class="ab"><span class="label">${k.toUpperCase()}</span><span class="m">${fmt(mod(c.abilities[k]))}</span><span class="s">${c.abilities[k]}</span>
             <span class="step"><button data-act="dec" data-k="${k}" aria-label="Lower ${label}">−</button><button data-act="inc" data-k="${k}" aria-label="Raise ${label}">+</button></span></div>` : `
           <button class="ab" data-act="check" data-k="${k}" title="Roll a ${label} check"><span class="label">${k.toUpperCase()}</span><span class="m">${fmt(mod(c.abilities[k]))}</span><span class="s">${c.abilities[k]}</span></button>`).join('')}
       </div>
-      <span class="muted">${ui.editScores ? 'Scores range from 3 to 20. Max HP, carrying capacity and spell DC update as you go.' : 'Click a score to roll a check.'}</span>
+      <span class="muted">${c.statPoints > 0 ? 'Spend points with +1. Even scores (12, 14, 16, 18, 20) reached this way unlock a talent for that ability.' : ui.editScores ? 'Scores range from 3 to 20. Max HP, carrying capacity and spell DC update as you go.' : 'Click a score to roll a check. Level up to earn stat points.'}</span>
     </div>
     <div class="section">
       <h3>Attack</h3>
@@ -5288,6 +5364,8 @@ $('panel').addEventListener('click', e => {
     case 'die': rollDie(+b.dataset.s); return;
     case 'cast': selectSpell(k); return;
     case 'editScores': ui.editScores = !ui.editScores; break;
+    case 'spend': spendPoint(k); break;
+    case 'talent': pickTalent(k); break;
     case 'model': c.model = k; dressHero(); break;
     case 'skin': c.skin = k; dressHero(); break;
     case 'hair': c.hair = k; dressHero(); break;
@@ -5694,7 +5772,7 @@ const store = {
 const uid = () => Math.random().toString(36).slice(2, 10);
 const clone = o => JSON.parse(JSON.stringify(o));
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const maxHpOf = c => Math.max(1, 10 + mod(c.abilities.con) + (c.level - 1) * (6 + mod(c.abilities.con)));
+const maxHpOf = c => Math.max(1, 10 + mod(c.abilities.con) + (c.level - 1) * (6 + mod(c.abilities.con)) + (c.talents?.includes('tough') ? 2 * c.level : 0));
 
 let heroes = store.get(HERO_KEY, null);
 if (!heroes) {   // first launch with the roster: the old single save becomes the first hero
@@ -5753,6 +5831,7 @@ function enterPlay(st, m = 'play', fresh = false) {
   for (const m of state.party) { migrateChar(m.char); if (fresh) m.char.hp = maxHpOf(m.char); }
   bootBoard(); hero.visible = true;
   refresh(); save();
+  if (state.party.length >= 4) after(2, () => achieve('partyOfFour'));
 }
 function showBackdrop(key) {
   stopPlay(); setMode('menu');
@@ -6439,6 +6518,167 @@ $('edLight').addEventListener('click', () => {
 $('menuBtn').addEventListener('click', menuButton);
 registerDungeons();
 
+
+/* ================================================================== *
+ * GROWTH: stat points on level up, a talent each time you push an ability to an even score,
+ * and a sardonic dungeon that announces every milestone
+ * ================================================================== */
+const TALENTS = {
+  str: {
+    heavyHitter: { name: 'Heavy Hitter', desc: '+2 damage with melee weapons.' },
+    brute:       { name: 'Brute', desc: 'Your melee attacks score a critical hit on a 19 or 20.' },
+    ironGrip:    { name: 'Iron Grip', desc: 'Two-handed weapons deal an extra 1d4 damage.' },
+    bulwark:     { name: 'Bulwark', desc: 'While you carry a shield, enemies have -1 to hit you.' },
+  },
+  dex: {
+    quickstep:   { name: 'Quickstep', desc: '+10 ft of movement on every turn.' },
+    sharpshooter:{ name: 'Sharpshooter', desc: '+2 to hit with ranged weapons, and bows reach 20 ft further.' },
+    evasion:     { name: 'Evasion', desc: 'When a trap or blast allows a Dex save, you take no damage on a success and half on a failure.' },
+    reflexes:    { name: 'Lightning Reflexes', desc: '+5 to initiative.' },
+  },
+  con: {
+    tough:       { name: 'Tough', desc: '+2 maximum HP for every level you have.' },
+    secondWind:  { name: 'Second Wind', desc: 'Once per fight, when you drop below half HP, you catch your breath and heal 1d10 + your level.' },
+    ironStomach: { name: 'Iron Stomach', desc: 'You can\'t be poisoned.' },
+    unbreakable: { name: 'Unbreakable', desc: 'Once per fight, a blow that would drop you to 0 HP leaves you at 1 instead.' },
+  },
+  int: {
+    reservoir:   { name: 'Arcane Reservoir', desc: '+6 maximum mana.' },
+    efficient:   { name: 'Efficient Casting', desc: 'Spells cost 1 less mana (never less than 1).' },
+    mastery:     { name: 'Elemental Mastery', desc: '+3 damage on every damaging spell.' },
+    lingering:   { name: 'Lingering Magic', desc: 'Buffs and curses from your spells last 1 round longer.' },
+    spellSniper: { name: 'Spell Sniper', desc: '+2 to spell attacks, and your spells reach 20 ft further.' },
+  },
+  wis: {
+    keenSenses:  { name: 'Keen Senses', desc: '+3 to Perception and searches.' },
+    dangerSense: { name: 'Danger Sense', desc: 'Hidden traps within 10 ft of you reveal themselves.' },
+    healer:      { name: 'Healer', desc: 'Your potions and healing spells restore 4 more HP.' },
+    manaSpring:  { name: 'Mana Spring', desc: 'Regain 2 mana at the start of each of your turns in a fight, instead of 1.' },
+    ironWill:    { name: 'Iron Will', desc: 'You can\'t be stunned.' },
+  },
+  cha: {
+    inspiring:   { name: 'Inspiring Presence', desc: 'When a fight starts, the whole party is blessed for 2 rounds.' },
+    commanding:  { name: 'Commanding Voice', desc: 'The whole party gets +3 to initiative.' },
+    lucky:       { name: 'Lucky', desc: 'Once per fight, a missed attack is rerolled.' },
+    dread:       { name: 'Dread Presence', desc: 'Enemies have -1 to hit you.' },
+    fortune:     { name: 'Fortune\'s Favour', desc: 'You find 25% more gold.' },
+  },
+};
+const TALENT_STAT = {}; for (const [st, list] of Object.entries(TALENTS)) for (const id of Object.keys(list)) TALENT_STAT[id] = st;
+const talentDef = id => TALENTS[TALENT_STAT[id]]?.[id];
+const hasT = (c, id) => !!c?.talents?.includes(id);
+const partyHas = id => state.party.some(m => m.char.hp > 0 && hasT(m.char, id));
+const TALENT_STEPS = [12, 14, 16, 18, 20];
+const ABIL_NAME = Object.fromEntries(ABILITIES);
+function growthInit(c) {
+  c.talents ||= []; c.statPoints ??= 0; c.pendingTalents ||= [];
+  c.claimed ||= Object.fromEntries(ABILITIES.map(([k]) => [k, c.abilities[k]]));
+  c.fight ||= {};
+  return c;
+}
+const nextTalentAt = (c, k) => TALENT_STEPS.find(v => v > Math.max(c.abilities[k], c.claimed?.[k] ?? 0));
+
+/* --- the announcer --- */
+const LEVEL_QUIPS = [
+  'Congratulations, {name}. You have murdered enough of the dungeon\'s residents to be considered mildly competent. The dungeon is thrilled. The residents less so.',
+  'Level {level}! Your mother would be so proud, if she could see you elbow-deep in giant rat. She cannot. Nobody can. Keep going.',
+  '{name} has grown stronger. Somewhere, a bard has started a song about you. It is not flattering, and it rhymes "hero" with "zero".',
+  'Ding! That sound was your soul expanding to accommodate slightly more violence. Please spend your points before they expire. They do not expire. We just like watching you panic.',
+  'Level {level} reached. The dungeon has adjusted its expectations of you from "lunch" to "inconvenient lunch".',
+  'You leveled up! Your hit points have increased, your mana has increased, and your sense of self-preservation remains exactly where it was. Concerning.',
+];
+const TALENT_QUIPS = [
+  'A new talent! We would call it a gift, but you clearly earned it the hard way, which is the only way we offer.',
+  'You have pushed your {stat} far enough that the universe noticed. Pick something shiny. Choose carefully. Or don\'t. We get ratings either way.',
+  'Talent unlocked. Studies show adventurers with talents die 12% less. The other 88% is up to you.',
+];
+const ACHIEVEMENTS = {
+  firstBlood:   { title: 'First Blood', text: 'You killed something! It was probably minding its own business. Reward: the warm glow of having started.', reward: { xp: 25 } },
+  firstBoss:    { title: 'Boss Fight? More Like Boss Bite', text: 'You took down a boss. The dungeon\'s management has been notified, and they are taking it personally.', reward: { gold: 50 } },
+  overkill:     { title: 'Overkill', text: 'You dealt over 25 damage in one hit. The target was dead some time ago. You kept going. We respect that.', reward: { xp: 50 } },
+  crateSmasher: { title: 'Interior Decorator', text: 'You have smashed ten pieces of furniture. Somewhere, a goblin quartermaster is weeping into his inventory sheet.', reward: { gold: 20 } },
+  pyromaniac:   { title: 'Some Men Just Want to Watch Things Burn', text: 'You set five enemies on fire. The fire marshal has opened an investigation.', reward: { item: 'arrowFire' } },
+  backFromBrink:{ title: 'Not Dead Yet', text: 'You were unconscious, and then you weren\'t. Try not to make a habit of it. Actually, do. It\'s great television.', reward: { item: 'potion' } },
+  descend:      { title: 'Going Down', text: 'You found the stairs and took them, deeper into the place every sensible person runs out of. Bold.', reward: { item: 'manaPotion' } },
+  kegBoom:      { title: 'Ka-BOOM', text: 'You blew up a powder keg. Everyone nearby is either dead, deafened, or very, very angry.', reward: { gold: 15 } },
+  talented:     { title: 'Specialist', text: 'Your first talent! You are now technically better at something than most of the population. Do not let it go to your head. It will.', reward: {} },
+  partyOfFour:  { title: 'Four-Way Split', text: 'A full party of four. Remember: the loot is shared, the blame is not.', reward: { gold: 10 } },
+};
+const noticeQ = []; let noticeBusy = false;
+function announce(n) { noticeQ.push(n); if (!noticeBusy) showNextNotice(); }
+function showNextNotice() {
+  const n = noticeQ.shift(); if (!n) { noticeBusy = false; return; }
+  noticeBusy = true;
+  const el = $('notice');
+  el.className = 'notice ' + (n.kind || '');
+  el.innerHTML = `<div class="nk">${esc(n.kicker)}</div><div class="nt">${esc(n.title)}</div><p>${esc(n.text)}</p>
+    ${n.rewards?.length ? `<ul>${n.rewards.map(r => `<li>${r}</li>`).join('')}</ul>` : ''}
+    ${n.action ? `<button class="btn primary small" data-notice-act="${n.action}">${esc(n.actionLabel)}</button>` : ''}<span class="nx">click to dismiss</span>`;
+  el.hidden = false; el.classList.remove('in'); void el.offsetWidth; el.classList.add('in');
+  SFX.fanfare(n.kind === 'level' ? 2 : n.kind === 'talent' ? 1 : 0);
+  clearTimeout(showNextNotice.t);
+  showNextNotice.t = setTimeout(hideNotice, n.ms || 7000);
+}
+function hideNotice() { const el = $('notice'); el.classList.remove('in'); el.hidden = true; clearTimeout(showNextNotice.t); setTimeout(showNextNotice, 250); }
+$('notice').addEventListener('click', e => {
+  const b = e.target.closest('[data-notice-act]');
+  if (b) { if (b.dataset.noticeAct === 'sheet') setPanel('sheet'); }
+  hideNotice();
+});
+function achieve(id, who = state.char) {
+  const A = ACHIEVEMENTS[id]; if (!A || !playing()) return;
+  const got = (state.achievements ||= []); if (got.includes(id)) return;
+  got.push(id);
+  const rewards = [];
+  if (A.reward.xp) { gainXp(A.reward.xp, true); rewards.push(`+${A.reward.xp} XP for the party`); }
+  if (A.reward.gold) { who.gold += A.reward.gold; rewards.push(`+${A.reward.gold} gold`); }
+  if (A.reward.item) { addItem(A.reward.item, true); const it = ITEMS[A.reward.item]; rewards.push(`${it.bundle ? it.bundle + ' × ' : ''}${it.name}`); }
+  addLog('sys', `<b>Achievement: ${A.title}.</b> <i>${A.text}</i>`);
+  announce({ kind: 'ach', kicker: 'New achievement!', title: A.title, text: A.text, rewards });
+}
+function announceLevel(c, gains) {
+  const q = LEVEL_QUIPS[Math.floor(Math.random() * LEVEL_QUIPS.length)].replaceAll('{name}', c.name).replaceAll('{level}', c.level);
+  announce({ kind: 'level', kicker: `${c.name} has reached level ${c.level}!`, title: 'Level up!', text: q, rewards: gains, action: 'sheet', actionLabel: 'Spend stat points', ms: 9000 });
+}
+function talentAnnounce(c, stat) {
+  const q = TALENT_QUIPS[Math.floor(Math.random() * TALENT_QUIPS.length)].replaceAll('{stat}', ABIL_NAME[stat]);
+  announce({ kind: 'talent', kicker: `${c.name}'s ${ABIL_NAME[stat]} reached ${c.abilities[stat]}`, title: 'Talent available!', text: q, rewards: ['Choose a talent on the character sheet'], action: 'sheet', actionLabel: 'Choose a talent' });
+}
+// spending a stat point; even scores past the last claim unlock a talent choice
+function spendPoint(k) {
+  const c = state.char; growthInit(c);
+  if (c.statPoints <= 0 || c.abilities[k] >= 20) return;
+  const before = maxHpOf(c), mpBefore = maxMpOf(c);
+  c.statPoints--; c.abilities[k]++;
+  c.hp = Math.max(1, Math.min(maxHpOf(c), c.hp + maxHpOf(c) - before)); c.mp = Math.min(maxMpOf(c), (c.mp ?? 0) + Math.max(0, maxMpOf(c) - mpBefore));
+  addLog('sys', `${c.name} raises ${ABIL_NAME[k]} to <b>${c.abilities[k]}</b>.`);
+  if (c.abilities[k] % 2 === 0 && c.abilities[k] > (c.claimed[k] ?? 0) && TALENT_STEPS.includes(c.abilities[k]) && talentChoices(c, k).length) {
+    c.claimed[k] = c.abilities[k]; c.pendingTalents.push(k);
+    talentAnnounce(c, k);
+  }
+}
+const talentChoices = (c, k) => Object.keys(TALENTS[k]).filter(id => !hasT(c, id));
+function pickTalent(id) {
+  const c = state.char, k = TALENT_STAT[id], i = c.pendingTalents.indexOf(k); if (i < 0 || hasT(c, id)) return;
+  c.pendingTalents.splice(i, 1); c.talents.push(id);
+  const before = maxHpOf(c); if (id === 'tough') c.hp += 2 * c.level;
+  if (id === 'reservoir') c.mp = (c.mp ?? 0) + 6;
+  addLog('sys', `<b>${c.name} learns ${talentDef(id).name}.</b> ${talentDef(id).desc}`);
+  announce({ kind: 'talent', kicker: 'Talent unlocked', title: talentDef(id).name, text: talentDef(id).desc, rewards: [] });
+  achieve('talented');
+  dressHero();
+}
+// the growth section of the character sheet
+function growthHtml(c) {
+  growthInit(c);
+  const pend = [...new Set(c.pendingTalents)];
+  return `
+    ${c.statPoints > 0 ? `<div class="growth-banner"><b>${c.statPoints}</b> stat point${c.statPoints > 1 ? 's' : ''} to spend. Raise an ability to an even score (12, 14, 16, 18, 20) to unlock a talent.</div>` : ''}
+    ${pend.map(k => `<div class="talent-pick"><h3>Choose a ${ABIL_NAME[k]} talent</h3>
+      <div class="tchoices">${talentChoices(c, k).map(id => `<button class="tchoice" data-act="talent" data-k="${id}"><b>${talentDef(id).name}</b><span>${talentDef(id).desc}</span></button>`).join('')}</div></div>`).join('')}
+    ${c.talents.length ? `<div class="section"><h3>Talents</h3><div class="tlist">${c.talents.map(id => `<div class="tl"><b>${talentDef(id)?.name}</b> <span class="muted">${ABIL_NAME[TALENT_STAT[id]]} · ${talentDef(id)?.desc}</span></div>`).join('')}</div></div>` : ''}`;
+}
+
 // handy for debugging from the browser console
 window.battleBoard = {
   camera, controls, get state() { return state; },
@@ -6452,6 +6692,7 @@ window.battleBoard = {
   party() { return state.party.map(m => ({ name: m.char.name, hp: m.char.hp, pos: m.pos, done: !!m.done })) },
   cast(key, x, z) { cast(key, x, z); },
   combat() { const cb = state.combat; return cb && { i: cb.i, order: cb.order.map(e => `${e.t}:${e.t === 'h' ? state.party.find(m => m.id === e.id)?.char.name : creatureById(e.id)?.type}:${e.init}`) }; },
+  xp(n) { gainXp(n); refresh(); },
   wanderers() { const m = spawnWanderers(6, 13); if (m && exploring() === false) startCombat(); refresh(); return m && m.map(c => c.type); },
 };
 showBackdrop('crypt');

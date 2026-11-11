@@ -58,6 +58,25 @@ Out of a fight, whoever you control leads and the others follow (**Tab** switche
 
 An adventurer at 0 HP falls unconscious. Click them from an adjacent square to help them up (with a potion if you carry one; that uses your action). When the fight ends they get back up with 1 HP. The run is lost only if the whole party falls.
 
+## Levels, stats and talents
+
+Each level-up brings more HP and mana, any new spells, and **2 stat points**. A pop-up announces it in the voice of a sardonic dungeon that is enjoying your suffering. Spend the points on the character sheet with **+1**.
+
+Raising an ability to an **even score (12, 14, 16, 18 or 20)** with stat points unlocks a **talent** for that ability. You pick one of its talents you don't have yet:
+
+| Ability | Talents |
+|---|---|
+| Strength | Heavy Hitter (+2 melee damage), Brute (melee crits on 19–20), Iron Grip (+1d4 with two-handed weapons), Bulwark (-1 to enemy hits while you hold a shield) |
+| Dexterity | Quickstep (+10 ft), Sharpshooter (+2 ranged to hit, +20 ft range), Evasion (no damage on a successful Dex save, half on a failed one), Lightning Reflexes (+5 initiative) |
+| Constitution | Tough (+2 HP per level), Second Wind (once per fight, heal 1d10 + level when below half), Iron Stomach (can't be poisoned), Unbreakable (once per fight, stay at 1 HP) |
+| Intelligence | Arcane Reservoir (+6 mana), Efficient Casting (spells cost 1 less), Elemental Mastery (+3 spell damage), Lingering Magic (+1 round on your effects), Spell Sniper (+2 spell attack, +20 ft range) |
+| Wisdom | Keen Senses (+3 Perception), Danger Sense (spot traps within 10 ft), Healer (+4 to your healing), Mana Spring (2 mana a turn), Iron Will (can't be stunned) |
+| Charisma | Inspiring Presence (party blessed when a fight starts), Commanding Voice (+3 initiative for the party), Lucky (once per fight, reroll a miss), Dread Presence (-1 to enemy hits), Fortune's Favour (+25% gold) |
+
+**Achievements** pop up the same way, with a small reward each: First Blood, Overkill, Ka-BOOM, Interior Decorator, Some Men Just Want to Watch Things Burn, Not Dead Yet, Going Down, Specialist, Four-Way Split, and Boss Fight? More Like Boss Bite.
+
+Freely editing ability scores is now only allowed outside the dungeon (in the Training Yard).
+
 ## Magic: mana, buffs and debuffs
 
 Spells cost **mana** instead of spell slots. Max mana is 6 + 4 per level + 2 × Intelligence modifier. You regain 1 at the start of each of your turns in a fight and 1 for every few squares you walk. Resting, camping, taking the stairs and Potions of Mana restore more. You learn new spells as you level:
