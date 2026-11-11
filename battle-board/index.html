@@ -452,6 +452,14 @@ const MAPS = {
     ],
     torches: [], loot: {}, chests: {}, stash: {}, secrets: {},
   },
+  // The Lich's Descent: seven floors, generated and checked by tools/floors.py
+  descent1: {"name": "The Overgrown Gate", "floor": 1, "campaign": "descent", "rev": 1, "dark": false, "fog": true, "rows": ["############################", "#####eee~e~evwwve###########", "####eeeeeee~vwwve#C.....uX##", "##eeeeeee~e~vwwve#....a...~#", "#eeeeee~Pe~evwwve#..P..P..##", "#e$ee~epeeeevwwve~......n.##", "#eeeeePe~eeevwwve#........##", "#eeeeeeef~eevwwve#u......u##", "#eee~e~ee~eevwwve####D######", "#e~eeeee~eeevvvve~eeeeee~ee#", "#eeePeeee~e~vvvveee~eeeeeee#", "#eeeepee~eeevwwveeeee~eKeee#", "#eeeeeeeeneevwwveeeen~eeeae#", "#eeee~eeee~evwwveeeeeee~eee#", "#eeeeeeeeeeevwwv~eeeeqen~o~#", "#e~eeeee~eee....ee~neeeeoe~#", "#ee@eeeeeeeevwwveeceeefeee##", "#ee~eeeeeeeevwwveecceeee####", "###eeee~~eeevwwv~eeeeeee####", "############################"], "torches": [], "loot": {"2,5": {"items": ["potion"], "gold": 0}}, "chests": {"18,2": {"items": ["potion", "leather"], "gold": 30}}, "stash": {}, "secrets": {}, "rooms": [{"x0": 1, "z0": 1, "x1": 11, "z1": 18, "name": "The Edge of the Wood", "text": "Thornwick's dead have been vanishing from the churchyard, and the goblins took them. You followed their cart tracks here, to a ruined chapel swallowed by the forest. Smoke rises from a camp across the stream, and something howls in the long grass."}, {"x0": 16, "z0": 9, "x1": 26, "z1": 18, "name": "The Raiders' Camp", "text": "Crude tents, a spit of something you would rather not name, and sacks stamped with the Thornwick churchyard seal. The goblins have been well paid: black coins glint everywhere. Someone is buying bodies."}, {"x0": 18, "z0": 2, "x1": 25, "z1": 7, "name": "The Roofless Chapel", "text": "Ivy has pulled down the roof, and the saints in the windows have had their faces chiselled off. Behind the altar, a stair spirals down into the dark. Fresh drag marks lead to it."}], "danger": true, "sight": 9, "flow": [0.05, 0.45], "stairsText": "The stair spirals down through roots and old stone. The air turns cold and smells of smoke, lamp oil and wet dog.", "wanderers": [{"types": ["goblin", "goblin"], "text": "Harsh voices to the {dir}: a goblin patrol is coming back from the village."}, {"types": ["wolf", "wolf"], "text": "A howl rises to the {dir}, then another. Wolves have your scent."}], "next": "descent2", "title": "The Lich's Descent", "floors": 7, "desc": "Goblins have been stealing the dead of Thornwick. Follow them down through seven floors, from a sunlit ruin to the throne of a lich."},
+  descent2: {"name": "The Goblin Warren", "floor": 2, "campaign": "descent", "rev": 1, "dark": true, "fog": true, "rows": ["############################", "############################", "##.....######cc..K.o#u....##", "##.@...######c.....o#...C.##", "##.......Z......n...S.....##", "##.~...######.....n.#.....##", "##.....######.K.....#.H..u##", "####.########..o~.cc########", "####.###########.###########", "####.###########T#####j...j#", "####.###########.#####...C.#", "####.######..h.......#.n...#", "##......o##........Ka#.....#", "##.......##....cc....#..B..#", "##...f~.......n...n~.D.~...#", "##.......##....cc....#...n.#", "##.b...f.##......n...#....~#", "##o...~..##.K........#....X#", "######################j....#", "############################"], "torches": [[3, 1, 0, 1], [15, 1, 0, 1], [26, 2, -1, 0], [1, 3, 1, 0], [7, 3, -1, 0], [11, 5, 0, -1], [3, 7, 1, 0], [21, 7, 0, -1], [14, 8, 0, -1], [12, 10, 0, 1], [18, 10, 0, 1], [5, 11, -1, 0], [10, 12, 1, 0], [21, 13, 1, 0], [27, 13, -1, 0], [1, 15, 1, 0], [4, 18, 0, -1], [16, 18, 0, -1]], "loot": {}, "chests": {"25,10": {"items": ["greater", "whisper"], "gold": 40}, "24,3": {"items": ["potion", "potion", "boneCharm"], "gold": 90}}, "stash": {"22,6": {"items": ["eel"], "gold": 25, "dc": 13}}, "secrets": {"20,4": {"dc": 13}}, "rooms": [{"x0": 2, "z0": 2, "x1": 6, "z1": 6, "name": "The Warren Mouth", "text": "The goblins have dug deep. Their tunnels stink of smoke, wet fur and lamp oil, and powder kegs are stacked carelessly along the walls. One spark down here and the whole hill comes down."}, {"x0": 13, "z0": 2, "x1": 19, "z1": 7, "name": "The Storeroom", "text": "Stolen grain, stolen ale, and three coffins with the lids pried off. Empty. The bodies went somewhere else."}, {"x0": 2, "z0": 12, "x1": 8, "z1": 17, "name": "The Kennels", "text": "Gnawed bones carpet the floor. Not all of them belonged to animals."}, {"x0": 11, "z0": 11, "x1": 20, "z1": 17, "name": "The Feasting Hall", "text": "A fire roars in a hearth hacked from the rock. Goblins squabble over a heap of grave-goods: rings still on fingers, coins still in mouths."}, {"x0": 22, "z0": 9, "x1": 26, "z1": 18, "name": "The Chief's Den", "text": "\"The pale man pays in black gold for every body,\" snarls Chief Grizzlegut from a throne of stolen coffins. \"He will pay well for yours.\" Behind him, a shaft drops into the deep."}], "sight": 7, "stairsText": "A rope ladder drops down a natural shaft. Far below, water drips into a cavern, and the goblin noise fades to silence.", "wanderers": [{"types": ["goblin", "goblin", "goblin"], "text": "Goblin war-drums start up to the {dir}. They know you are here."}, {"types": ["wolf", "goblin"], "text": "Claws on stone to the {dir}: a goblin wolf-rider is hunting you."}], "next": "descent3", "hidden": true},
+  descent3: {"name": "The Weeping Caves", "floor": 3, "campaign": "descent", "rev": 1, "dark": true, "fog": true, "rows": ["##############################", "##############################", "#####.##################.$####", "###...r################.s.u###", "##..@...######~#######u....u.#", "##.......##........###..~.s..#", "###..r...~~.s.......~..b....##", "###...##................#.####", "########.....vvvv~....########", "#########.~~vvwwww...p.#######", "#########...vwwwwwv.~..#######", "#########..r.wwwwvvvv..#######", "########~.....vvv.vvvvv#######", "####~.I##.......~...vvv....###", "###.p~~.....p......s.#..z...##", "###.F~....#.~...r...##Y~....##", "##.u...u######~..#####...Xs.##", "###.....###############....###", "##############################", "##############################"], "torches": [[11, 4, 0, 1], [17, 4, 0, 1], [29, 4, -1, 0], [2, 7, 1, 0], [26, 7, -1, 0], [7, 8, 1, 0], [23, 10, -1, 0], [8, 13, 1, 0], [11, 16, 0, -1], [17, 16, -1, 0], [22, 17, 1, 0], [3, 18, 0, -1]], "loot": {"25,2": {"items": ["greater", "sunder"], "gold": 30}}, "chests": {}, "stash": {}, "secrets": {}, "rooms": [{"x0": 2, "z0": 2, "x1": 7, "z1": 7, "name": "The Weeping Caves", "text": "The goblin warren breaks into a natural cavern. Water drips from a thousand stone teeth, and the walls glitter with webs as thick as sailcloth. Something large shifts on the ceiling."}, {"x0": 9, "z0": 5, "x1": 21, "z1": 15, "name": "The Black Lake", "text": "A still black lake fills the heart of the cavern. Wrapped shapes hang from the webs above it, slowly turning. Some of them still twitch."}, {"x0": 21, "z0": 2, "x1": 27, "z1": 7, "name": "The Nest", "text": "The webs here are thick with bones and grave-goods. Whatever the goblins could not carry, the spiders took."}, {"x0": 2, "z0": 12, "x1": 8, "z1": 17, "name": "The Old Shrine", "text": "A spring bubbles up through carved stone. Someone built a shrine here long ago, before the dark crept in. A tablet beside it is scratched with a warning."}, {"x0": 21, "z0": 12, "x1": 27, "z1": 18, "name": "The Drowned Steps", "text": "Stone steps lead down into an older place. A body lies across them, bloated and grey. As your light touches it, its fingers curl."}], "sight": 7, "flow": [0.4, 0.1], "tablet": "Turn back. Below the lake lie the halls of the Pale Crown, where the dead do not rest. We sealed it once. We could not seal it twice.", "stairsText": "The steps sink into black water and come out somewhere colder. The smell of rot rises to meet you.", "wanderers": [{"types": ["spider"], "text": "Something skitters across the ceiling to the {dir}. The webs are trembling."}, {"types": ["rat", "rat", "rat"], "text": "A tide of squeaking pours out of a crack to the {dir}."}], "next": "descent4", "hidden": true},
+  descent4: {"name": "The Drowned Ossuary", "floor": 4, "campaign": "descent", "rev": 1, "dark": true, "fog": true, "rows": ["############################", "############################", "##u.....u#.u...u.........u##", "##.......#vvPvvvPvvvPvvvPv##", "##.@......vvvvzvvvvzvvvzvv##", "##.......#vvPvvvPvvvPvvvPv##", "##......u#.........u......##", "#####.###############.######", "#####Z###############D######", "##......u#.......u#j......j#", "##.P...P.#.b...k..#.P....P.#", "##...k...#...vv...#....k...#", "##.b.....#..vwwv..#..z.....#", "##H........vvwwvv.#......X.#", "##....b..#..vwwv..#.....z..#", "##.......#...vv............#", "##.P..rP.#..z...z.#.P....P.#", "##u......#........#.......C#", "############################", "############################"], "torches": [[7, 1, 0, 1], [13, 1, 0, 1], [19, 1, 0, 1], [9, 5, 1, 0], [26, 6, -1, 0], [7, 7, 0, -1], [13, 7, 0, -1], [24, 8, 0, 1], [9, 11, 1, 0], [27, 11, -1, 0], [1, 13, 1, 0], [18, 14, 1, 0], [9, 17, 1, 0], [14, 18, 0, -1], [20, 18, 0, -1]], "loot": {}, "chests": {"26,17": {"items": ["greater", "wardenHelm"], "gold": 60}}, "stash": {"2,13": {"items": ["potion", "boneCharm"], "gold": 30, "dc": 14}}, "secrets": {}, "rooms": [{"x0": 2, "z0": 2, "x1": 8, "z1": 6, "name": "The Drowned Ossuary", "text": "Below the caves lies an older place: a flooded hall of the dead. Bodies float in the black water, and the goblins' gifts are piled at the door, still in their sacks. Those sacks are empty now."}, {"x0": 10, "z0": 2, "x1": 25, "z1": 6, "name": "The Flooded Nave", "text": "Knee-deep water fills the nave. Shapes stand in it, perfectly still, facing the far end of the hall. One by one they turn toward the splashing of your boots."}, {"x0": 2, "z0": 9, "x1": 17, "z1": 17, "name": "The Bone Galleries", "text": "Skulls line every wall, thousands of them, sorted by size. Somebody has been taking them down and putting the skeletons back together."}, {"x0": 19, "z0": 9, "x1": 26, "z1": 17, "name": "The Stair of Candles", "text": "Braziers burn with a cold green flame. Fresh footprints lead downstairs: bare feet, and a long trailing robe."}], "sight": 7, "flow": [0.45, 0.05], "stairsText": "Below, you hear chanting. Many voices, all saying the same name.", "wanderers": [{"types": ["zombie", "zombie"], "text": "Something splashes through the water to the {dir}, slow and heavy and tireless."}, {"types": ["skeleton", "skeleton"], "text": "Bones clatter to the {dir} as the galleries give up their dead."}], "next": "descent5", "hidden": true},
+  descent5: {"name": "The Sanctum of the Pale Crown", "floor": 5, "campaign": "descent", "rev": 1, "dark": true, "fog": true, "rows": ["############################", "############################", "########u..........u#C.h..c#", "########.k..jllj....D...N.c#", "########..P..ll..P..#......#", "########..........N.#......#", "########....N.......########", "########..P......P..###j...#", "##.....#............###.z..#", "##.....#...j....j...###....#", "##.@......1..I...3..G....XN#", "##.....#...j....j...###....#", "##.....#..P......P..###..z.#", "########.......N....###j...#", "########.....2......########", "########.zP......P..#...z.$#", "########..........k.D.b....#", "########u..........u#....b.#", "#####################u....u#", "############################"], "torches": [[12, 1, 0, 1], [18, 1, 0, 1], [24, 1, 0, 1], [27, 4, -1, 0], [20, 5, 1, 0], [7, 6, 1, 0], [25, 6, 0, 1], [22, 9, 1, 0], [20, 11, -1, 0], [1, 12, 1, 0], [7, 12, 1, 0], [23, 14, 0, 1], [27, 16, -1, 0], [20, 17, 1, 0], [13, 18, 0, -1], [24, 19, 0, -1]], "loot": {"26,15": {"items": ["wardenBlade"], "gold": 0}}, "chests": {"21,2": {"items": ["greater", "potion"], "gold": 80}}, "stash": {}, "secrets": {}, "rooms": [{"x0": 2, "z0": 8, "x1": 6, "z1": 12, "name": "The Sanctum of the Pale Crown", "text": "Black candles. Bone-white robes. Chanting echoes through a temple carved from the living rock. The cult of the Pale Crown has made this place a factory for the dead."}, {"x0": 8, "z0": 2, "x1": 19, "z1": 17, "name": "The Temple of Three Lights", "text": "Fire pours from a cracked altar in the north. Before it stands a tablet, and set into the floor are three plates: a sun, a moon and a star. To the east, an iron portcullis bars the way down."}, {"x0": 21, "z0": 2, "x1": 26, "z1": 5, "name": "The Cult Library", "text": "Shelves of skin-bound books, and a desk covered in notes about raising the dead, written in a fine, patient hand. Every page is signed: V.M."}, {"x0": 21, "z0": 15, "x1": 26, "z1": 18, "name": "The Waiting Crypts", "text": "Rows of fresh bodies lie on stone slabs, ready to be raised. Some of them have already started without the priests."}], "sight": 7, "puzzleOrder": ["3", "2", "1"], "tablet": "First the <b>star</b> that guides the dead. Then the <b>moon</b> that wakes them. Last the <b>sun</b> they will never see again.", "stairsText": "The stairs grow hot underfoot. Red light flickers from below, and with it a cold that has nothing to do with the air.", "wanderers": [{"types": ["cultist", "skeleton"], "text": "Chanting grows louder to the {dir}. A priest and its servant are searching for you."}, {"types": ["zombie", "zombie", "zombie"], "text": "Shuffling feet to the {dir}. The crypts are emptying."}], "next": "descent6", "hidden": true, "puzzle": {"order": ["3", "2", "1"], "gate": [20, 10]}},
+  descent6: {"name": "The Burning Halls", "floor": 6, "campaign": "descent", "rev": 1, "dark": true, "fog": true, "rows": ["##############################", "##############lll#############", "##u..........ulll..#u......u##", "##............lll..#........##", "##...P....P...lll..#..P..P..##", "##...............Q.D........##", "##......z.....lll..#........##", "##............lll..#.N.j..j.##", "##...P....P...lll..#........##", "##$...........lll..#K......C##", "##.@.......N..lll..#K...W.X.##", "##...P....P...lll..#........##", "##............lll..#.N.j..j.##", "##.......z....lll..#........##", "##...............Q.D........##", "##...P....P...lll..#..P..P..##", "##..........K.lll..#........##", "##u..........Klll..#.......u##", "##############lll#############", "##############################"], "torches": [[5, 1, 0, 1], [11, 1, 0, 1], [17, 1, 0, 1], [23, 1, 0, 1], [1, 5, 1, 0], [28, 8, -1, 0], [1, 11, 1, 0], [19, 11, 1, 0], [28, 14, -1, 0], [19, 17, 1, 0], [6, 18, 0, -1], [12, 18, 0, -1], [24, 18, 0, -1]], "loot": {"2,9": {"items": ["potion", "potion"], "gold": 0}}, "chests": {"27,9": {"items": ["greater", "greater"], "gold": 120}}, "stash": {}, "secrets": {}, "rooms": [{"x0": 2, "z0": 2, "x1": 13, "z1": 17, "name": "The Burning Halls", "text": "The air shimmers with heat. A river of molten rock splits the hall in two, and pale cold shapes drift above it, untouched by the fire. The Restless have been waiting for you."}, {"x0": 17, "z0": 2, "x1": 18, "z1": 17, "name": "The Far Bank", "text": "Up close, the wraiths have faces: Thornwick faces. The miller. The blacksmith's wife. They do not know you any more."}, {"x0": 20, "z0": 2, "x1": 27, "z1": 17, "name": "The Warden's Gate", "text": "An armoured giant stands before the last stair, a greatsword planted at its feet. Its helm turns toward you, and green fire kindles behind the visor."}], "sight": 8, "flow": [0.02, 0.5], "stairsText": "The last stair. Below it, the heart of the mountain, and the one who has been waiting all along.", "wanderers": [{"types": ["zombie", "cultist"], "text": "A priest drives its dead toward you from the {dir}."}, {"types": ["skeleton", "skeleton", "skeleton"], "text": "Bones knit together to the {dir}. The halls are raising a guard."}], "next": "descent7", "hidden": true},
+  descent7: {"name": "The Throne of Vael Morrow", "floor": 7, "campaign": "descent", "rev": 1, "dark": true, "fog": true, "rows": ["##############################", "##############################", "##u........................u##", "##.P....P.............P....P##", "##..........lllllll.........##", "##...j....lllllllllll....j..##", "##..N....lllllllllllll....N.##", "##......lllllll.lllllll.....##", "##.....llllllj...jlllll.....##", "##.............L...llll.....##", "##.....lllll.......lllll....##", "##.....llllllj...jllllll....##", "##.....llllllll.lllllll.....##", "##......lllllll.lllllll.....##", "##......lllllll.lllllll.....##", "##...j...l.llll.lllll....j..##", "##..........lQl.lQ..........##", "##....z...K.........K...z...##", "##.P....P.............P....P##", "##u............@...........u##", "##############################", "##############################"], "torches": [[5, 1, 0, 1], [10, 1, 0, 1], [15, 1, 0, 1], [20, 1, 0, 1], [25, 1, 0, 1], [28, 4, -1, 0], [1, 7, 1, 0], [28, 9, -1, 0], [1, 12, 1, 0], [28, 14, -1, 0], [1, 17, 1, 0], [4, 20, 0, -1], [9, 20, 0, -1], [14, 20, 0, -1], [19, 20, 0, -1], [24, 20, 0, -1]], "loot": {}, "chests": {}, "stash": {}, "secrets": {}, "rooms": [{"x0": 1, "z0": 12, "x1": 28, "z1": 20, "name": "The Throne of Vael Morrow", "text": "At the heart of the mountain, on an island in a lake of fire, sits Vael Morrow, Lich of the Pale Crown. \"Thornwick sends me a hero,\" it whispers, and its voice is everywhere at once. \"How thoughtful. I needed a new captain.\""}], "sight": 9, "flow": [0.25, 0.2], "wanderers": [], "finale": {"title": "The Pale Crown falls", "text": "Vael Morrow's phylactery cracks with a sound like a bell breaking, and a scream that is centuries old tears through the mountain. All through the halls above, the dead of Thornwick lie down and are still. You climb back toward the daylight carrying the Pale Crown, and the story of the hero who walked into the dark and came back out."}, "hidden": true},
 };
 const PLATE_NAMES = { 1: 'sun', 2: 'moon', 3: 'star' };
 
@@ -492,6 +500,18 @@ const MONSTERS = {
   rat:      { name: 'Giant Rat', hp: 7, ac: 12, xp: 25, speed: 6, ai: 'melee', atk: 4, dmg: [1, 4, 2], dmgType: 'piercing', range: 1, saves: { dex: 2, str: -2 }, verb: 'bites' },
   skeleton: { name: 'Skeleton', hp: 13, ac: 13, xp: 50, speed: 6, ai: 'melee', atk: 4, dmg: [1, 6, 2], dmgType: 'slashing', range: 1, saves: { dex: 2, str: 0 }, verb: 'slashes' },
   archer:   { name: 'Goblin Archer', hp: 7, ac: 13, xp: 50, speed: 6, ai: 'ranged', atk: 4, dmg: [1, 6, 2], dmgType: 'piercing', range: 16, saves: { dex: 2, str: -1 }, verb: 'shoots' },
+  goblin:   { name: 'Goblin', hp: 7, ac: 15, xp: 50, speed: 6, ai: 'melee', atk: 4, dmg: [1, 6, 2], dmgType: 'slashing', range: 1, saves: { dex: 2, str: -1 }, verb: 'hacks' },
+  goblinBoss: { name: 'Chief Grizzlegut', hp: 32, ac: 16, xp: 300, speed: 6, ai: 'melee', atk: 5, dmg: [2, 6, 3], dmgType: 'slashing', range: 1, saves: { dex: 2, str: 2 }, verb: 'cleaves', boss: true, scale: 1.3 },
+  wolf:     { name: 'Wolf', hp: 11, ac: 13, xp: 50, speed: 8, ai: 'melee', atk: 4, dmg: [2, 4, 2], dmgType: 'piercing', range: 1, saves: { dex: 2, str: 1 }, verb: 'bites' },
+  spider:   { name: 'Giant Spider', hp: 26, ac: 14, xp: 200, speed: 6, ai: 'melee', atk: 5, dmg: [1, 8, 3], dmgType: 'piercing', range: 1, saves: { dex: 3, str: 2 }, verb: 'stabs with venomous fangs' },
+  zombie:   { name: 'Zombie', hp: 22, ac: 8, xp: 50, speed: 4, ai: 'melee', atk: 3, dmg: [1, 6, 1], dmgType: 'bludgeoning', range: 1, saves: { dex: -2, str: 1 }, verb: 'claws' },
+  cultist:  { name: 'Bone Cultist', hp: 18, ac: 12, xp: 100, speed: 6, ai: 'ranged', atk: 4, dmg: [2, 6, 0], dmgType: 'necrotic', range: 12, proj: 'bolt', saves: { dex: 1, str: 0 }, verb: 'hurls a bolt of grave-light' },
+  wraith:   { name: 'Wraith', hp: 45, ac: 13, xp: 450, speed: 6, ai: 'melee', atk: 6, dmg: [3, 6, 2], dmgType: 'necrotic', range: 1, saves: { dex: 3, str: 0 }, verb: 'drains your life', float: true, aura: '#8af2ff' },
+  lich:     { name: 'Vael Morrow', hp: 110, ac: 16, xp: 3000, speed: 5, ai: 'ranged', atk: 7, dmg: [4, 8, 0], dmgType: 'necrotic', range: 14, proj: 'bolt', saves: { dex: 3, str: 1 }, verb: 'unleashes a bolt of death', boss: true, summon: true, aura: '#5fffd0' },
+  crate:    { name: 'Crate', hp: 8, ac: 10, xp: 0, speed: 0, ai: 'none', object: true, saves: { dex: -5, str: -5 }, debris: '#7a5530', breakText: 'splinters apart' },
+  barrel:   { name: 'Barrel', hp: 10, ac: 10, xp: 0, speed: 0, ai: 'none', object: true, saves: { dex: -5, str: -5 }, debris: '#6a4a2a', breakText: 'bursts its hoops' },
+  keg:      { name: 'Powder Keg', hp: 4, ac: 10, xp: 0, speed: 0, ai: 'none', object: true, saves: { dex: -5, str: -5 }, debris: '#5a1a14', breakText: 'cracks open' },
+  urn:      { name: 'Clay Urn', hp: 3, ac: 9, xp: 0, speed: 0, ai: 'none', object: true, saves: { dex: -5, str: -5 }, debris: '#a8603a', breakText: 'shatters' },
   warden:   { name: 'Grave Warden', hp: 45, ac: 16, xp: 450, speed: 5, ai: 'melee', atk: 5, dmg: [2, 6, 3], dmgType: 'slashing', range: 1, saves: { dex: 0, str: 3 }, verb: 'cleaves', boss: true },
 };
 // What each enemy carries. Rolled when it dies; click the body to search it.
@@ -499,6 +519,18 @@ const LOOT_TABLES = {
   rat:      [{ gold: [0, 3] }, { item: 'ratTail', p: 0.6 }],
   skeleton: [{ gold: [2, 8] }, { item: 'boneCharm', p: 0.45 }, { item: 'potion', p: 0.35 }, { item: 'dagger', p: 0.3 }],
   archer:   [{ gold: [3, 10] }, { item: 'arrows', p: 0.8 }, { item: 'goblinStew', p: 0.45 }, { item: 'potion', p: 0.25 }, { item: 'shortbow', p: 0.15 }],
+  goblin:   [{ gold: [1, 8] }, { item: 'goblinStew', p: 0.25 }, { item: 'dagger', p: 0.2 }, { item: 'potion', p: 0.12 }],
+  goblinBoss: [{ gold: [30, 50] }, { item: 'greater', p: 1 }, { item: 'potion', p: 1 }],
+  wolf:     [{ item: 'teeth', p: 0.3 }],
+  spider:   [{ gold: [0, 10] }, { item: 'potion', p: 0.3 }],
+  zombie:   [{ gold: [0, 6] }, { item: 'teeth', p: 0.2 }],
+  cultist:  [{ gold: [5, 15] }, { item: 'potion', p: 0.35 }, { item: 'boneCharm', p: 0.15 }],
+  wraith:   [{ gold: [10, 25] }, { item: 'greater', p: 0.5 }],
+  lich:     [{ gold: [200, 300] }, { item: 'greater', p: 1 }, { item: 'crown', p: 1 }],
+  crate:    [{ gold: [0, 5] }, { item: 'potion', p: 0.15 }, { item: 'rations', p: 0.3 }, { item: 'arrows', p: 0.15 }],
+  barrel:   [{ gold: [0, 3] }, { item: 'goblinStew', p: 0.3 }],
+  urn:      [{ gold: [2, 14] }, { item: 'potion', p: 0.12 }, { item: 'boneCharm', p: 0.05 }],
+  keg:      [],
   warden:   [{ gold: [40, 60] }, { item: 'greater', p: 1 }, { item: 'wardenBlade', p: 1 }, { item: 'wardenHelm', p: 1 }],
 };
 function rollLoot(type) {
@@ -508,10 +540,11 @@ function rollLoot(type) {
     if (e.gold) gold += e.gold[0] + Math.floor(Math.random() * (e.gold[1] - e.gold[0] + 1));
     else if (Math.random() < e.p) items.push(e.item);
   }
-  if (!items.length && !gold) gold = 1;
+  if (!items.length && !gold && !MONSTERS[type].object) gold = 1;
   return { items, gold };
 }
-const CREATURE_CHARS = { r: 'rat', k: 'skeleton', b: 'skeleton', a: 'archer', W: 'warden', m: 'dummy' };
+const CREATURE_CHARS = { r: 'rat', k: 'skeleton', b: 'skeleton', a: 'archer', W: 'warden', m: 'dummy', n: 'goblin', B: 'goblinBoss', f: 'wolf', s: 'spider', z: 'zombie', N: 'cultist', Q: 'wraith', L: 'lich',
+  c: 'crate', o: 'barrel', K: 'keg', u: 'urn' };
 
 // range and size are in 5 ft squares
 const SPELLS = {
@@ -553,6 +586,7 @@ const mod = s => Math.floor((s - 10) / 2);
 const fmt = n => (n >= 0 ? '+' : '') + n;
 const roll = (n, d) => Array.from({ length: n }, () => 1 + Math.floor(Math.random() * d));
 const sum = a => a.reduce((p, c) => p + c, 0);
+const theName = n => /^the /i.test(n) ? n : `the ${n}`;   // "the Sunken Crypt", "The Goblin Warren"
 const cheb = (a, b) => Math.max(Math.abs(a.x - b.x), Math.abs(a.z - b.z));
 const keyOf = (x, z) => x + ',' + z;
 
@@ -622,7 +656,7 @@ function freshState(mapKey, carryChar, map = MAPS[mapKey]) {
     startChar: JSON.parse(JSON.stringify(char)),
     nextId: 1, effects: [], pos,
     turn: { round: 1, move: 6, action: true },
-    log: [{ kind: 'sys', html: `<b>${char.name}</b> enters the ${map.name}.` }],
+    log: [{ kind: 'sys', html: `<b>${char.name}</b> enters ${theName(map.name)}.` }],
   };
 }
 function load() {
@@ -654,7 +688,8 @@ let MAP = MAPS[state.mapKey], W = MAP.rows[0].length, H = MAP.rows.length;
 const prefs = loadPrefs();
 const ui = { tab: 'sheet', editScores: false, spell: null, aim: null, sandbox: prefs.sandbox ?? true, hover: null };
 let busy = false;   // a spell or the enemy turn is playing out
-const freeCast = () => ui.sandbox && !MAP.dark;   // the dungeon always plays by the real rules
+const grim = () => MAP.danger ?? MAP.dark;   // real rules, wandering monsters, risky camps
+const freeCast = () => ui.sandbox && !grim();   // the dungeon always plays by the real rules
 
 /* ================================================================== *
  * RENDERER — HDR pipeline: scene → bloom → ACES tone map
@@ -734,14 +769,14 @@ const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').match
 /* ================================================================== *
  * TILES
  * ================================================================== */
-const WALKABLE = new Set(['.', '~', 'd', 'g', 'X', '1', '2', '3', 'p']);
-const DIFFICULT = new Set(['~', 'p']);
+const WALKABLE = new Set(['.', '~', 'd', 'g', 'X', '1', '2', '3', 'p', 'e', 'v']);
+const DIFFICULT = new Set(['~', 'p', 'v']);
 const SIGHT_BLOCK = new Set(['#', 'D', 'S', 'P']);
 const tileAt = (x, z) => (x < 0 || z < 0 || x >= W || z >= H) ? '#' : state.grid[z][x];
 const isWall = ch => ch === '#' || ch === 'S';
 const worldOf = (x, z) => {
   const ch = tileAt(x, z);
-  return new THREE.Vector3(x - W / 2 + 0.5, isWall(ch) ? 1.1 : ch === '~' ? 0.14 : 0.2, z - H / 2 + 0.5);
+  return new THREE.Vector3(x - W / 2 + 0.5, isWall(ch) ? 1.1 : ch === '~' || ch === 'v' || ch === 'w' || ch === 'l' ? 0.14 : 0.2, z - H / 2 + 0.5);
 };
 function seeded(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
@@ -940,7 +975,7 @@ function addProp(i, o, update) { const p = { i, o, update }; props.push(p); retu
 
 function buildBoard() {
   if (board) { board.traverse(o => { if (o.isMesh && o.material && !o.userData.sharedMat) [].concat(o.material).forEach(m => m.dispose()); }); board.removeFromParent(); }
-  board = new THREE.Group(); scene.add(board);
+  board = new THREE.Group(); scene.add(board); fireSpots.clear();
   tileMeshes = new Array(W * H).fill(null); overlays = new Array(W * H).fill(null);
   tileObjs = Array.from({ length: W * H }, () => []); props = [];
   const dark = MAP.dark;
@@ -990,7 +1025,7 @@ function buildBoard() {
 
 function clearTile(i) {
   for (const o of tileObjs[i]) { o.traverse(c => { if (c.isMesh && c.material && !c.userData.sharedMat) [].concat(c.material).forEach(m => m.dispose()); }); o.removeFromParent(); }
-  tileObjs[i] = []; props = props.filter(p => p.i !== i);
+  tileObjs[i] = []; props = props.filter(p => p.i !== i); fireSpots.delete(i);
   tileMeshes[i] = null;
   if (overlays[i]) { overlays[i].material.dispose(); overlays[i].removeFromParent(); overlays[i] = null; }
 }
@@ -1033,6 +1068,8 @@ function buildTile(x, z) {
       mesh.add(post, cp);
     }
     mesh.userData.dim = [[side, side.color.clone()], [trim, trim.color.clone()], [rock, rock.color.clone()]];
+  } else if ('evwl'.includes(ch) && (mesh = buildSpecialTile(i, x, z, ch, p, r, j, ST))) {
+    // grass, water and lava
   } else if (ch === '~' && !dark) {
     mesh = new THREE.Mesh(brushGeo, mat(new THREE.Color('#3d5636').offsetHSL(0, 0, j)));
     mesh.position.set(p.x, 0.07, p.z);
@@ -1153,6 +1190,7 @@ function buildTile(x, z) {
     });
   }
   if (ch === 'P' || ch === 'p') buildPillar(i, x, z, ch, p, r);
+  if (ch === 'h' || ch === 'j' || ch === 'q') buildFireProp(i, x, z, ch, p, r);
   if (dark) decorate(i, x, z, ch, p, r);
   // floor loot
   const lt = state.loot[k];
@@ -1288,6 +1326,11 @@ const TEXR = () => (_runeTex ||= TEX.rune);
 
 function lootModel(key) {
   const it = ITEMS[key], g = new THREE.Group();
+  if (!it) {   // just coins
+    const gold = new THREE.MeshStandardMaterial({ color: '#ffcc55', metalness: 1, roughness: 0.25, emissive: '#5a3a00' });
+    for (let n = 0; n < 6; n++) { const c = new THREE.Mesh(unitCyl, gold); c.scale.set(0.05, 0.012, 0.05); c.position.set(rnd(-.08, .08), n * 0.014 - 0.1, rnd(-.08, .08)); c.rotation.set(rnd(-.3, .3), 0, rnd(-.3, .3)); g.add(c); }
+    return g;
+  }
   if (it.type === 'consumable') {
     const glass = new THREE.MeshStandardMaterial({ color: key === 'greater' ? '#c02a6a' : '#c0302a', emissive: key === 'greater' ? '#7a1040' : '#6a1010', emissiveIntensity: 1.2, roughness: 0.15, transparent: true, opacity: 0.9 });
     const body = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 12), glass); body.scale.y = key === 'greater' ? 1.25 : 1;
@@ -1767,7 +1810,7 @@ function buildCreature(c) {
   g.add(miniBase(m.boss ? 0.95 : 0.82));
   const height = MODELS[c.type](pivot);
   paintRim(g);
-  if (m.boss) g.scale.setScalar(1.12);
+  if (m.boss) g.scale.setScalar(m.scale || 1.12);
   const ring = new THREE.Mesh(new THREE.RingGeometry(0.43, 0.5, 40), new THREE.MeshBasicMaterial({ color: '#d0604b', transparent: true, opacity: 0.9, side: THREE.DoubleSide, toneMapped: false }));
   ring.rotation.x = -Math.PI / 2; ring.position.y = 0.01; ring.userData.noShadow = true; ring.visible = false; g.add(ring);
   tagAll(g, 'creature', { cid: c.id });
@@ -1778,7 +1821,8 @@ function buildCreature(c) {
   const v = { g, pivot, ring, bar, mats, height, anim: null, lunge: 0, lungeDir: new THREE.Vector3(), shake: 0, flash: 0 };
   views.set(c.id, v);
   g.position.copy(worldOf(c.x, c.z));
-  if (!c.alive || c.dormant) pivot.rotation.x = -1.35;
+  if ((!c.alive && !m.object) || c.dormant) pivot.rotation.x = -1.35;
+  if (!c.alive && m.object) { pivot.visible = false; objDebris(v, m); }
   if (c.dormant) g.traverse(o => { o.userData.kind = 'deco'; });   // just bones, as far as anyone can tell
   return v;
 }
@@ -1880,9 +1924,25 @@ const SFX = (() => {
       if (type === 'rat') { for (let i = 0; i < (far ? 6 : 2); i++) tone({ t: i * (far ? 0.09 : 0.15), dur: 0.1, wave: 'square', f0: R(1700, 2100), f1: R(2400, 2900), vol: 0.035 * v, lp: 3500, wet }); if (far) S.rattle(0.4, 1); }
       else if (type === 'skeleton') S.rattle(v, wet);
       else if (type === 'archer') { tone({ dur: 0.35, wave: 'sawtooth', f0: 320, f1: 760, vol: 0.06 * v, lp: 1600, wet }); tone({ t: 0.4, dur: 0.25, wave: 'sawtooth', f0: 700, f1: 380, vol: 0.05 * v, lp: 1600, wet }); }
-      else if (type === 'warden') { tone({ dur: 1.6, wave: 'sawtooth', f0: 72, f1: 48, vol: 0.25 * v, lp: 380, a: 0.25, wet: 0.7 }); noise({ dur: 1.6, f0: 260, f1: 90, vol: 0.4 * v, a: 0.25, wet: 0.7 }); }
+      else if (type === 'goblin' || type === 'goblinBoss' || type === 'cultist') S.alert('archer', far);
+      else if (type === 'wolf') { tone({ dur: 1.3, wave: 'sine', f0: 380, f1: 560, vol: 0.09 * v, a: 0.3, wet: 0.8 }); tone({ t: 1.0, dur: 0.8, wave: 'sine', f0: 560, f1: 330, vol: 0.07 * v, wet: 0.8 }); }
+      else if (type === 'spider') noise({ dur: 0.7, type: 'highpass', f0: 3000, f1: 5000, vol: 0.25 * v, a: 0.1, wet });
+      else if (type === 'zombie') { tone({ dur: 1.4, wave: 'sawtooth', f0: 95, f1: 70, vol: 0.12 * v, lp: 500, a: 0.3, wet }); }
+      else if (type === 'wraith') noise({ dur: 1.8, type: 'bandpass', f0: 600, f1: 2600, q: 4, vol: 0.3 * v, a: 0.4, wet: 1 });
+      else if (type === 'lich' || type === 'warden') { tone({ dur: 1.6, wave: 'sawtooth', f0: 72, f1: 48, vol: 0.25 * v, lp: 380, a: 0.25, wet: 0.7 }); noise({ dur: 1.6, f0: 260, f1: 90, vol: 0.4 * v, a: 0.25, wet: 0.7 }); }
+    },
+    bolt() { tone({ dur: 0.5, wave: 'sawtooth', f0: 180, f1: 620, vol: 0.05, lp: 1400, wet: 0.6 }); noise({ dur: 0.5, type: 'bandpass', f0: 600, f1: 2400, q: 2, vol: 0.15, a: 0.05 }); },
+    smash(type) {
+      if (type === 'urn') { for (let i = 0; i < 6; i++) tone({ t: i * 0.02, dur: 0.12, wave: 'triangle', f0: R(1800, 3400), f1: R(900, 1600), vol: 0.06 }); noise({ dur: 0.2, type: 'highpass', f0: 2500, vol: 0.3 }); }
+      else { noise({ dur: 0.08, f0: 3000, f1: 600, vol: 0.5 }); noise({ t: 0.05, dur: 0.3, type: 'bandpass', f0: 500, f1: 200, q: 1.5, vol: 0.4 }); for (let i = 0; i < 4; i++) noise({ t: 0.1 + i * R(0.04, 0.08), dur: 0.05, type: 'bandpass', f0: R(700, 1400), q: 4, vol: 0.15 }); }
     },
     death(type) {
+      if (['crate', 'barrel', 'keg', 'urn'].includes(type)) return S.smash(type);
+      if (type === 'wolf') return tone({ dur: 0.5, wave: 'triangle', f0: 900, f1: 300, vol: 0.08, wet: 0.5 });
+      if (type === 'zombie' || type === 'spider') return noise({ dur: 0.5, f0: 900, f1: 150, vol: 0.4 });
+      if (type === 'wraith') return noise({ dur: 1.6, type: 'bandpass', f0: 2400, f1: 300, q: 3, vol: 0.4, a: 0.05, wet: 1 });
+      if (type === 'lich') { S.doom(); return S.alert('warden'); }
+      if (type === 'goblin' || type === 'goblinBoss') return tone({ dur: 0.35, wave: 'sawtooth', f0: 700, f1: 250, vol: 0.05, lp: 1500 });
       if (type === 'skeleton') { S.rattle(1.2); noise({ t: 0.25, dur: 0.3, f0: 600, f1: 120, vol: 0.4 }); }
       else if (type === 'rat') tone({ dur: 0.3, wave: 'square', f0: 2600, f1: 800, vol: 0.05, lp: 3500 });
       else if (type === 'warden') { S.alert('warden'); noise({ t: 0.7, dur: 1, f0: 900, f1: 60, vol: 0.7, wet: 0.8 }); }
@@ -2624,6 +2684,440 @@ function spawnVisual(e, instant) {
   const C = FX_CLASSES[e.type]; if (!C) return;
   const v = new C(e, instant); visuals.set(e.id, v); fxList.push(v);
 }
+
+/* ================================================================== *
+ * MORE MINIATURES: goblins, beasts, the dead, and breakable props
+ * ================================================================== */
+const kit = p => ({
+  cyl: (m, r, h, x, y, z, rx = 0, rz = 0, r2) => { const o = new THREE.Mesh(new THREE.CylinderGeometry(r, r2 ?? r, h, 10), m); o.position.set(x, y, z); o.rotation.set(rx, 0, rz); p.add(o); return o; },
+  ball: (m, r, x, y, z, sx = 1, sy = 1, sz = 1) => { const o = new THREE.Mesh(new THREE.SphereGeometry(r, 14, 10), m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); p.add(o); return o; },
+  box: (m, sx, sy, sz, x, y, z, rx = 0, ry = 0, rz = 0) => { const o = new THREE.Mesh(unitBox, m); o.scale.set(sx, sy, sz); o.position.set(x, y, z); o.rotation.set(rx, ry, rz); p.add(o); return o; },
+  glow: (hex, k, r, x, y, z) => { const o = new THREE.Mesh(new THREE.SphereGeometry(r, 8, 6), new THREE.MeshBasicMaterial({ color: hdrColor(hex, k) })); o.position.set(x, y, z); o.userData.noShadow = true; p.add(o); return o; },
+});
+const lathe = (pts, m, seg = 20) => new THREE.Mesh(new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(r, y)), seg), m);
+Object.assign(MODELS, {
+  goblin(p, boss = false) {
+    const { cyl, ball, box, glow } = kit(p);
+    const skin = mat(boss ? '#5f7f2e' : '#6f8f3a', { roughness: 0.7 }), tunic = mat(boss ? '#4a2a5a' : '#6a3a2a'), leather = mat('#3d2c1e'), wood = mat('#6b4a2b');
+    const steel = mat('#a2a4a0', { metalness: 0.85, roughness: 0.3 });
+    for (const sx of [-1, 1]) {
+      cyl(skin, 0.035, 0.17, sx * 0.06, 0.13, 0);
+      box(leather, 0.06, 0.035, 0.11, sx * 0.06, 0.03, 0.03);
+      const ear = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.2, 6), skin); ear.rotation.z = -sx * 1.3; ear.position.set(sx * 0.18, 0.59, -0.01); p.add(ear);
+      glow('#ffe04a', 3, 0.018, sx * 0.048, 0.58, 0.105);
+    }
+    cyl(tunic, 0.11, 0.26, 0, 0.32, 0, 0, 0, 0.17);
+    const belt = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.018, 6, 16), leather); belt.rotation.x = Math.PI / 2; belt.position.y = 0.27; p.add(belt);
+    ball(skin, 0.12, 0, 0.56, 0, 1, 0.95, 1.05);
+    const nose = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.08, 6), skin); nose.rotation.x = Math.PI / 2; nose.position.set(0, 0.55, 0.14); p.add(nose);
+    for (const sx of [-1, 1]) { const t = new THREE.Mesh(new THREE.ConeGeometry(0.012, 0.04, 5), mat('#efe6cf')); t.position.set(sx * 0.035, 0.515, 0.11); p.add(t); }
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 8, 0, 6.283, 0, 1.2), boss ? mat('#c9a24a', { metalness: 0.9, roughness: 0.3 }) : leather); cap.position.y = 0.6; p.add(cap);
+    if (boss) for (let n = 0; n < 5; n++) { const sp = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.09, 5), mat('#c9a24a', { metalness: 0.9, roughness: 0.3 })); const a = n / 5 * 6.283; sp.position.set(Math.sin(a) * 0.1, 0.72, Math.cos(a) * 0.1); p.add(sp); }
+    cyl(skin, 0.028, 0.18, 0.15, 0.4, 0.08, -1.1, -0.3);
+    cyl(skin, 0.028, 0.18, -0.15, 0.4, 0.06, -0.6, 0.3);
+    // a notched cleaver (bigger for the chief) and a round hide shield
+    const bl = boss ? 1.5 : 1;
+    box(steel, 0.02, 0.24 * bl, 0.07 * bl, 0.19, 0.5 + 0.06 * bl, 0.24, 0.9, 0, 0);
+    box(leather, 0.025, 0.08, 0.025, 0.18, 0.43, 0.17, 0.9, 0, 0);
+    const sh = cyl(wood, 0.13, 0.025, -0.22, 0.4, 0.1, 0, Math.PI / 2); sh.rotation.y = -0.5;
+    const hide = cyl(mat('#8a6a4a'), 0.1, 0.03, -0.225, 0.4, 0.11, 0, Math.PI / 2); hide.rotation.y = -0.5;
+    if (boss) { const cape = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.42), mat('#5a1a1a', { side: THREE.DoubleSide })); cape.position.set(0, 0.3, -0.16); cape.rotation.x = 0.15; p.add(cape); }
+    return 0.75;
+  },
+  goblinBoss(p) { return MODELS.goblin(p, true); },
+  wolf(p) {
+    const { cyl, ball, glow } = kit(p);
+    const fur = mat('#6a6258', { roughness: 0.95 }), dark = mat('#3e3a34', { roughness: 0.95 }), pale = mat('#a49a88', { roughness: 0.95 });
+    ball(fur, 1, 0, 0.36, -0.04, 0.15, 0.15, 0.32); ball(dark, 1, 0, 0.42, 0.16, 0.16, 0.18, 0.16); ball(pale, 1, 0, 0.33, 0.2, 0.11, 0.1, 0.12);
+    ball(fur, 1, 0, 0.5, 0.36, 0.1, 0.095, 0.12);
+    const snout = new THREE.Mesh(unitBox, fur); snout.scale.set(0.08, 0.06, 0.14); snout.position.set(0, 0.46, 0.5); p.add(snout);
+    ball(mat('#141010'), 0.022, 0, 0.48, 0.57);
+    for (const sx of [-1, 1]) {
+      const ear = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.09, 4), dark); ear.position.set(sx * 0.055, 0.6, 0.33); p.add(ear);
+      glow('#ffc23a', 3, 0.014, sx * 0.045, 0.53, 0.45);
+      for (const lz of [-0.22, 0.2]) cyl(lz > 0 ? fur : dark, 0.032, 0.3, sx * 0.08, 0.15, lz, 0, 0, 0.025);
+    }
+    const tail = [[0, .4, -.32], [0, .36, -.48], [0, .3, -.6]].map(v => new THREE.Vector3(...v));
+    p.add(new THREE.Mesh(taperedTube(new THREE.CatmullRomCurve3(tail), 10, 0.05, 8), dark));
+    return 0.66;
+  },
+  spider(p) {
+    const { ball, glow } = kit(p);
+    const chit = mat('#2a2420', { roughness: 0.45, metalness: 0.1 }), hair = mat('#4a3a2a', { roughness: 0.95 });
+    ball(hair, 1, 0, 0.36, -0.26, 0.25, 0.21, 0.3);
+    const mark = new THREE.Mesh(new THREE.CircleGeometry(0.07, 3), new THREE.MeshBasicMaterial({ color: hdrColor('#c02010', 1.4) })); mark.position.set(0, 0.575, -0.27); mark.rotation.x = -Math.PI / 2; p.add(mark);
+    ball(chit, 1, 0, 0.3, 0.07, 0.15, 0.11, 0.17);
+    for (const sx of [-1, 1]) {
+      const fang = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.09, 6), mat('#1a1410')); fang.position.set(sx * 0.04, 0.22, 0.22); fang.rotation.x = Math.PI * 0.85; p.add(fang);
+      for (const [ey, ez] of [[0.36, 0.2], [0.34, 0.22], [0.38, 0.17]]) glow('#ff2a1a', 3, 0.014, sx * (0.025 + (0.22 - ez) * 0.6), ey, ez);
+      [0.16, 0.06, -0.04, -0.13].forEach((z, n) => {
+        const a = new THREE.Vector3(sx * 0.12, 0.3, z), k = new THREE.Vector3(sx * 0.42, 0.6, z * 1.8 + (n - 1.5) * 0.05), f = new THREE.Vector3(sx * 0.62, 0.02, z * 2.6 + (n - 1.5) * 0.12);
+        p.add(new THREE.Mesh(taperedTube(new THREE.CatmullRomCurve3([a, k, f]), 14, 0.026, 6), n % 2 ? chit : hair));
+      });
+    }
+    return 0.7;
+  },
+  zombie(p) {
+    const { cyl, ball, box, glow } = kit(p);
+    const skin = mat('#7d8a6a', { roughness: 0.8 }), rot = mat('#5a5a42', { roughness: 0.9 }), rag = mat('#4a3e34', { side: THREE.DoubleSide, roughness: 1 }), bone = mat('#d8ccb0');
+    for (const sx of [-1, 1]) { cyl(rot, 0.04, 0.38, sx * 0.08, 0.2, sx * 0.03, sx * 0.08); box(rot, 0.07, 0.04, 0.12, sx * 0.08, 0.02, 0.04 + sx * 0.03); }
+    const torso = cyl(rag, 0.13, 0.36, 0, 0.56, 0.02, 0.22, 0, 0.16);
+    for (let n = 0; n < 3; n++) { const rib = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.01, 5, 10, Math.PI * 0.6), bone); rib.position.set(0.04, 0.55 + n * 0.05, 0.1); rib.rotation.set(0.2, 0.3, -0.3); p.add(rib); }
+    const head = ball(skin, 0.1, 0.03, 0.83, 0.1, 1, 1.05, 1); head.rotation.z = 0.35;
+    box(mat('#2a1a14'), 0.07, 0.03, 0.02, 0.04, 0.77, 0.19, 0.2, 0, 0.35);
+    glow('#d8e04a', 1.8, 0.013, 0.0, 0.85, 0.19); glow('#d8e04a', 1.8, 0.013, 0.07, 0.86, 0.18);
+    for (const sx of [-1, 1]) { cyl(skin, 0.032, 0.3, sx * 0.15, 0.68, 0.2, -1.35, 0); ball(skin, 0.04, sx * 0.15, 0.68, 0.36); }
+    for (let n = 0; n < 4; n++) { const r = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 0.14), rag); r.position.set(-0.1 + n * 0.07, 0.33, 0.12); r.rotation.set(0.1, 0, (n - 1.5) * 0.15); p.add(r); }
+    return 1.0;
+  },
+  cultist(p) {
+    const { cyl, ball, glow } = kit(p);
+    const robe = mat('#d8d2c4', { roughness: 0.9, side: THREE.DoubleSide }), trim = mat('#3a1a2a'), bone = mat('#e6dcc2'), wood = mat('#3a2a1e');
+    const body = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.82, 16, 1, true), robe); body.position.y = 0.41; p.add(body);
+    cyl(trim, 0.245, 0.04, 0, 0.03, 0);
+    const sash = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.018, 6, 16), trim); sash.rotation.x = Math.PI / 2; sash.position.y = 0.52; p.add(sash);
+    const hood = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.32, 14), robe); hood.position.set(0, 0.92, -0.02); p.add(hood);
+    ball(new THREE.MeshBasicMaterial({ color: '#08060a' }), 0.09, 0, 0.84, 0.05, 1, 1.1, 0.8);
+    glow('#7dff8a', 3, 0.016, -0.03, 0.85, 0.12); glow('#7dff8a', 3, 0.016, 0.03, 0.85, 0.12);
+    cyl(robe, 0.05, 0.28, 0.15, 0.62, 0.07, -0.6, -0.4, 0.07); cyl(robe, 0.05, 0.28, -0.15, 0.62, 0.05, -0.3, 0.4, 0.07);
+    cyl(wood, 0.016, 1.2, 0.24, 0.6, 0.15);
+    ball(bone, 0.06, 0.24, 1.22, 0.15);
+    glow('#7dff8a', 2.5, 0.035, 0.24, 1.3, 0.15);
+    return 1.1;
+  },
+  wraith(p) {
+    const { ball, glow } = kit(p);
+    const shade = mat('#1c2230', { transparent: true, opacity: 0.78, roughness: 1, emissive: '#0c1a2a', side: THREE.DoubleSide, depthWrite: false });
+    const g = new THREE.ConeGeometry(0.28, 1.0, 18, 6, true), pos = g.attributes.position;
+    for (let n = 0; n < pos.count; n++) { const y = pos.getY(n); if (y < -0.3) { pos.setY(n, y + Math.random() * 0.18); pos.setX(n, pos.getX(n) * (1 + Math.random() * 0.25)); pos.setZ(n, pos.getZ(n) * (1 + Math.random() * 0.25)); } }
+    g.computeVertexNormals();
+    const cloak = new THREE.Mesh(g, shade); cloak.position.y = 0.62; p.add(cloak);
+    const hood = new THREE.Mesh(new THREE.SphereGeometry(0.15, 14, 10, 0, 6.283, 0, 2.1), shade); hood.position.set(0, 1.08, 0); p.add(hood);
+    ball(new THREE.MeshBasicMaterial({ color: '#020306' }), 0.1, 0, 1.04, 0.06, 1, 1.1, 0.8);
+    glow('#8af2ff', 4, 0.018, -0.035, 1.06, 0.14); glow('#8af2ff', 4, 0.018, 0.035, 1.06, 0.14);
+    for (const sx of [-1, 1]) {
+      const arm = [[sx * 0.18, 0.86, 0], [sx * 0.26, 0.78, 0.2], [sx * 0.22, 0.72, 0.38]].map(v => new THREE.Vector3(...v));
+      p.add(new THREE.Mesh(taperedTube(new THREE.CatmullRomCurve3(arm), 10, 0.045, 6), shade));
+      for (let f = 0; f < 3; f++) { const c = new THREE.Mesh(new THREE.ConeGeometry(0.008, 0.08, 4), mat('#cfd8e0')); c.position.set(sx * (0.2 + f * 0.02), 0.71, 0.42); c.rotation.x = 1.4; p.add(c); }
+    }
+    return 1.25;
+  },
+  lich(p) {
+    const { cyl, ball, box, glow } = kit(p);
+    const robe = mat('#2a1838', { roughness: 0.8, side: THREE.DoubleSide }), trim = mat('#b8913a', { metalness: 0.9, roughness: 0.3 }), bone = mat('#e2d8be', { roughness: 0.6 });
+    const iron = mat('#2a2c30', { metalness: 0.8, roughness: 0.4 });
+    const body = new THREE.Mesh(new THREE.ConeGeometry(0.3, 1.1, 18, 1, true), robe); body.position.y = 0.55; p.add(body);
+    cyl(trim, 0.305, 0.05, 0, 0.04, 0);
+    const mantle = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 10, 0, 6.283, 0, 1.3), robe); mantle.position.y = 1.0; p.add(mantle);
+    for (const sx of [-1, 1]) {
+      const pad = ball(iron, 0.1, sx * 0.2, 1.05, 0, 1, 0.6, 1);
+      for (let n = 0; n < 3; n++) { const sp = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.12, 5), bone); sp.position.set(sx * (0.2 + n * 0.03), 1.13, -0.03 + n * 0.03); sp.rotation.z = -sx * 0.4; p.add(sp); }
+    }
+    const skull = ball(bone, 0.11, 0, 1.25, 0.02, 1, 1.08, 1.05);
+    box(bone, 0.11, 0.04, 0.07, 0, 1.15, 0.06, 0.25);
+    for (const sx of [-1, 1]) { ball(new THREE.MeshBasicMaterial({ color: '#06030a' }), 0.03, sx * 0.04, 1.26, 0.09); glow('#5fffd0', 5, 0.014, sx * 0.04, 1.26, 0.11); }
+    const crown = cyl(trim, 0.11, 0.05, 0, 1.36, 0.02);
+    for (let n = 0; n < 7; n++) { const a = n / 7 * 6.283, sp = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.1, 5), trim); sp.position.set(Math.sin(a) * 0.1, 1.42, 0.02 + Math.cos(a) * 0.1); p.add(sp); }
+    glow('#5fffd0', 3, 0.02, 0, 1.38, 0.13);
+    cyl(robe, 0.05, 0.36, 0.22, 0.85, 0.08, -0.5, -0.5, 0.08); cyl(robe, 0.05, 0.36, -0.22, 0.85, 0.1, -0.9, 0.4, 0.08);
+    for (const sx of [-1, 1]) ball(bone, 0.04, sx * 0.3, 0.7, 0.2);
+    cyl(iron, 0.02, 1.7, 0.32, 0.85, 0.22);
+    const cage = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.01, 6, 14), trim); cage.position.set(0.32, 1.75, 0.22); p.add(cage);
+    const cage2 = cage.clone(); cage2.rotation.y = Math.PI / 2; p.add(cage2);
+    glow('#5fffd0', 5, 0.05, 0.32, 1.75, 0.22);
+    const cape = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 1.0, 4, 6), robe); cape.position.set(0, 0.6, -0.22); cape.rotation.x = 0.12; p.add(cape);
+    return 1.9;
+  },
+  crate(p) {
+    const { box } = kit(p);
+    const wood = mat('#8a6238', { roughness: 0.85 }), dark = mat('#5a3e22', { roughness: 0.9 });
+    box(wood, 0.54, 0.54, 0.54, 0, 0.29, 0);
+    for (const a of [-1, 1]) for (const b of [-1, 1]) {
+      box(dark, 0.6, 0.06, 0.06, 0, 0.29 + a * 0.27, b * 0.27); box(dark, 0.06, 0.6, 0.06, a * 0.27, 0.29, b * 0.27); box(dark, 0.06, 0.06, 0.6, a * 0.27, 0.29 + b * 0.27, 0);
+    }
+    for (const s of [-1, 1]) { box(dark, 0.05, 0.7, 0.03, 0, 0.29, s * 0.275, 0, 0, 0.78); box(dark, 0.03, 0.7, 0.05, s * 0.275, 0.29, 0, 0.78, 0, 0); }
+    return 0.62;
+  },
+  barrel(p) {
+    const wood = mat('#7a5230', { roughness: 0.8 }), iron = mat('#33312e', { metalness: 0.7, roughness: 0.45 });
+    p.add(lathe([[0, 0], [0.2, 0], [0.235, 0.17], [0.25, 0.35], [0.235, 0.53], [0.2, 0.7], [0, 0.7]], wood));
+    for (const [y, r] of [[0.07, 0.212], [0.35, 0.252], [0.63, 0.212]]) { const h = new THREE.Mesh(new THREE.TorusGeometry(r, 0.014, 6, 24), iron); h.rotation.x = Math.PI / 2; h.position.y = y; p.add(h); }
+    const lid = new THREE.Mesh(new THREE.CircleGeometry(0.19, 20), mat('#5a3a20')); lid.rotation.x = -Math.PI / 2; lid.position.y = 0.705; p.add(lid);
+    return 0.74;
+  },
+  keg(p) {
+    const { cyl, glow } = kit(p);
+    const red = mat('#8a2a1e', { roughness: 0.7 }), iron = mat('#1e1c1a', { metalness: 0.7, roughness: 0.45 }), band = mat('#d8b03a', { roughness: 0.6 });
+    p.add(lathe([[0, 0], [0.17, 0], [0.2, 0.13], [0.21, 0.27], [0.2, 0.41], [0.17, 0.54], [0, 0.54]], red));
+    for (const [y, r, m] of [[0.06, 0.18, iron], [0.27, 0.212, band], [0.48, 0.18, iron]]) { const h = new THREE.Mesh(new THREE.TorusGeometry(r, 0.016, 6, 24), m); h.rotation.x = Math.PI / 2; h.position.y = y; p.add(h); }
+    cyl(mat('#2a2622'), 0.012, 0.1, 0.05, 0.59, 0, 0, 0.4);
+    glow('#ffb040', 6, 0.02, 0.07, 0.64, 0);
+    return 0.62;
+  },
+  urn(p) {
+    const clay = mat('#a8603a', { roughness: 0.7 }), paint = mat('#3a2018', { roughness: 0.7 });
+    p.add(lathe([[0, 0], [0.1, 0], [0.17, 0.1], [0.2, 0.24], [0.16, 0.38], [0.08, 0.46], [0.1, 0.52], [0.09, 0.53], [0, 0.5]], clay));
+    const b = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.012, 6, 24), paint); b.rotation.x = Math.PI / 2; b.position.y = 0.24; p.add(b);
+    const b2 = b.clone(); b2.scale.setScalar(0.88); b2.position.y = 0.33; p.add(b2);
+    return 0.55;
+  },
+});
+// debris left where a prop was smashed
+function objDebris(v, m) {
+  const r = seeded(v.g.id * 13), M = mat(m.debris || '#6a4a2a');
+  for (let n = 0; n < 7; n++) {
+    const o = new THREE.Mesh(n % 3 ? unitBox : new THREE.DodecahedronGeometry(1, 0), M);
+    const s = 0.04 + r() * 0.06; o.scale.set(s * (1 + r() * 2), s * 0.5, s);
+    o.position.set((r() - 0.5) * 0.6, 0.02, (r() - 0.5) * 0.6); o.rotation.set(r(), r() * 3, r()); v.g.add(o);
+  }
+}
+function smashProp(c) {
+  const m = MONSTERS[c.type], v = views.get(c.id), p = worldOf(c.x, c.z), dc = new THREE.Color(m.debris);
+  v.pivot.visible = false; objDebris(v, m);
+  burst(smoke, 36, () => ({ p: [p.x + rnd(-.2, .2), p.y + rnd(.1, .5), p.z + rnd(-.2, .2)], v: [rnd(-2, 2), rnd(1, 3.5), rnd(-2, 2)], life: rnd(.5, 1),
+    s: [.07, .05], c0: [dc.r, dc.g, dc.b], c1: [dc.r * .6, dc.g * .6, dc.b * .6], a: 1, g: -9, bounce: true }));
+  burst(smoke, 14, () => ({ p: [p.x, p.y + .3, p.z], v: [rnd(-.5, .5), rnd(.2, .8), rnd(-.5, .5)], life: rnd(.8, 1.5), s: [.3, .8], c0: hdr('#6a5a48'), c1: hdr('#2a221c'), a: .35, drag: 2 }));
+  // what was inside spills onto the floor
+  if (c.loot && (c.loot.items.length || c.loot.gold)) {
+    const k = keyOf(c.x, c.z), L = state.loot[k];
+    if (L && !L.taken) { L.items.push(...c.loot.items); L.gold = (L.gold || 0) + c.loot.gold; } else state.loot[k] = { items: c.loot.items, gold: c.loot.gold };
+    addLog('', `Something tumbles out of the ${m.name.toLowerCase()}. Walk over it to pick it up.`);
+    buildTile(c.x, c.z); applyFog();
+  }
+  c.loot = null; c.looted = true;
+  if (c.type === 'keg') kegBlast(c);
+}
+function kegBlast(c) {
+  const p = worldOf(c.x, c.z).add(new THREE.Vector3(0, 0.45, 0));
+  explodeFire(p, 1.6); makeNoise(3);
+  addLog('hit', '<b>The powder keg explodes!</b>');
+  after(0.15, () => {
+    const dice = roll(3, 6), full = sum(dice);
+    for (const o of state.creatures) {
+      if (!o.alive || o === c || cheb(o, c) > 1) continue;
+      const sv = (MONSTERS[o.type].saves?.dex ?? 0) + roll(1, 20)[0] >= 13, dmg = sv ? Math.floor(full / 2) : full;
+      addLog('hit', `The blast hits the ${MONSTERS[o.type].name.toLowerCase()} for <b>${dmg}</b> fire${sv ? ' (half)' : ''}.`);
+      damageCreature(o, dmg, 'dmg');
+    }
+    if (cheb(state.pos, c) <= 1 && state.char.hp > 0) {
+      const r = roll(1, 20)[0], sv = r + mod(state.char.abilities.dex) >= 13;
+      hurtHero(sv ? Math.floor(full / 2) : full, `Caught in the keg blast${sv ? ' (Dex save, half)' : ''}`);
+    }
+    refresh(); save();
+  });
+}
+function summonDead(lich) {
+  const raised = state.creatures.filter(c => c.alive && c.summoned).length;
+  if (raised >= 4) return;
+  const spots = [];
+  for (let dz = -2; dz <= 2; dz++) for (let dx = -2; dx <= 2; dx++) {
+    const x = lich.x + dx, z = lich.z + dz;
+    if ((dx || dz) && WALKABLE.has(tileAt(x, z)) && !state.creatures.some(c => c.alive && c.x === x && c.z === z) && !(state.pos.x === x && state.pos.z === z)) spots.push({ x, z });
+  }
+  spots.sort(() => Math.random() - 0.5);
+  let id = Math.max(0, ...state.creatures.map(c => c.id)) + 1;
+  for (const s of spots.slice(0, 2)) {
+    const c = { id: id++, type: 'skeleton', x: s.x, z: s.z, hp: MONSTERS.skeleton.hp, alive: true, aware: true, restrained: false, summoned: true };
+    state.creatures.push(c); buildCreature(c);
+    const p = worldOf(s.x, s.z);
+    burst(glow, 40, () => ({ p: [p.x + rnd(-.3, .3), p.y + .05, p.z + rnd(-.3, .3)], v: [0, rnd(.8, 2), 0], life: rnd(.5, 1), s: [.08, .01], c0: hdr('#a0ffd8', 5), c1: hdr('#20a080', 1), a: 1 }));
+  }
+  SFX.rattle(1.4); shakeCam(0.15);
+  addLog('hit', `<b>${MONSTERS[lich.type].name} raises the dead!</b> Skeletons claw their way out of the floor.`);
+  toast('The lich raises the dead!');
+  applyFog();
+}
+
+/* ================================================================== *
+ * LIVING TERRAIN: flowing water and lava, swaying grass, fires
+ * ================================================================== */
+const LIQUID_VS = /* glsl */`varying vec3 vW; void main() { vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`;
+const WATER_FS = /* glsl */`
+uniform float uTime, uDeep; uniform vec3 uTint; uniform vec2 uFlow; varying vec3 vW;
+${NOISE}
+void main() {
+  vec2 p = vW.xz, f = uFlow * uTime;
+  float n1 = snoise(vec3(p * 1.2 - f, uTime * 0.22)), n2 = snoise(vec3(p * 2.9 - f * 1.7 + 7.0, uTime * 0.4));
+  float n = n1 * 0.6 + n2 * 0.4;
+  vec3 deep = mix(vec3(0.02, 0.08, 0.1), vec3(0.008, 0.03, 0.05), uDeep);
+  vec3 col = mix(deep, vec3(0.07, 0.24, 0.26), smoothstep(-0.7, 0.9, n));
+  float caust = pow(1.0 - abs(snoise(vec3(p * 3.4 - f * 2.2, uTime * 0.55))), 7.0);
+  col += vec3(0.4, 0.62, 0.6) * caust * (0.5 - uDeep * 0.3);
+  col += vec3(0.8, 0.9, 0.9) * smoothstep(0.62, 0.95, n2) * 0.22;
+  gl_FragColor = vec4(col * uTint, mix(0.62, 0.93, uDeep));
+}`;
+const LAVA_FS = /* glsl */`
+uniform float uTime; uniform vec3 uTint; uniform vec2 uFlow; varying vec3 vW;
+${NOISE}
+void main() {
+  vec2 p = vW.xz, f = uFlow * uTime * 0.3;
+  float n = snoise(vec3(p * 1.0 - f, uTime * 0.12)) * 0.62 + snoise(vec3(p * 2.4 - f * 1.6, uTime * 0.25)) * 0.38;
+  float crust = smoothstep(0.08, 0.5, n);
+  float vein = 1.0 - smoothstep(0.0, 0.16, abs(n - 0.04));
+  vec3 hot = mix(vec3(1.0, 0.22, 0.02), vec3(1.0, 0.72, 0.22), vein) * 3.2;
+  vec3 col = mix(hot, vec3(0.07, 0.035, 0.025), crust * 0.9);
+  col += vec3(1.0, 0.45, 0.08) * vein * 2.2 * (0.75 + 0.25 * sin(uTime * 2.3 + p.x * 3.0 + p.y * 2.0));
+  gl_FragColor = vec4(col * uTint, 1.0);
+}`;
+const liquidGeo = new THREE.PlaneGeometry(1.0, 1.0).rotateX(-Math.PI / 2);
+const bedGeo = new THREE.BoxGeometry(0.98, 0.1, 0.98);
+function liquidMat(kind, flow) {
+  const tint = new THREE.Color(1, 1, 1);
+  const m = new THREE.ShaderMaterial({
+    uniforms: { uTime: fxTime, uTint: { value: tint }, uFlow: { value: new THREE.Vector2(...flow) }, uDeep: { value: kind === 'w' ? 1 : 0 } },
+    vertexShader: LIQUID_VS, fragmentShader: kind === 'l' ? LAVA_FS : WATER_FS, transparent: kind !== 'l', depthWrite: kind === 'l',
+  });
+  m.color = tint;   // so fog-of-war dimming can tint it like any other tile
+  return m;
+}
+// water and lava drift along their channel; open pools drift with the map's current
+function flowAt(x, z, ch) {
+  const same = (dx, dz) => { const c = tileAt(x + dx, z + dz); return c === ch || (ch !== 'l' && (c === 'v' || c === 'w')); };
+  const base = MAP.flow || [0.35, 0.12], h = same(1, 0) || same(-1, 0), v = same(0, 1) || same(0, -1);
+  if (h && !v) return [Math.sign(base[0] || 1) * 0.4, 0.04];
+  if (v && !h) return [0.04, Math.sign(base[1] || 1) * 0.4];
+  return base;
+}
+let GRASS = null;
+function grassAssets() {
+  if (GRASS) return GRASS;
+  const r = seeded(4242), pos = [], uv = [], col = [];
+  for (let n = 0; n < 46; n++) {
+    const x = (r() - 0.5) * 0.92, z = (r() - 0.5) * 0.92, h = 0.12 + r() * 0.16, w = 0.025 + r() * 0.02, a = r() * Math.PI, lean = (r() - 0.5) * 0.06;
+    const cx = Math.cos(a) * w, cz = Math.sin(a) * w, g = 0.75 + r() * 0.5;
+    pos.push(x - cx, 0, z - cz, x + cx, 0, z + cz, x + lean, h, z + lean * 0.5);
+    uv.push(0, 0, 1, 0, 0.5, 1);
+    col.push(0.16 * g, 0.26 * g, 0.08 * g, 0.16 * g, 0.26 * g, 0.08 * g, 0.5 * g, 0.62 * g, 0.24 * g);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); geo.computeVertexNormals();
+  const ground = stoneTextures(128, (g, s) => {
+    g.fillStyle = '#777'; g.fillRect(0, 0, s, s); const q = seeded(77);
+    for (let k = 0; k < 420; k++) { const v = 60 + q() * 140 | 0; g.fillStyle = `rgb(${v},${v},${v})`; g.beginPath(); g.arc(q() * s, q() * s, 1 + q() * 3.5, 0, 6.283); g.fill(); }
+  }, ['#2a3a18', '#5f7a34'], 2);
+  return GRASS = { geo, ground };
+}
+function grassMat() {
+  const m = new THREE.MeshStandardMaterial({ vertexColors: true, side: THREE.DoubleSide, roughness: 0.9 });
+  m.onBeforeCompile = sh => {
+    sh.uniforms.uTime = fxTime;
+    sh.vertexShader = 'uniform float uTime;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+      vec4 gw = modelMatrix * vec4(position, 1.0);
+      float bend = uv.y * uv.y;
+      transformed.x += (sin(uTime * 1.6 + gw.x * 1.1 + gw.z * 0.7) * 0.6 + sin(uTime * 3.3 + gw.x * 2.9) * 0.25) * 0.06 * bend;
+      transformed.z += cos(uTime * 1.25 + gw.z * 1.5 + gw.x * 0.4) * 0.045 * bend;`);
+  };
+  m.customProgramCacheKey = () => 'grass-sway';
+  return m;
+}
+let fireSpots = new Map();
+// flames on a prop: a few flickering cones plus sparks and smoke; the light pool treats it like a torch
+function addFire(i, g, local, size, n) {
+  g.updateMatrixWorld(true);
+  const wp = local.clone().applyMatrix4(g.matrixWorld);
+  const flames = [], fm = new THREE.MeshBasicMaterial({ color: hdrColor('#ff9a3a', 4), transparent: true, opacity: 0.9, depthWrite: false });
+  for (let k = 0; k < 3; k++) {
+    const f = new THREE.Mesh(new THREE.ConeGeometry(0.06 * size, 0.24 * size, 8), fm);
+    f.position.copy(local).add(new THREE.Vector3((k - 1) * 0.05 * size, 0.1 * size, (k % 2 - 0.5) * 0.04 * size)); f.userData.noShadow = true;
+    g.add(f); flames.push(f);
+  }
+  const core = new THREE.Mesh(new THREE.SphereGeometry(0.07 * size, 8, 6), new THREE.MeshBasicMaterial({ color: hdrColor('#ffd890', 6) }));
+  core.position.copy(local); core.userData.noShadow = true; g.add(core);
+  fireSpots.set(i, { i, n, pos: wp.clone().add(new THREE.Vector3(0, 0.45, 0)) });
+  addProp(i, g, (dt, t) => {
+    if (!g.visible) return;
+    flames.forEach((f, k) => { f.scale.set(1 + Math.sin(t * 11 + k * 2 + n) * 0.12, 1 + Math.sin(t * 17 + k + n) * 0.25, 1); });
+    stream(glow, 0.5 * size, dt, () => ({ p: [wp.x + rnd(-.06, .06) * size, wp.y + .12 * size, wp.z + rnd(-.06, .06) * size], v: [rnd(-.15, .15), rnd(.6, 1.4) * size, rnd(-.15, .15)],
+      life: rnd(.3, .8), s: [.12 * size, .02], c0: hdr('#ffc070', 5), c1: hdr('#ff3000', 1.4), a: .9, turb: 1 }));
+    stream(smoke, 0.08 * size, dt, () => ({ p: [wp.x, wp.y + .4 * size, wp.z], v: [rnd(-.05, .05), rnd(.3, .6), rnd(-.05, .05)], life: rnd(2, 3.5), s: [.2, .9], c0: hdr('#3a3430'), c1: hdr('#1a1816'), a: .25, fi: .3 }));
+  });
+}
+// tiles that aren't plain floor or wall; returns the main mesh or null to fall through
+function buildSpecialTile(i, x, z, ch, p, r, j, ST) {
+  const dark = MAP.dark;
+  if (ch === 'e') {
+    const G = grassAssets();
+    const ground = new THREE.Mesh(floorGeo, mat(new THREE.Color(dark ? '#7a8a64' : '#a8b88a').offsetHSL(0, 0, j), { map: G.ground.map, normalMap: G.ground.normalMap, roughness: 0.95 }));
+    ground.position.set(p.x, 0.1, p.z); ground.rotation.y = Math.floor(r() * 4) * Math.PI / 2;
+    const bm = grassMat(), blades = new THREE.Mesh(G.geo, bm);
+    blades.position.set(p.x, 0.2, p.z); blades.rotation.y = r() * 6.283; blades.userData.noShadow = true;
+    addObj(i, blades, 'deco', x, z);
+    ground.userData.dim = [[ground.material, ground.material.color.clone()], [bm, bm.color.clone()]];
+    if (r() < 0.18) {   // the odd wildflower
+      const fl = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 4), new THREE.MeshBasicMaterial({ color: ['#e8d24a', '#e0e0f0', '#c86ad0'][Math.floor(r() * 3)] }));
+      fl.position.set(p.x + (r() - .5) * .7, 0.33, p.z + (r() - .5) * .7); addObj(i, fl, 'deco', x, z);
+    }
+    return ground;
+  }
+  if (ch === 'v' || ch === 'w' || ch === 'l') {
+    const g = new THREE.Group();
+    const bed = new THREE.Mesh(bedGeo, mat(ch === 'l' ? '#2a1a14' : ch === 'w' ? '#1e2624' : '#6a6050', { map: ST.top.map, roughness: 1 }));
+    bed.position.set(p.x, 0.05, p.z); g.add(bed);
+    if (ch === 'v') for (let n = 0; n < 5; n++) { const pb = new THREE.Mesh(new THREE.DodecahedronGeometry(0.03 + r() * 0.04, 0), mat('#8a8070')); pb.position.set(p.x + (r() - .5) * .8, 0.11, p.z + (r() - .5) * .8); g.add(pb); }
+    const lm = liquidMat(ch, flowAt(x, z, ch)), surf = new THREE.Mesh(liquidGeo, lm);
+    surf.position.set(p.x, ch === 'w' ? 0.12 : 0.135, p.z); surf.receiveShadow = ch !== 'l'; surf.userData.noShadow = true; surf.renderOrder = 1;
+    g.add(surf);
+    g.userData.dim = [[bed.material, bed.material.color.clone()], [lm, lm.color.clone()]];
+    if (ch === 'l') {
+      if ((x * 7 + z * 3) % 4 === 0) fireSpots.set(i, { i, n: i % 9, pos: new THREE.Vector3(p.x, 0.7, p.z) });
+      addProp(i, g, (dt) => {
+        if (!g.visible) return;
+        stream(glow, 0.35, dt, () => ({ p: [p.x + rnd(-.45, .45), 0.16, p.z + rnd(-.45, .45)], v: [rnd(-.1, .1), rnd(.4, 1.4), rnd(-.1, .1)], life: rnd(.6, 1.6),
+          s: [.05, .01], c0: hdr('#ffb040', 6), c1: hdr('#ff2000', 1.5), a: 1, turb: .6 }));
+        if (Math.random() < dt * 0.25) burst(glow, 6, () => ({ p: [p.x + rnd(-.3, .3), 0.15, p.z + rnd(-.3, .3)], v: [rnd(-.6, .6), rnd(1, 2), rnd(-.6, .6)], life: .5, s: [.06, .02], c0: hdr('#ffd060', 6), c1: hdr('#ff3000', 1), a: 1, g: -6 }));
+      });
+    } else if (ch === 'v') addProp(i, g, (dt) => {
+      if (g.visible && Math.random() < dt * 0.3) burst(glow, 3, () => ({ p: [p.x + rnd(-.4, .4), 0.15, p.z + rnd(-.4, .4)], v: [0, rnd(.05, .15), 0], life: .6, s: [.0, .06], c0: hdr('#c8f0f0', .8), a: .6 }));
+    });
+    return g;
+  }
+  return null;
+}
+function buildFireProp(i, x, z, ch, p, r) {
+  const g = new THREE.Group(); g.position.set(p.x, 0.2, p.z);
+  const stone = mat('#6a625a', { roughness: 0.95 }), wood = mat('#4a3020'), iron = mat('#2a2826', { metalness: 0.7, roughness: 0.45 });
+  const add = (geo, m, x0, y0, z0, sx = 1, sy = 1, sz = 1) => { const o = new THREE.Mesh(geo, m); o.position.set(x0, y0, z0); o.scale.set(sx, sy, sz); g.add(o); return o; };
+  const dirs = [[0, 1, 0], [1, 0, Math.PI / 2], [0, -1, Math.PI], [-1, 0, -Math.PI / 2]];
+  if (ch === 'h') {   // a stone hearth, turned to face the open room and backed against the wall
+    const back = dirs.find(([dx, dz]) => isWall(tileAt(x - dx, z - dz)) && WALKABLE.has(tileAt(x + dx, z + dz))) || dirs.find(([dx, dz]) => WALKABLE.has(tileAt(x + dx, z + dz)));
+    if (back) g.rotation.y = back[2];
+    add(unitBox, stone, 0, 0.04, 0.05, 0.9, 0.08, 0.6);
+    for (const s of [-1, 1]) add(unitBox, stone, s * 0.36, 0.42, -0.1, 0.16, 0.8, 0.4);
+    add(unitBox, stone, 0, 0.88, -0.1, 0.92, 0.16, 0.46);
+    add(unitBox, mat('#1a1410'), 0, 0.42, -0.28, 0.56, 0.76, 0.06);
+    add(unitBox, stone, 0, 1.2, -0.2, 0.5, 0.5, 0.3);
+    for (const s of [-1, 1]) { const l = add(unitCyl, wood, s * 0.08, 0.13, -0.05, 0.04, 0.4, 0.04); l.rotation.set(Math.PI / 2, 0, s * 0.6); }
+    addFire(i, g, new THREE.Vector3(0, 0.16, -0.06), 1.1, i % 7);
+  } else if (ch === 'j') {   // a brazier on iron legs
+    for (let k = 0; k < 3; k++) { const a = k / 3 * 6.283, l = add(unitCyl, iron, Math.sin(a) * 0.14, 0.3, Math.cos(a) * 0.14, 0.018, 0.62, 0.018); l.rotation.set(Math.cos(a) * 0.25, 0, -Math.sin(a) * 0.25); }
+    const bowl = new THREE.Mesh(new THREE.SphereGeometry(0.22, 18, 8, 0, 6.283, Math.PI / 2, Math.PI / 2), iron); bowl.position.y = 0.72; g.add(bowl);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.02, 6, 20), iron); rim.rotation.x = Math.PI / 2; rim.position.y = 0.72; g.add(rim);
+    add(new THREE.CircleGeometry(0.2, 16), new THREE.MeshBasicMaterial({ color: hdrColor('#ff6020', 2) }), 0, 0.71, 0).rotation.x = -Math.PI / 2;
+    addFire(i, g, new THREE.Vector3(0, 0.74, 0), 1, i % 7);
+  } else {   // campfire: a ring of stones and crossed logs
+    for (let k = 0; k < 9; k++) { const a = k / 9 * 6.283; add(new THREE.DodecahedronGeometry(0.07, 0), stone, Math.sin(a) * 0.3, 0.04, Math.cos(a) * 0.3).rotation.set(r(), r(), r()); }
+    for (let k = 0; k < 3; k++) { const l = add(unitCyl, wood, 0, 0.07, 0, 0.035, 0.42, 0.035); l.rotation.set(Math.PI / 2, k * 2.1, 0.3); }
+    addFire(i, g, new THREE.Vector3(0, 0.08, 0), 1.15, i % 7);
+  }
+  addObj(i, g, 'prop', x, z);
+}
+
+/* --- descending the stairs of a multi-floor dungeon --- */
+function descend() {
+  const next = MAPS[MAP.next];
+  showModal(next.floor ? `Floor ${next.floor}: ${next.name}` : next.name, `<p>${esc(MAP.stairsText || 'The stairs wind down into the dark.')}</p>
+    <p class="muted">You keep your hit points, gear and gold. Spell slots come back as you catch your breath on the stairs.</p>`, [
+    { label: 'Descend', primary: true, fn: () => {
+      const st = freshState(MAP.next, state.char);
+      st.stats = { ...state.stats }; st.danger = { steps: 0, noise: 0, waves: 0, rests: state.danger?.rests || 0 };
+      enterPlay(st, mode === 'test' ? 'test' : 'play');
+      SFX.door();
+    } },
+    { label: 'Not yet' },
+  ]);
+}
+
 function clearVisuals() {
   for (const v of visuals.values()) { const i = fxList.indexOf(v); if (i >= 0) fxList.splice(i, 1); v.dispose(); }
   visuals.clear();
@@ -2714,7 +3208,7 @@ function onHeroStep(cell) {
   computeVisibility(); applyFog();
   SFX.step();
   const wasExploring = exploring();
-  const rose = MAP.dark && riseCheck();
+  const rose = riseCheck();
   if ((wakeCreatures() || rose) && wasExploring) { startCombat(); stop = true; }
   if (rose) stop = true;
   enterRoom(cell.x, cell.z);
@@ -2726,9 +3220,9 @@ function onHeroStep(cell) {
   if (state.traps[k]) { triggerTrap(k, cell.x, cell.z); stop = true; }
   if (PLATE_NAMES[ch] && pressPlate(ch, cell.x, cell.z)) stop = true;
   pickupLoot(k, cell.x, cell.z);
-  if (ch === 'X') { after(0.35, victory); stop = true; }
+  if (ch === 'X') { after(0.35, MAP.next && MAPS[MAP.next] ? descend : victory); stop = true; }
   if (exploring() && isCursed() && ++state.char.curseSteps % 6 === 0) curseDrain();
-  if (!stop && MAP.dark && wasExploring && exploring() && dangerStep()) { startCombat(); stop = true; }
+  if (!stop && grim() && wasExploring && exploring() && dangerStep()) { startCombat(); stop = true; }
   if (state.char.hp <= 0) stop = true;
   return stop;
 }
@@ -2755,7 +3249,7 @@ function wakeCreatures() {
 
 /* --- dread: wandering monsters, ambushes, camping and read-aloud text --- */
 const danger = () => (state.danger ||= { steps: 0, noise: 0, waves: 0, rests: 0 });
-const makeNoise = n => { if (MAP.dark) danger().noise = Math.min(6, danger().noise + n); };
+const makeNoise = n => { if (grim()) danger().noise = Math.min(6, danger().noise + n); };
 const WANDERERS = [
   { types: ['rat', 'rat', 'rat'], text: d => `Claws skitter in the dark to the ${d}. Something has caught your scent.` },
   { types: ['skeleton', 'skeleton'], text: d => `Bones clatter somewhere to the ${d}. The dead are walking, and they are coming this way.` },
@@ -2776,7 +3270,8 @@ function spawnWanderers(minD, maxD, why) {
   for (let i = 0; i < W * H; i++) if (field[i] >= minD && field[i] <= maxD && free(i) && !vis[i]) cands.push(i);
   if (!cands.length) for (let i = 0; i < W * H; i++) if (field[i] >= minD && field[i] <= maxD + 6 && free(i)) cands.push(i);
   if (!cands.length) return null;
-  const g = WANDERERS[Math.floor(Math.random() * WANDERERS.length)];
+  const list = MAP.wanderers || WANDERERS; if (!list.length) return null;
+  const g = list[Math.floor(Math.random() * list.length)];
   const c0 = cands[Math.floor(Math.random() * cands.length)], o = { x: c0 % W, z: (c0 / W) | 0 };
   const spots = [c0, ...cands.filter(i => i !== c0 && cheb({ x: i % W, z: (i / W) | 0 }, o) <= 2).sort(() => Math.random() - 0.5)];
   let id = Math.max(0, ...state.creatures.map(c => c.id)) + 1; const made = [];
@@ -2786,7 +3281,7 @@ function spawnWanderers(minD, maxD, why) {
     state.creatures.push(c); buildCreature(c); made.push(c);
   });
   const D = danger(); D.waves++; D.noise = 0; D.steps = 0;
-  const line = g.text(dirWord(o.x - state.pos.x, o.z - state.pos.z));
+  const dw = dirWord(o.x - state.pos.x, o.z - state.pos.z), line = typeof g.text === 'function' ? g.text(dw) : g.text.replace('{dir}', dw);
   addLog('hit', `${why ? why + ' ' : ''}<i>${line}</i>`);
   toast(line);
   SFX.alert(g.types[0], true);
@@ -2858,7 +3353,7 @@ function updateDread() {
   b.classList.toggle('low', state.char.hp > 0 && f <= 0.5 && f > 0.25);
   b.classList.toggle('dying', state.char.hp > 0 && f <= 0.25);
   $('soundBtn').textContent = SFX.on ? 'Sound on' : 'Sound off';
-  $('menuBtn').textContent = mode === 'edit' ? `☰ Menu · ${ed.map.name}` : mode === 'test' ? '← Back to the editor' : `☰ Menu · ${MAP.name}`;
+  $('menuBtn').textContent = mode === 'edit' ? `☰ Menu · ${ed.map.name}` : mode === 'test' ? '← Back to the editor' : `☰ Menu · ${MAP.floor ? `Floor ${MAP.floor}: ` : ''}${MAP.name}`;
 }
 function startCombat() {
   state.turn = { round: state.turn.round, move: derived().speedSq, action: state.turn.action };
@@ -2893,6 +3388,9 @@ function interact(x, z) {
   if (ch === 'D') return approach(x, z, () => openDoor(x, z));
   if (ch === 'C') return state.chests[k].opened ? toast('The chest is empty.') : approach(x, z, () => openChest(k, x, z));
   if (ch === 'F') return approach(x, z, () => useFont(x, z));
+  if (ch === 'h') return toast('A fire crackles in the hearth. It is the only warm thing down here.');
+  if (ch === 'j') return toast('Coals glow in the iron brazier. Someone keeps it fed.');
+  if (ch === 'q') return toast('The campfire is still warm. They can\'t have gone far.');
   if (tr && tr.found) return approach(x, z, () => disarm(k, x, z));
 }
 function openDoor(x, z) {
@@ -2952,6 +3450,7 @@ function readTablet() {
 /* --- traps --- */
 const sleep = s => new Promise(r => after(s, r));
 function shootProjectile(from, to, kind) {
+  if (kind === 'bolt') return shootBolt(from, to);
   const len = kind === 'arrow' ? 0.4 : 0.2;
   const g = new THREE.Group();
   const shaft = new THREE.Mesh(unitBox, mat(kind === 'arrow' ? '#7a5a3a' : '#3a3a3a', { metalness: kind === 'arrow' ? 0 : 0.6 })); shaft.scale.set(0.02, 0.02, len);
@@ -2966,6 +3465,23 @@ function shootProjectile(from, to, kind) {
     if (k >= 1) {
       g.removeFromParent();
       burst(glow, 8, () => ({ p: [to.x, to.y, to.z], v: [rnd(-1, 1), rnd(0, 1.5), rnd(-1, 1)], life: .3, s: [.04, .01], c0: hdr('#ffe0a0', 4), a: 1 }));
+      res(); return false;
+    }
+    return true;
+  } }));
+}
+// a ball of sickly grave-light with a smoking trail
+function shootBolt(from, to) {
+  const orb = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 8), new THREE.MeshBasicMaterial({ color: hdrColor('#7dffb0', 6) }));
+  scene.add(orb);
+  const d = from.distanceTo(to), dur = 0.2 + d * 0.05, p = new THREE.Vector3(); let t = 0;
+  return new Promise(res => fxList.push({ update(dt) {
+    t += dt; const k = clamp01(t / dur);
+    p.lerpVectors(from, to, k); p.y += Math.sin(k * Math.PI) * 0.25 + Math.sin(t * 30) * 0.03; orb.position.copy(p);
+    stream(glow, 60, dt, () => ({ p: [p.x + rnd(-.04, .04), p.y + rnd(-.04, .04), p.z + rnd(-.04, .04)], v: [rnd(-.2, .2), rnd(-.1, .3), rnd(-.2, .2)], life: rnd(.25, .5), s: [.1, .01], c0: hdr('#a0ffc8', 4), c1: hdr('#108a50', 1), a: 1 }));
+    if (k >= 1) {
+      orb.removeFromParent(); orb.material.dispose();
+      burst(glow, 40, () => { const v = rndDir().multiplyScalar(rnd(.5, 2.5)); return { p: [to.x, to.y, to.z], v: [v.x, v.y, v.z], life: rnd(.3, .7), s: [.08, .01], c0: hdr('#c0ffe0', 6), c1: hdr('#108a50', 1), a: 1 }; });
       res(); return false;
     }
     return true;
@@ -3137,12 +3653,14 @@ function killCreature(c) {
   const m = MONSTERS[c.type], wasCombat = !exploring();
   c.alive = false; c.restrained = false;
   SFX.death(c.type);
-  addLog('sys', `The ${m.name.toLowerCase()} ${m.ai === 'none' ? 'is destroyed' : 'falls'}. +${m.xp} XP.`);
+  const nm = m.boss ? m.name : `The ${m.name.toLowerCase()}`;
+  addLog('sys', m.object ? `${nm} ${m.breakText}.` : `${nm} ${m.ai === 'none' ? 'is destroyed' : 'falls'}. +${m.xp} XP.`);
   if (m.ai !== 'none') state.stats.kills++;
-  if (m.boss) { toast(`The ${m.name} falls!`); shakeCam(0.3); }
+  if (m.boss) { toast(`${nm} falls!`); shakeCam(0.3); }
   c.loot = rollLoot(c.type);
-  if (c.loot) addLog('', `Its remains can be searched: click the body when you're next to it.`);
-  gainXp(m.xp);
+  if (m.object) smashProp(c);
+  else if (c.loot) addLog('', `Its remains can be searched: click the body when you're next to it.`);
+  if (m.xp) gainXp(m.xp);
   views.get(c.id).bar.hidden = true;
   checkFightOver(wasCombat);
   // a dungeon without exit stairs is won by clearing it
@@ -3260,6 +3778,7 @@ function walkCreature(c, path) {
 }
 async function creatureTurn(c) {
   const m = MONSTERS[c.type];
+  if (m.summon && (c.turns = (c.turns || 0) + 1) % 3 === 1) { summonDead(c); await sleep(0.6); }
   const inReach = () => cheb(c, state.pos) <= m.range && (m.range === 1 || los(c.x, c.z, state.pos.x, state.pos.z));
   if (!c.restrained) {
     let goal = null;
@@ -3280,8 +3799,8 @@ async function creatureTurn(c) {
 async function creatureAttack(c) {
   const m = MONSTERS[c.type], v = views.get(c.id), d = derived();
   v.lungeDir.subVectors(worldOf(state.pos.x, state.pos.z), worldOf(c.x, c.z)).setY(0).normalize();
-  if (m.ai === 'ranged') SFX.bow(); else SFX.swing();
-  if (m.ai === 'ranged') await shootProjectile(creatureTop(c).add(new THREE.Vector3(0, -0.35, 0)), above(hero, 0.5), 'arrow');
+  if (m.ai === 'ranged') (m.proj === 'bolt' ? SFX.bolt() : SFX.bow()); else SFX.swing();
+  if (m.ai === 'ranged') await shootProjectile(creatureTop(c).add(new THREE.Vector3(0, -0.35, 0)), above(hero, 0.5), m.proj || 'arrow');
   else { v.lunge = 1; await sleep(0.14); }
   const dist = cheb(c, state.pos), disadv = c.restrained || (m.ai === 'ranged' && dist <= 1);
   const r = roll(disadv ? 2 : 1, 20), nat = disadv ? Math.min(...r) : r[0], total = nat + m.atk;
@@ -3378,7 +3897,7 @@ function hurtHero(n, what, cls = 'dmg') {
   const hf = $('hitflash'); hf.classList.remove('go'); void hf.offsetWidth; hf.classList.add('go');
   addLog('hit', `${what}: ${c.name} takes <b>${n}</b> (${c.hp}/${derived().maxHp}).`);
   if (c.hp === 0) {
-    if (state.creatures.some(cr => MONSTERS[cr.type].ai !== 'none') || MAP.dark) after(0.6, defeat);
+    if (state.creatures.some(cr => MONSTERS[cr.type].ai !== 'none') || grim()) after(0.6, defeat);
     else toast(`${c.name} is at 0 HP. Heal or take a long rest from the sheet.`);
   }
 }
@@ -3387,17 +3906,18 @@ function hurtHero(n, what, cls = 'dmg') {
 function defeat() {
   if (state.over) return;
   state.over = 'defeat'; busy = false; save(); SFX.doom();
-  showModal('You have fallen', `<p>${state.char.name} collapses on the cold stones of the ${MAP.name}. Somewhere in the dark, something laughs.</p>`, [
+  showModal('You have fallen', `<p>${state.char.name} collapses on the cold stones of ${theName(MAP.name)}. Somewhere in the dark, something laughs.</p>`, [
     { label: 'Try again', primary: true, fn: () => restartMap(state.mapKey, state.startChar) },
     mode === 'test' ? { label: 'Back to the editor', fn: () => openEditor(ed.id, true) } : { label: 'Main menu', fn: () => toMenu() },
   ]);
 }
 function victory() {
   const s = state.stats, foes = state.creatures.filter(c => MONSTERS[c.type].ai !== 'none').length, cleared = !mapHasExit();
-  addLog('sys', `<b>${state.char.name} ${cleared ? 'clears' : 'escapes'} the ${MAP.name}!</b>`);
+  addLog('sys', `<b>${state.char.name} ${cleared ? 'clears' : 'escapes'} ${theName(MAP.name)}!</b>`);
   save();
-  showModal(cleared ? `The ${MAP.name} is cleared` : `You escape the ${MAP.name}`, `
-    <p>${cleared ? 'The last of its guardians falls. The dungeon is silent, and it is yours.' : 'The stairs spiral down into fresh air and grey morning light. You made it out.'}</p>
+  const fin = MAP.finale;
+  showModal(fin ? fin.title : cleared ? `${theName(MAP.name).replace(/^t/, 'T')} is cleared` : `You escape ${theName(MAP.name)}`, `
+    <p>${fin ? fin.text : cleared ? 'The last of its guardians falls. The dungeon is silent, and it is yours.' : 'The stairs spiral down into fresh air and grey morning light. You made it out.'}</p>
     <div class="stats">
       <div><span>Enemies defeated</span><b>${s.kills} / ${foes}</b></div>
       <div><span>Secrets found</span><b>${s.secrets}</b></div>
@@ -3652,10 +4172,10 @@ function renderSheet() {
         <div class="hp-top"><span class="label">Hit points${isCursed() ? ' · <span style="color:#c98bff">cursed</span>' : ''}</span><span><span class="v">${c.hp}</span> <span class="muted">/ ${d.maxHp}</span></span></div>
         <div class="bar"><i style="width:${hpPct}%;background:${hpPct <= 25 ? 'var(--blood)' : 'var(--moss)'}"></i></div>
         <div class="hp-row">
-          ${MAP.dark ? '' : `<input id="hpAmt" type="number" min="1" value="5" aria-label="Amount">
+          ${grim() ? '' : `<input id="hpAmt" type="number" min="1" value="5" aria-label="Amount">
           <button class="btn small" data-act="dmg">Damage</button>
           <button class="btn small" data-act="heal">Heal</button>`}
-          <button class="btn small" data-act="rest" title="${MAP.dark ? 'Camp in the dark. It restores you, unless something finds you first.' : 'Restore hit points and spell slots'}">${MAP.dark ? 'Make camp' : 'Long rest'}</button>
+          <button class="btn small" data-act="rest" title="${grim() ? 'Camp in the dark. It restores you, unless something finds you first.' : 'Restore hit points and spell slots'}">${grim() ? 'Make camp' : 'Long rest'}</button>
         </div>
       </div>
       <div class="vitals">
@@ -3720,8 +4240,8 @@ function renderSpells() {
           ${Array.from({ length: s.max }, (_, i) => `<i class="pip ${i < s.left ? 'on' : ''}"></i>`).join('')}
           <span class="muted">${s.left}/${s.max}</span></div>`).join('')}
       </div>
-      <label class="toggle"><input type="checkbox" id="sandbox" ${ui.sandbox ? 'checked' : ''} ${MAP.dark ? 'disabled' : ''}>
-        <span><b>Free casting</b><br><span class="muted">${MAP.dark ? 'Off in the dungeon. Every spell costs a slot and your action, so spend them carefully.' : "Spells don't use your action or slots. Handy for watching effects. It only works in the Training Yard."}</span></span></label>
+      <label class="toggle"><input type="checkbox" id="sandbox" ${ui.sandbox ? 'checked' : ''} ${grim() ? 'disabled' : ''}>
+        <span><b>Free casting</b><br><span class="muted">${grim() ? 'Off in the dungeon. Every spell costs a slot and your action, so spend them carefully.' : "Spells don't use your action or slots. Handy for watching effects. It only works in the Training Yard."}</span></span></label>
     </div>
     <div class="section">
       <h3>Spellbook</h3>
@@ -3858,7 +4378,7 @@ $('panel').addEventListener('click', e => {
     }
     case 'rest':
       if (!exploring()) { toast('You can\'t rest with enemies hunting you.'); return; }
-      if (MAP.dark) { makeCamp(); return; }
+      if (grim()) { makeCamp(); return; }
       c.hp = derived().maxHp; c.slots = freshSlots();
       addLog('heal', `${c.name} takes a long rest: full HP and spell slots.`); break;
     case 'equip': equip(k); dressHero(); break;
@@ -3965,8 +4485,10 @@ canvas.addEventListener('pointerup', e => {
   if (p.kind === 'corpse') return approach(p.x, p.z, () => openLoot(creatureById(p.cid)));
   if (p.kind === 'hero') { ui.tab = 'sheet'; return renderPanel(); }
   const ch = tileAt(p.x, p.z), tr = state.traps[keyOf(p.x, p.z)];
-  if ((p.kind === 'prop' || !WALKABLE.has(ch)) && !isWall(ch) && !WALKABLE.has(ch) || (tr && tr.found)) return interact(p.x, p.z);
+  if ((p.kind === 'prop' || !WALKABLE.has(ch)) && !isWall(ch) && !WALKABLE.has(ch) && ch !== 'w' && ch !== 'l' || (tr && tr.found)) return interact(p.x, p.z);
   if (isWall(ch)) return toast('Solid stone. Try searching nearby walls for secrets.');
+  if (ch === 'w') return toast('The water is too deep to wade. Find a ford or a bridge.');
+  if (ch === 'l') return toast('Molten rock. Not a chance.');
   if (reachable(p.x, p.z)) moveTo(p.x, p.z);
   else if (solidAt(p.x, p.z)) toast('The wall of ice blocks your way.');
   else if (!(p.x === state.pos.x && p.z === state.pos.z)) toast(exploring() ? 'You can\'t get there from here.' : state.turn.move ? `Out of reach. You have ${state.turn.move * 5} ft of movement left.` : 'No movement left. Dash or end your turn.');
@@ -4015,7 +4537,7 @@ function tick() {
   if ((torchT -= dt) <= 0) {
     torchT = 0.3;
     const ref = playing() ? hero.position : controls.target;
-    const near = torchSpots.filter(t => state.explored[t.i]).sort((a, b) => a.pos.distanceToSquared(ref) - b.pos.distanceToSquared(ref));
+    const near = torchSpots.concat([...fireSpots.values()]).filter(t => state.explored[t.i]).sort((a, b) => a.pos.distanceToSquared(ref) - b.pos.distanceToSquared(ref));
     torchLights.forEach((l, k) => { l.userData.spot = near[k] || null; if (near[k]) l.position.copy(near[k].pos); });
   }
   SFX.tick(dt);
@@ -4095,11 +4617,14 @@ function tick() {
     if (!c.alive && c.loot && !c.looted && v.g.visible) { const gp = v.g.position; stream(glow, .3, dt, () => ({ p: [gp.x + rnd(-.3, .3), gp.y + rnd(.05, .3), gp.z + rnd(-.3, .3)], v: [0, rnd(.1, .3), 0],
       life: rnd(.4, .8), s: [0, .08], c0: hdr('#fff3c0', 6), c1: hdr('#ffc04a', 2), a: 1, fi: .5 })); }
     v.pivot.rotation.z = Math.sin(time * 40) * v.shake * 0.12; v.shake = Math.max(0, v.shake - dt * 2.5);
-    v.pivot.rotation.x += ((c.alive && !c.dormant ? 0 : -1.35) - v.pivot.rotation.x) * Math.min(1, dt * 6);
+    if (!MONSTERS[c.type].object) v.pivot.rotation.x += ((c.alive && !c.dormant ? 0 : -1.35) - v.pivot.rotation.x) * Math.min(1, dt * 6);
     if (v.flash > 0) { v.flash = Math.max(0, v.flash - dt * 3); for (const m of v.mats) m.emissive.copy(RED).multiplyScalar(v.flash); }
     const attackable = c.alive && canAttack(c);
     v.ring.visible = c.alive && v.g.visible && (c.aware || c.type === 'dummy' || ui.hover === c.id);
     v.ring.material.opacity = attackable ? 0.6 + Math.sin(time * 5) * 0.35 : 0.35;
+    const M = MONSTERS[c.type];
+    if (M.float && c.alive) v.pivot.position.y = 0.12 + Math.sin(time * 2 + c.id) * 0.06;
+    if (M.aura && c.alive && v.g.visible) { const gp = v.g.position, col = M.aura; stream(glow, M.boss ? 0.9 : 0.4, dt, () => ({ p: [gp.x + rnd(-.3, .3), gp.y + rnd(.1, 1.2), gp.z + rnd(-.3, .3)], v: [rnd(-.1, .1), rnd(.1, .4), rnd(-.1, .1)], life: rnd(.8, 1.6), s: [.06, .0], c0: hdr(col, 3), c1: hdr(col, .5), a: .8, turb: .4 })); }
     const showBar = c.alive && v.g.visible && (c.aware || c.hp < MONSTERS[c.type].hp || ui.hover === c.id);
     v.bar.hidden = !showBar;
     if (showBar) {
@@ -4169,7 +4694,7 @@ function registerDungeons() {
 }
 const saveHeroes = () => store.set(HERO_KEY, heroes) || toast('Could not save: browser storage is full.');
 const heroById = id => heroes.find(h => h.id === id);
-const mapKeys = () => Object.keys(MAPS).filter(k => k !== '_test');
+const mapKeys = () => Object.keys(MAPS).filter(k => k !== '_test' && !MAPS[k].hidden);
 
 // fill in what a hand-made dungeon needs to be playable
 function finalizeMap(m) {
@@ -4185,7 +4710,8 @@ function finalizeMap(m) {
     for (const k of Object.keys(m[field])) if (at(k) !== ch) delete m[field][k];
   return m;
 }
-const monsterCount = m => m.rows.join('').split('').filter(ch => CREATURE_CHARS[ch] && ch !== 'm').length;
+const isFoe = ch => CREATURE_CHARS[ch] && MONSTERS[CREATURE_CHARS[ch]].ai !== 'none';
+const monsterCount = m => m.rows.join('').split('').filter(isFoe).length;
 
 /* --- switching modes --- */
 function setMode(m) {
@@ -4246,8 +4772,8 @@ function heroStatus(h) {
   const r = h.run;
   if (!r) return 'Ready for an expedition';
   if (!MAPS[r.mapKey]) return 'Their dungeon no longer exists';
-  if (r.over === 'defeat') return `Fell in the ${esc(MAPS[r.mapKey].name)}`;
-  return `In the ${esc(MAPS[r.mapKey].name)} · ${r.char.hp}/${maxHpOf(r.char)} HP`;
+  if (r.over === 'defeat') return `Fell in ${esc(theName(MAPS[r.mapKey].name))}`;
+  return `${MAPS[r.mapKey].floor ? `Floor ${MAPS[r.mapKey].floor}, ` : 'In '}${esc(theName(MAPS[r.mapKey].name))} · ${r.char.hp}/${maxHpOf(r.char)} HP`;
 }
 const canContinue = h => h.run && !h.run.over && MAPS[h.run.mapKey];
 const back = (to = 'title') => `<button class="btn" data-go="${to}">Back</button>`;
@@ -4260,7 +4786,7 @@ const SCREENS = {
     return `<div class="menu title">
       <h1>Battle Board</h1>
       <p class="sub">A tabletop dungeon crawl in your browser</p>
-      ${live ? `<button class="btn primary big" data-act="continue" data-id="${live.id}">Continue: ${esc(live.char.name)} in the ${esc(MAPS[live.run.mapKey].name)}</button>` : ''}
+      ${live ? `<button class="btn primary big" data-act="continue" data-id="${live.id}">Continue: ${esc(live.char.name)} in ${esc(theName(MAPS[live.run.mapKey].name))}</button>` : ''}
       <div class="choices">
         <button class="choice" data-go="heroes"><span class="ct">Adventure</span><span>Choose a hero or make a new one, then take them into a dungeon.</span></button>
         <button class="choice" data-go="creator"><span class="ct">Create</span><span>Build your own dungeon: rooms, doors, traps, treasure and monsters.</span></button>
@@ -4323,9 +4849,9 @@ const SCREENS = {
       <div class="mhead">${back('heroes')}<h2>Where will ${esc(h.char.name)} go?</h2></div>
       <div class="dlist">${mapKeys().map(k => { const m = MAPS[k]; return `
         <label class="dopt"><input type="radio" name="dmap" value="${k}" ${k === scr.map ? 'checked' : ''}>
-          <span><b>${esc(m.name)}</b>${m.custom ? ' <span class="tag">Yours</span>' : ''}<br>
+          <span><b>${esc(m.title || m.name)}</b>${m.custom ? ' <span class="tag">Yours</span>' : ''}<br>
           <span class="muted">${esc(m.desc || MAP_DESC[k] || '')}</span><br>
-          <span class="muted">${m.rows[0].length}×${m.rows.length} squares · ${m.dark ? 'dark, fog of war' : 'lit'} · ${monsterCount(m)} monsters</span></span></label>`; }).join('')}</div>
+          <span class="muted">${m.floors ? `${m.floors} floors, from sunlit ruins to the lich's throne` : `${m.rows[0].length}×${m.rows.length} squares · ${m.dark ? 'dark, fog of war' : 'lit'} · ${monsterCount(m)} monsters`}</span></span></label>`; }).join('')}</div>
       ${h.char.level > 1 || h.run ? `<label class="toggle"><input type="checkbox" id="freshStart" ${scr.fresh ? 'checked' : ''}>
         <span><b>Start again at level 1</b><br><span class="muted">Off: ${esc(h.char.name)} keeps their level, gear and gold.</span></span></label>` : ''}
       ${canContinue(h) ? `<p class="muted">This ends the expedition in progress.</p>` : ''}
@@ -4340,7 +4866,7 @@ const SCREENS = {
       <div class="form">
         <h3>New dungeon</h3>
         <label class="field"><span>Name</span><input type="text" id="ndName" maxlength="40" value="${esc(d.name)}"></label>
-        <div class="field"><span>Start from</span>${seg('ndFrom', d.from, [['blank', 'Solid rock'], ['crypt', 'Copy of the Sunken Crypt'], ['trainingYard', 'Copy of the Training Yard']])}</div>
+        <label class="field"><span>Start from</span><select id="ndFromSel"><option value="blank">Solid rock</option>${Object.keys(MAPS).filter(k => !k.startsWith('c_') && k !== '_test').map(k => `<option value="${k}" ${d.from === k ? 'selected' : ''}>Copy of ${esc(MAPS[k].floor ? `${MAPS[k].title || ''} floor ${MAPS[k].floor}: ${MAPS[k].name}` : MAPS[k].name)}</option>`).join('')}</select></label>
         ${d.from === 'blank' ? `
         <div class="field"><span>Size</span>${seg('ndSize', d.size, [['16x12', 'Small 16×12'], ['24x18', 'Medium 24×18'], ['32x24', 'Large 32×24'], ['40x30', 'Huge 40×30']])}</div>
         <div class="field"><span>Mood</span>${seg('ndDark', d.dark ? 'dark' : 'lit', [['dark', 'Dark, with fog of war'], ['lit', 'Lit, everything visible']])}</div>` : ''}
@@ -4394,6 +4920,7 @@ $('screen').addEventListener('change', e => {
   if (e.target.name === 'dmap') scr.map = e.target.value;
   if (e.target.id === 'freshStart') scr.fresh = e.target.checked;
   if (e.target.id === 'impFile' && e.target.files[0]) importDungeon(e.target.files[0]);
+  if (e.target.id === 'ndFromSel') { scr.nd.from = e.target.value; renderScreen(); }
 });
 $('screen').addEventListener('click', e => {
   const go = e.target.closest('[data-go]');
@@ -4438,7 +4965,8 @@ $('screen').addEventListener('click', e => {
     case 'ndCreate': {
       const d = scr.nd; let m;
       if (d.from === 'blank') { const [w, hh] = d.size.split('x').map(Number); m = blankDungeon(d.name.trim() || 'Untitled dungeon', w, hh, d.dark); }
-      else { m = clone(MAPS[d.from]); m.name = d.name.trim() || `${m.name} (my version)`; m.custom = true; m.rev = 1; m.desc = ''; m.puzzleOrder = m.puzzle?.order; }
+      else { m = clone(MAPS[d.from]); m.name = d.name.trim() || `${m.name} (my version)`; m.custom = true; m.rev = 1; m.desc = ''; m.puzzleOrder = m.puzzle?.order;
+        for (const f of ['next', 'hidden', 'floor', 'floors', 'title', 'finale']) delete m[f]; }
       const nid = uid(); m.updated = Date.now(); dungeons[nid] = finalizeMap(m); store.set(DUNGEON_KEY, dungeons); registerDungeons();
       return openEditor(nid);
     }
@@ -4470,7 +4998,7 @@ function importDungeon(file) {
     const j = JSON.parse(t), m = j.map || j;
     const okRows = Array.isArray(m.rows) && m.rows.length >= 4 && m.rows.length <= 60 && m.rows.every(r => typeof r === 'string' && r.length === m.rows[0].length && r.length <= 60);
     if (!okRows) throw new Error('bad');
-    const legal = new Set('#.~DSGXCFI123$HTYZPp@rkbaWmdg'.split(''));
+    const legal = new Set('#.~DSGXCFI123$HTYZPp@rkbaWmdgevwlhjqcoKunBfszNQL'.split(''));
     m.rows = m.rows.map(r => [...r].map(ch => legal.has(ch) ? ch : '#').join(''));
     m.name = String(m.name || 'Imported dungeon').slice(0, 40); m.custom = true; m.rev = 1; m.updated = Date.now();
     m.rooms = (m.rooms || []).filter(a => a && Number.isInteger(a.x0)).map(a => ({ ...a, name: String(a.name || '').slice(0, 60), text: String(a.text || '').slice(0, 600) }));
@@ -4491,6 +5019,10 @@ const TOOLS = [
   { g: 'Terrain', id: 'floor', ch: '.', label: 'Floor', icon: '', bg: '#b3a796', hint: 'Open floor. Also clears anything placed on a square.' },
   { g: 'Terrain', id: 'wall', ch: '#', label: 'Wall', icon: '', bg: '#2c2622', hint: 'Solid rock. Walls appear wherever rock meets floor.' },
   { g: 'Terrain', id: 'rough', ch: '~', label: 'Rubble', icon: '∴', bg: '#6a6156', hint: 'Difficult terrain: moving through it costs double. Brush on lit maps.' },
+  { g: 'Terrain', id: 'grass', ch: 'e', label: 'Grass', icon: '"', bg: '#4f6a2a', hint: 'Long grass that sways in the wind. Ordinary ground to walk on.' },
+  { g: 'Terrain', id: 'shallow', ch: 'v', label: 'Shallow water', icon: '≈', bg: '#2f6a70', hint: 'Flowing water you can wade through: difficult terrain.' },
+  { g: 'Terrain', id: 'deep', ch: 'w', label: 'Deep water', icon: '≋', bg: '#123a4a', hint: 'Too deep to cross. Doesn\'t block sight or arrows. Lines of it flow like a river.' },
+  { g: 'Terrain', id: 'lava', ch: 'l', label: 'Lava', icon: '≋', bg: '#b8401a', hint: 'Flowing molten rock. Impassable, and it lights the room.' },
   { g: 'Terrain', id: 'pillar', ch: 'P', label: 'Pillar', icon: '●', bg: '#c9beae', fg: '#2c2622', hint: 'Blocks movement and line of sight. Good cover.' },
   { g: 'Terrain', id: 'broken', ch: 'p', label: 'Broken pillar', icon: '◐', bg: '#9d9282', fg: '#2c2622', hint: 'Fallen stone: difficult terrain.' },
   { g: 'Doors', id: 'door', ch: 'D', label: 'Door', icon: '▯', bg: '#5a3b22', hint: 'A closed wooden door. Blocks sight until opened. Place it in a gap in a wall.' },
@@ -4509,6 +5041,21 @@ const TOOLS = [
   { g: 'Objects', id: 'stash', ch: 'H', label: 'Hidden cache', icon: '◇', bg: '#5a4a2a', hint: 'Invisible until found with Search. Use Inspect to set contents and DC.' },
   { g: 'Objects', id: 'font', ch: 'F', label: 'Healing font', icon: '◍', bg: '#2a6a8a', hint: 'Heals the hero fully once, and breaks curses.' },
   { g: 'Objects', id: 'tablet', ch: 'I', label: 'Inscription', icon: '≡', bg: '#4a4a52', hint: 'A stone tablet. Write its text under Dungeon.' },
+  { g: 'Props', id: 'crate', ch: 'c', label: 'Crate', icon: '▦', bg: '#7a5530', hint: 'Breakable (8 HP). Blocks movement until smashed. Might hold coins, food or a potion.' },
+  { g: 'Props', id: 'barrel', ch: 'o', label: 'Barrel', icon: '◉', bg: '#6a4a2a', hint: 'Breakable (10 HP). Blocks movement until smashed.' },
+  { g: 'Props', id: 'keg', ch: 'K', label: 'Powder keg', icon: '✸', bg: '#8a2a1e', hint: 'Breakable (4 HP) and explosive: 3d6 fire to everything next to it. Kegs set each other off.' },
+  { g: 'Props', id: 'urn', ch: 'u', label: 'Clay urn', icon: '⚱', bg: '#a8603a', hint: 'Breakable (3 HP). Burial urns often hold a few coins.' },
+  { g: 'Props', id: 'fireplace', ch: 'h', label: 'Fireplace', icon: '⌂', bg: '#6a5a4a', hint: 'A stone hearth. Put it against a wall: it turns to face the room. Lights the area.' },
+  { g: 'Props', id: 'brazier', ch: 'j', label: 'Brazier', icon: 'Ψ', bg: '#3a3430', hint: 'Burning coals in an iron bowl. Blocks movement, lights the area.' },
+  { g: 'Props', id: 'campfire', ch: 'q', label: 'Campfire', icon: '∆', bg: '#8a4a1a', hint: 'A ring of stones and crackling logs. Blocks movement, lights the area.' },
+  { g: 'Monsters', id: 'goblin', ch: 'n', label: 'Goblin', icon: 'g', bg: '#4f6a2a' },
+  { g: 'Monsters', id: 'chief', ch: 'B', label: 'Goblin chief', icon: 'C', bg: '#4a2a5a' },
+  { g: 'Monsters', id: 'wolf', ch: 'f', label: 'Wolf', icon: 'w', bg: '#5a564e' },
+  { g: 'Monsters', id: 'spider', ch: 's', label: 'Giant spider', icon: 'x', bg: '#2a2420' },
+  { g: 'Monsters', id: 'zombie', ch: 'z', label: 'Zombie', icon: 'Z', bg: '#5a6a4a' },
+  { g: 'Monsters', id: 'cultist', ch: 'N', label: 'Bone cultist', icon: 'c', bg: '#8a8478' },
+  { g: 'Monsters', id: 'wraith', ch: 'Q', label: 'Wraith', icon: 'R', bg: '#1c2a3a' },
+  { g: 'Monsters', id: 'lich', ch: 'L', label: 'Lich', icon: 'L', bg: '#3a1a4a' },
   { g: 'Monsters', id: 'rat', ch: 'r', label: 'Giant rat', icon: 'R', bg: '#5a4636' },
   { g: 'Monsters', id: 'skeleton', ch: 'k', label: 'Skeleton', icon: 'S', bg: '#8a826e' },
   { g: 'Monsters', id: 'bones', ch: 'b', label: 'Bone pile', icon: 'B', bg: '#6e6656', hint: 'A skeleton lying in wait. It looks dead until the hero steps next to it, then rises and attacks.' },
@@ -4516,7 +5063,7 @@ const TOOLS = [
   { g: 'Monsters', id: 'warden', ch: 'W', label: 'Grave Warden', icon: 'W', bg: '#3a3f5a' },
   { g: 'Monsters', id: 'dummy', ch: 'm', label: 'Training dummy', icon: 'D', bg: '#7a6a4a' },
 ];
-for (const t of TOOLS) if (t.g === 'Monsters' && !t.hint) { const m = MONSTERS[CREATURE_CHARS[t.ch]]; t.hint = `${m.name}: ${m.hp} HP, AC ${m.ac}${m.atk ? `, ${m.dmg[0]}d${m.dmg[1]}+${m.dmg[2]} ${m.dmgType}` : ''}. Wakes when it sees the hero.`; }
+for (const t of TOOLS) if (t.g === 'Monsters' && !t.hint) { const m = MONSTERS[CREATURE_CHARS[t.ch]]; t.hint = `${m.name}: ${m.hp} HP, AC ${m.ac}${m.atk ? `, ${m.dmg[0]}d${m.dmg[1]}${m.dmg[2] ? '+' + m.dmg[2] : ''} ${m.dmgType}${m.ai === 'ranged' ? ', ranged' : ''}` : ''}.${m.summon ? ' Raises skeletons every few turns.' : ''}${m.float ? ' Floats.' : ''} Wakes when it sees the hero.`; }
 const toolById = id => TOOLS.find(t => t.id === id);
 const CH_NAME = Object.fromEntries(TOOLS.filter(t => t.ch).map(t => [t.ch, t.label]));
 
@@ -4714,7 +5261,7 @@ function edProblems() {
   const plates = ['1', '2', '3'].filter(has).length;
   if (plates && !has('G')) out.push({ text: 'The plates have nothing to open: add a Portcullis.' });
   if (has('G') && plates < 3) out.push({ text: 'A portcullis only rises when all three plates (sun, moon, star) are in the dungeon.' });
-  const monsters = [...all].some(ch => CREATURE_CHARS[ch] && ch !== 'm');
+  const monsters = [...all].some(isFoe);
   if (!has('X') && !monsters) out.push({ text: 'There\'s no way to win yet: add Exit stairs or some monsters.' });
   else if (!has('X')) out.push({ info: true, text: 'No exit stairs, so the hero wins by defeating every monster.' });
   if (has('I') && ed.map.tablet.startsWith('The letters are worn')) out.push({ info: true, text: 'Your inscription has no text yet. Write it under Dungeon.' });
@@ -4776,6 +5323,7 @@ function renderEdPanel() {
       <div class="field"><span>Size</span><div class="row"><input type="number" id="edW" min="8" max="48" value="${W}" aria-label="Width"> × <input type="number" id="edH" min="8" max="48" value="${H}" aria-label="Height"><button class="btn small" data-ed="resize">Resize</button></div></div>
       ${['1', '2', '3'].some(c => all.includes(c)) ? `<div class="field"><span>Plate order</span><div class="row">${[0, 1, 2].map(n => `<select data-order="${n}">${['1', '2', '3'].map(c => `<option value="${c}" ${m.puzzleOrder[n] === c ? 'selected' : ''}>${PLATE_NAMES[c]}</option>`).join('')}</select>`).join('')}</div></div>` : ''}
       ${all.includes('I') ? `<label class="field"><span>Inscription text</span><textarea id="edTablet" rows="4" maxlength="600">${esc(m.tablet)}</textarea></label>` : ''}
+      ${all.includes('X') ? `<label class="field"><span>Exit stairs lead to</span><select id="edNext"><option value="">Nowhere: reaching them wins</option>${Object.entries(dungeons).filter(([id]) => id !== ed.id).map(([id, d]) => `<option value="c_${id}" ${m.next === 'c_' + id ? 'selected' : ''}>${esc(d.name)} (next floor)</option>`).join('')}</select></label>` : ''}
       <label class="field"><span>Description (shown when choosing a dungeon)</span><textarea id="edDesc" rows="2" maxlength="200">${esc(m.desc || '')}</textarea></label>
       ${m.rooms.length ? `<div class="field"><span>Read-aloud areas</span><div class="row">${m.rooms.map((a, n) => `<button class="btn small" data-ed="pickArea" data-n="${n}">${esc(a.name)}</button>`).join('')}</div></div>` : ''}
     </div>
@@ -4815,6 +5363,7 @@ $('edPanel').addEventListener('input', e => {
 $('edPanel').addEventListener('change', e => {
   const m = ed.map, id = e.target.id;
   if (e.target.dataset.order) m.puzzleOrder[+e.target.dataset.order] = e.target.value;
+  if (id === 'edNext') { if (e.target.value) m.next = e.target.value; else delete m.next; }
   if (ed.sel && (id === 'goldIn' || id === 'dcIn')) {
     const { x, z } = ed.sel, k = keyOf(x, z), ch = edGet(x, z), v = Math.max(0, +e.target.value | 0);
     const tgt = ch === 'C' ? m.chests[k] : ch === '$' ? m.loot[k] : ch === 'H' ? m.stash[k] : m.secrets[k];
@@ -4843,6 +5392,9 @@ window.battleBoard = {
   teleport(x, z) { state.pos = { x, z }; placeHero(); resetView(); refresh(); },
   redress() { dressHero(); refresh(); },
   hit(id, n) { const c = creatureById(id); if (c) damageCreature(c, n, 'dmg'); refresh(); },
+  go(key) { enterPlay(freshState(key, state.char), mode === 'test' ? 'test' : 'play', true); },
+  overview() { state.explored.fill(1); const s = Math.max(W, H); controls.target.set(0, 0, 0); camera.position.set(0, s * 0.8, s * 0.55); controls.update(); refresh(); },
+  walk(x, z) { refresh(); if (!reachable(x, z)) return false; moveTo(x, z); return true; },
   wanderers() { const m = spawnWanderers(6, 13); if (m && exploring() === false) startCombat(); refresh(); return m && m.map(c => c.type); },
 };
 showBackdrop('crypt');

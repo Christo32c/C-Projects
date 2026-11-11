@@ -34,6 +34,29 @@ Start from solid rock (small to huge) or from a copy of a built-in map. Then bui
 - **Playtest** drops a level-1 test hero into the dungeon without saving anything. **Back to the editor** returns you where you were.
 - Everything saves as you build. Your dungeons appear in the Adventure dungeon list. **Export** saves a dungeon as a `.json` file, and **Import** loads one.
 
+## The Lich's Descent
+
+A seven-floor campaign, picked as one entry in the Adventure menu. Goblins have been stealing the dead of Thornwick, and the trail leads down:
+
+1. **The Overgrown Gate**: a sunlit forest ruin. Swaying grass, a stream with a ford and a stone bridge, a goblin camp, wolves, and a chapel with a stair going down.
+2. **The Goblin Warren**: smoky tunnels stacked with crates, barrels and powder kegs, a kennel, a feasting hall with a hearth, a hidden hoard, and Chief Grizzlegut.
+3. **The Weeping Caves**: caverns around a black lake, giant spiders, an old shrine with a healing font, and the first of the walking dead.
+4. **The Drowned Ossuary**: flooded halls, zombies wading through the water, and bone galleries full of skeletons.
+5. **The Sanctum of the Pale Crown**: a cult temple with a fire altar, bone cultists hurling grave-light, and a plate puzzle that opens the way down.
+6. **The Burning Halls**: a river of lava with two bridges, wraiths, and the Grave Warden guarding the last stair.
+7. **The Throne of Vael Morrow**: the lich on an island in a lake of fire. It raises skeletons every few turns. Defeat everything to win.
+
+Exit stairs lead to the next floor. You keep your hit points and gear, and your spell slots come back on the stairs. Each floor has its own read-aloud text and its own wandering monsters. `tools/floors.py` generates the floors and checks that each one can be finished: the exit and every monster are reachable, and the puzzle plates can be reached before the portcullis. Paste its output into `MAPS` after changing it.
+
+## Terrain, props and creatures
+
+- **Animated terrain**: long grass that sways in the wind, flowing water (shallow water is difficult terrain, deep water can't be crossed), and slowly churning lava that glows, spits embers and lights the room. Water and lava flow along their channel.
+- **Fire**: fireplaces (they turn to face the room), braziers and campfires all crackle, smoke, and light the area around them.
+- **Breakables**: crates, barrels, clay urns and powder kegs. Attack them or catch them in a spell. They block movement until smashed, then spill whatever was inside onto the floor. Powder kegs explode for 3d6 fire around them and set off other kegs.
+- **New creatures**: goblins and their chief, wolves, giant spiders, zombies, bone cultists (ranged), wraiths (they float), and the lich Vael Morrow.
+
+Everything above is in the creator's palette too. In a dungeon you make, the **Exit stairs lead to** setting can link to another of your dungeons, so you can build your own multi-floor dungeons.
+
 ## The Sunken Crypt
 
 The default map is a dungeon (switch maps from the selector at the top left):
