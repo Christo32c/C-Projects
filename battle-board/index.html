@@ -4645,8 +4645,9 @@ function resetView() {
     controls.target.set(0, 0, 0); camera.position.set(0, 13, 12); controls.update(); return;
   }
   CAM.focus = hero; CAM.anim = null; CAM.dist = 3.6; CAM.elev = 0.42;
-  const f = nearestFoe();
-  camPlace(focusPos(hero), f ? Math.atan2(f.x - state.pos.x, f.z - state.pos.z) : (hero.rotation.y || Math.PI), CAM.elev, CAM.dist);
+  const f = nearestFoe(), yaw = f ? Math.atan2(f.x - state.pos.x, f.z - state.pos.z) : (hero.rotation.y || Math.PI);
+  if (!anim) { hero.rotation.y = yaw; faceAt = null; }   // the hero looks where the camera looks
+  camPlace(focusPos(hero), yaw, CAM.elev, CAM.dist);
   controls.update();
 }
 function resize() {
