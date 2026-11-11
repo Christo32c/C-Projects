@@ -282,6 +282,64 @@
   .seg button:last-child { border-right: 0; }
   .seg button[aria-pressed="true"] { background: var(--brass); color: #20180d; font-weight: 700; }
 
+  /* play: the board fills the screen; HP and the hotbar stay, everything else opens in a drawer */
+  body[data-mode="play"] .app { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+  body[data-mode="play"] #panel { position: fixed; top: 0; right: 0; bottom: 0; width: min(380px, 100vw); z-index: 25; box-sizing: border-box;
+    transform: translateX(105%); transition: transform .25s ease; box-shadow: -18px 0 50px rgba(0,0,0,.55); border-left: 1px solid var(--brass); visibility: hidden; }
+  body[data-mode="play"] #panel.open { transform: none; visibility: visible; }
+  body:not([data-mode="play"]) #playBar, body:not([data-mode="play"]) #sideBtns { display: none !important; }
+  .drawer-x { display: none; position: absolute; top: 10px; right: 12px; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); font-size: 20px; line-height: 1; z-index: 2; }
+  body[data-mode="play"] .drawer-x { display: block; }
+  body[data-mode="play"] .sheet-head { padding-right: 40px; }
+  .sidebtns { position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+  .sbtn { display: inline-flex; align-items: center; gap: 7px; padding: 5px 10px 5px 6px; font-size: 13px; border-radius: 8px; border: 1px solid var(--line);
+          background: color-mix(in srgb, var(--panel) 86%, transparent); }
+  .sbtn b { width: 20px; height: 20px; border-radius: 5px; display: grid; place-items: center; font-size: 11px; background: var(--panel-2); color: var(--brass); }
+  .sbtn:hover, .sbtn[aria-pressed="true"] { border-color: var(--brass); }
+  #soundBtn.sbtn { padding-left: 10px; }
+  .hotbar-wrap { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); display: flex; align-items: stretch; gap: 8px;
+                 width: max-content; max-width: calc(100% - 24px); flex-wrap: wrap; justify-content: center; }
+  .vitals-card { display: flex; gap: 10px; align-items: center; text-align: left; padding: 8px 12px 8px 8px; min-width: 220px; border-radius: 12px;
+                 border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 92%, transparent); }
+  .vitals-card:hover { border-color: var(--brass); }
+  .vitals-card .por { width: 42px; height: 42px; border-radius: 50%; flex: none; background: var(--c); border: 2px solid var(--brass);
+                      display: grid; place-items: center; font: 700 17px var(--display); color: #fff; text-shadow: 0 1px 2px #000; }
+  .vitals-card .vt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  .vitals-card .nm { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
+  .vitals-card .nm b { font-family: var(--display); font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hpbar2 { position: relative; height: 14px; border-radius: 7px; background: #120c09; border: 1px solid #000; overflow: hidden; }
+  .hpbar2 i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(#8fbf6c, #5e8a44); transition: width .3s; }
+  .hpbar2.low i { background: linear-gradient(#e0705a, #a83a2a); }
+  .hpbar2 span { position: relative; display: block; text-align: center; font-size: 11px; line-height: 14px; font-weight: 700; text-shadow: 0 1px 2px #000; font-variant-numeric: tabular-nums; }
+  .slots-mini { display: flex; gap: 8px; font-size: 10px; color: var(--muted); }
+  .slots-mini i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #c79bff; margin-left: 2px; }
+  .slots-mini i.off { background: transparent; box-shadow: inset 0 0 0 1px var(--muted); }
+  .hotbar { display: flex; gap: 5px; padding: 6px; border-radius: 12px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 92%, transparent); }
+  .slot { --c: var(--brass); position: relative; width: 62px; height: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+          padding: 4px 2px 3px; border-radius: 9px; border: 1px solid var(--line); background: var(--panel-2); font-size: 10.5px; line-height: 1.05; text-align: center; }
+  .slot .k { position: absolute; top: 2px; left: 5px; font-size: 10px; color: var(--muted); font-weight: 700; }
+  .slot .ic { width: 24px; height: 24px; border-radius: 6px; display: grid; place-items: center; font-weight: 700; font-size: 14px;
+              color: var(--c); background: color-mix(in srgb, var(--c) 20%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 45%, transparent); }
+  .slot .q { position: absolute; top: 2px; right: 5px; font-size: 10px; color: var(--ink); font-weight: 700; }
+  .slot:hover:not(:disabled) { border-color: var(--c); }
+  .slot[aria-pressed="true"] { border-color: var(--c); box-shadow: 0 0 0 1px var(--c), 0 0 16px color-mix(in srgb, var(--c) 45%, transparent); }
+  .slot:disabled { opacity: .4; cursor: not-allowed; }
+  .slot.gap { margin-left: 6px; }
+  .turnbox { display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 6px; border-radius: 12px; border: 1px solid var(--line);
+             background: color-mix(in srgb, var(--panel) 92%, transparent); min-width: 104px; }
+  .turnbox .btn { padding: 9px 12px; }
+  .turninfo { font-size: 11px; color: var(--muted); text-align: center; font-variant-numeric: tabular-nums; }
+  .turninfo b { color: var(--sky); }
+  body[data-mode="play"] .narr { bottom: 96px; }
+  @media (max-width: 760px) {
+    body[data-mode="play"] #panel { top: auto; left: 0; width: 100%; height: 72vh; transform: translateY(105%); border-left: 0; border-top: 1px solid var(--brass); }
+    .sidebtns { flex-direction: row; flex-wrap: wrap; justify-content: flex-end; top: 52px; left: 12px; }
+    .sbtn { padding: 4px; } .sbtn b ~ * , .sbtn:not(#soundBtn) { font-size: 0; } .sbtn b { font-size: 11px; }
+    .slot { width: 50px; height: 50px; font-size: 0; } .slot .k, .slot .q { font-size: 9px; }
+    .vitals-card { min-width: 0; flex: 1 1 100%; }
+    body[data-mode="play"] .narr { bottom: 190px; }
+  }
+
   /* the creator */
   .pal { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 6px; }
   .pal button { display: flex; align-items: center; gap: 7px; padding: 5px 7px; background: var(--panel-2); border: 1px solid var(--line);
@@ -331,21 +389,25 @@
         <span class="hint">Left-drag paints · Right-drag turns · WASD or Shift+right-drag pans · Scroll zooms</span>
       </div>
     </div>
-    <div class="actions" id="playBar">
-      <div class="row" id="spellbar"></div>
-      <div class="row">
-        <button class="btn" id="searchBtn" title="Wisdom (Perception) check to find secret doors, traps and hidden caches within 15 ft">Search</button>
-        <button class="btn" id="dashBtn" title="Use your action to double your movement this turn">Dash</button>
-        <button class="btn primary" id="endBtn">End turn</button>
-        <button class="btn" id="viewBtn" title="Reset the camera">Reset view</button>
-        <button class="btn" id="soundBtn" title="Turn sound on or off">Sound</button>
-        <span class="hint">Click to move or interact · Click an enemy to attack · 1–4 casts · Drag to orbit</span>
-      </div>
+    <div class="sidebtns" id="sideBtns">
+      <button class="sbtn" data-panel="sheet" title="Character sheet (C)"><b>C</b>Character</button>
+      <button class="sbtn" data-panel="inv" title="Inventory (I)"><b>I</b>Inventory</button>
+      <button class="sbtn" data-panel="spells" title="Spellbook (K)"><b>K</b>Spells</button>
+      <button class="sbtn" data-panel="log" title="Adventure log (L)"><b>L</b>Log</button>
+      <button class="sbtn" id="camBtn" title="Camera: follow the action, or free (V)"><b>V</b><span id="camLbl">Follow cam</span></button>
+      <button class="sbtn" id="viewBtn" title="Snap the camera back behind your hero (R)"><b>R</b>Recenter</button>
+      <button class="sbtn" id="soundBtn" title="Turn sound on or off">Sound</button>
+    </div>
+    <div class="hotbar-wrap" id="playBar">
+      <button class="vitals-card" id="vitals" title="Open the character sheet"></button>
+      <div class="hotbar" id="spellbar" role="toolbar" aria-label="Hotbar"></div>
+      <div class="turnbox"><span class="turninfo" id="turnInfo"></span><button class="btn primary" id="endBtn" title="End your turn (Space)">End turn</button></div>
     </div>
   </main>
 
   <aside class="panel" id="edPanel" aria-label="Dungeon creator"></aside>
   <aside class="panel" id="panel" aria-label="Character sheet">
+    <button class="drawer-x" id="panelClose" aria-label="Close panel" title="Close (Esc)">×</button>
     <div class="sheet-head">
       <label class="swatch" title="Miniature colour"><input type="color" id="charColor" aria-label="Miniature colour"></label>
       <div style="min-width:0;flex:1">
@@ -680,7 +742,7 @@ function save() {   // only real expeditions are saved, into the hero's slot in 
   saveHeroes();
 }
 function loadPrefs() { try { return JSON.parse(localStorage.getItem(PREF_KEY)) || {}; } catch (e) { return {}; } }
-function savePrefs() { try { localStorage.setItem(PREF_KEY, JSON.stringify({ sandbox: ui.sandbox, quality: qName, sound: SFX.on })); } catch (e) {} }
+function savePrefs() { try { localStorage.setItem(PREF_KEY, JSON.stringify({ sandbox: ui.sandbox, quality: qName, sound: SFX.on, autoCam: CAM.auto })); } catch (e) {} }
 
 let state = freshState('crypt');
 let mode = 'menu', curHero = null;
@@ -723,7 +785,7 @@ const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.maxPolarAngle = Math.PI * 0.45;
-controls.minDistance = 4;
+controls.minDistance = 1.6;
 controls.maxDistance = 30;
 
 const composer = new EffectComposer(renderer);
@@ -3360,6 +3422,7 @@ function startCombat() {
   state.turn = { round: state.turn.round, move: derived().speedSq, action: state.turn.action };
   addLog('sys', '<b>Combat!</b> Your turn: move up to 30 ft and take one action, then end your turn.');
   toast('Combat! Your turn.');
+  camToHero(0.9);
 }
 function checkFightOver(wasCombat) {
   if (wasCombat && exploring()) {
@@ -3825,10 +3888,14 @@ async function enemyPhase() {
   if (actors.length) { $('aim').hidden = false; $('aim').style.setProperty('--c', '#d0604b'); $('aim').textContent = 'Enemy turn'; }
   for (const c of actors) {
     if (!c.alive || state.char.hp <= 0 || state.over) continue;
+    const v = views.get(c.id);
+    if (v && v.g.visible) { camShot(v.g, hero.position, 0.7); $('aim').textContent = `${MONSTERS[c.type].name}'s turn`; await sleep(reduceMotion ? 0.05 : 0.55); }
+    else $('aim').textContent = 'Something moves in the dark…';
     await creatureTurn(c);
   }
   $('aim').hidden = true;
   busy = false;
+  camToHero(0.8);
 }
 
 function dash() {
@@ -4140,25 +4207,38 @@ function renderHud() {
   const t = state.turn, ex = exploring();
   const foes = state.creatures.filter(c => c.alive && c.aware && MONSTERS[c.type].ai !== 'none').length;
   const hc = ui.hover && creatureById(ui.hover);
-  $('hudChips').innerHTML = ex
-    ? `<span class="chip explore">Exploring</span><span class="chip">Gold <b>${state.char.gold}</b></span>`
-    : `<span class="chip combat"><i class="dot"></i>Combat · ${foes} ${foes === 1 ? 'foe' : 'foes'}</span>
-       <span class="chip">Round <b>${t.round}</b></span>
-       <span class="chip move">Move <b>${t.move * 5} ft</b></span>
-       <span class="chip"><i class="dot ${t.action ? '' : 'spent'}"></i>Action ${t.action ? 'ready' : 'used'}</span>`;
+  $('hudChips').innerHTML = ex ? '' : `<span class="chip combat"><i class="dot"></i>Combat · ${foes} ${foes === 1 ? 'foe' : 'foes'} · Round <b>${t.round}</b></span>`;
   if (hc && !hc.alive && hc.loot && !hc.looted) $('hudChips').innerHTML += `<span class="chip">${MONSTERS[hc.type].name} remains · click to search</span>`;
   if (hc && hc.alive) { const m = MONSTERS[hc.type];
     $('hudChips').innerHTML += `<span class="chip target">${m.name} <b>${hc.hp}/${m.hp}</b> HP · AC ${m.ac}${hc.restrained ? ' · <b style="color:#a6e07a">Restrained</b>' : ''}</span>`; }
-  $('dashBtn').disabled = ex || !t.action || busy;
-  $('endBtn').disabled = busy;
-  $('endBtn').textContent = ex ? 'Wait a round' : 'End turn';
-  $('searchBtn').disabled = busy || (!ex && !t.action);
+  // the vitals card: portrait, HP and spell slots
+  const c = state.char, d = derived(), f = c.hp / d.maxHp;
+  $('vitals').innerHTML = `<span class="por" style="--c:${esc(c.color)}">${esc((c.name || '?')[0])}</span>
+    <span class="vt"><span class="nm"><b>${esc(c.name)}</b><span class="muted">Lv ${c.level} · AC ${d.ac}</span></span>
+    <span class="hpbar2 ${f <= 0.35 ? 'low' : ''}"><i style="width:${Math.max(0, f * 100)}%"></i><span>${c.hp} / ${d.maxHp}</span></span>
+    <span class="slots-mini">${Object.entries(c.slots).map(([lv, sl]) => `<span>L${lv}${Array.from({ length: sl.max }, (_, i) => `<i class="${i < sl.left ? '' : 'off'}"></i>`).join('')}</span>`).join('')}
+      <span style="margin-left:auto">${c.gold} gp</span></span></span>`;
+  // the hotbar: spells, then a potion, search and dash
+  const potion = ['potion', 'greater', 'goblinStew'].map(k => invEntry(k)).find(Boolean);
+  const actOk = ex || t.action;
   $('spellbar').innerHTML = Object.entries(SPELLS).map(([k, sp]) => {
-    const left = state.char.slots[sp.level]?.left ?? 0;
+    const left = c.slots[sp.level]?.left ?? 0;
     const off = busy || (!freeCast() && ((!ex && !t.action) || left <= 0));
-    return `<button class="spell" style="--c:${sp.color}" data-spell="${k}" aria-pressed="${ui.spell === k}" ${off ? 'disabled' : ''}
-      title="${sp.name}: ${sp.area}, range ${sp.range * 5} ft"><span class="k">${sp.key}</span>${sp.name}<span class="lv">L${sp.level}</span></button>`;
-  }).join('');
+    return `<button class="slot" style="--c:${sp.color}" data-spell="${k}" aria-pressed="${ui.spell === k}" ${off ? 'disabled' : ''}
+      title="${sp.name} (${sp.key}): ${sp.area}, range ${sp.range * 5} ft, level ${sp.level}"><span class="k">${sp.key}</span><span class="q">L${sp.level}</span>
+      <span class="ic">${{ fireball: '✹', firewall: '▲', icewall: '❄', vines: '❦' }[k]}</span>${sp.name}</button>`;
+  }).join('') + `
+    <button class="slot gap" style="--c:#e0605a" data-hot="potion" ${!potion || busy || !actOk ? 'disabled' : ''} title="Drink ${potion ? ITEMS[potion.key].name : 'a healing potion'} (5)">
+      <span class="k">5</span>${potion ? `<span class="q">×${potion.qty}</span>` : ''}<span class="ic">♥</span>${potion ? (potion.key === 'goblinStew' ? 'Stew' : 'Potion') : 'No potion'}</button>
+    <button class="slot" style="--c:#d3aa55" data-hot="search" ${busy || !actOk ? 'disabled' : ''} title="Search (6): a Perception check for traps, secret doors and hidden caches within 15 ft">
+      <span class="k">6</span><span class="ic">⌕</span>Search</button>
+    <button class="slot" style="--c:#7aa7cb" data-hot="dash" ${ex || !t.action || busy ? 'disabled' : ''} title="Dash (7): use your action to double your movement">
+      <span class="k">7</span><span class="ic">»</span>Dash</button>`;
+  $('endBtn').disabled = busy;
+  $('endBtn').textContent = ex ? 'Wait' : 'End turn';
+  $('turnInfo').innerHTML = ex ? 'Exploring' : busy ? 'Enemy turn…' : `Move <b>${t.move * 5} ft</b> · ${t.action ? 'action ready' : 'action used'}`;
+  for (const b of document.querySelectorAll('[data-panel]')) b.setAttribute('aria-pressed', ui.panelOpen && ui.tab === b.dataset.panel);
+  $('camLbl').textContent = CAM.auto ? 'Follow cam' : 'Free cam';
 }
 
 function renderSheet() {
@@ -4396,17 +4476,40 @@ $('panel').addEventListener('click', e => {
   refresh(); save();
 });
 
-$('searchBtn').addEventListener('click', search);
-$('dashBtn').addEventListener('click', dash);
 $('endBtn').addEventListener('click', endTurn);
+function useHot(h) {
+  if (busy || anim || state.over) return;
+  if (h === 'search') return search();
+  if (h === 'dash') return dash();
+  if (h === 'potion') { const p = ['potion', 'greater', 'goblinStew'].find(k => invEntry(k)); if (!p) return toast('You have no healing left.'); useItem(p); refresh(); save(); }
+}
+$('spellbar').addEventListener('click', e => { const h = e.target.closest('[data-hot]'); if (h) useHot(h.dataset.hot); });
+// the drawer: character sheet, inventory, spells and log open and close over the board
+function setPanel(tab) {
+  if (tab && ui.panelOpen && ui.tab === tab) tab = null;
+  ui.panelOpen = !!tab; if (tab) ui.tab = tab;
+  $('panel').classList.toggle('open', ui.panelOpen);
+  refresh();
+}
+$('sideBtns').addEventListener('click', e => { const b = e.target.closest('[data-panel]'); if (b) setPanel(b.dataset.panel); });
+$('vitals').addEventListener('click', () => setPanel('sheet'));
+$('panelClose').addEventListener('click', () => setPanel(null));
+$('camBtn').addEventListener('click', () => { CAM.auto = !CAM.auto; savePrefs(); toast(CAM.auto ? 'Follow cam: the camera swings to whoever is acting.' : 'Free cam: the camera follows, but you choose the angle.'); refresh(); });
 $('viewBtn').addEventListener('click', resetView);
 $('soundBtn').addEventListener('click', () => { SFX.toggle(); savePrefs(); updateDread(); });
 $('narr').addEventListener('click', () => { narrT = Math.min(narrT, 0.01); });
 window.addEventListener('keydown', e => {
   if (!playing() || e.target.closest('input, select, textarea') || !$('modal').hidden) return;
-  const k = Object.keys(SPELLS).find(k => SPELLS[k].key === e.key);
+  const k = Object.keys(SPELLS).find(k => SPELLS[k].key === e.key), key = e.key.toLowerCase();
   if (k) { selectSpell(k); e.preventDefault(); }
-  else if (e.key === 'Escape') cancelSpell();
+  else if (e.key === 'Escape') { if (ui.spell) cancelSpell(); else if (ui.panelOpen) setPanel(null); }
+  else if (e.key === '5') useHot('potion');
+  else if (e.key === '6') useHot('search');
+  else if (e.key === '7') useHot('dash');
+  else if (e.key === ' ') { e.preventDefault(); if (!busy && !anim) endTurn(); }
+  else if ({ c: 'sheet', i: 'inv', k: 'spells', l: 'log' }[key]) setPanel({ c: 'sheet', i: 'inv', k: 'spells', l: 'log' }[key]);
+  else if (key === 'v') $('camBtn').click();
+  else if (key === 'r') resetView();
 });
 
 function setQuality(name) {
@@ -4498,10 +4601,52 @@ canvas.addEventListener('pointerup', e => {
 /* ================================================================== *
  * LOOP
  * ================================================================== */
-function resetView() {
-  const t = MAP.fog ? worldOf(state.pos.x, state.pos.z).setY(0) : new THREE.Vector3();
+/* --- third-person camera: close behind whoever is acting, swinging over their shoulder toward the action --- */
+const CAM = { dist: 3.6, elev: 0.42, focus: null, anim: null, auto: prefs.autoCam ?? true };
+const CHEST = 0.55;
+const camYaw = () => Math.atan2(controls.target.x - camera.position.x, controls.target.z - camera.position.z);
+const camElev = () => Math.asin(clamp01((camera.position.y - controls.target.y) / Math.max(0.01, camera.position.distanceTo(controls.target))));
+function camPlace(t, yaw, elev, dist) {
   controls.target.copy(t);
-  camera.position.copy(t).add(MAP.fog ? new THREE.Vector3(0, 7.4, 6.6) : new THREE.Vector3(0, 13, 12));   // close and low in the dungeon
+  camera.position.set(t.x - Math.sin(yaw) * Math.cos(elev) * dist, t.y + Math.sin(elev) * dist, t.z - Math.cos(yaw) * Math.cos(elev) * dist);
+}
+const lerpAngle = (a, b, k) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * k;
+const focusPos = o => o.position.clone().setY(o.position.y + CHEST);
+// swing to look past `who` toward `at` (or keep the current heading)
+function camShot(who, at, dur = 0.8) {
+  CAM.focus = who;
+  const to = focusPos(who), yaw = at && CAM.auto ? Math.atan2(at.x - who.position.x, at.z - who.position.z) : camYaw();
+  CAM.anim = { t: 0, dur: reduceMotion ? 0.01 : dur, fromT: controls.target.clone(), toT: to, fromYaw: camYaw(), toYaw: yaw,
+               fromEl: camElev(), toEl: CAM.elev, fromD: camera.position.distanceTo(controls.target), toD: CAM.dist };
+}
+function nearestFoe() {
+  let best = null, bd = Infinity;
+  for (const c of state.creatures) if (c.alive && c.aware && MONSTERS[c.type].ai !== 'none') { const d = cheb(c, state.pos); if (d < bd) { bd = d; best = c; } }
+  return best;
+}
+function camToHero(dur) { const f = nearestFoe(); camShot(hero, f ? worldOf(f.x, f.z) : null, dur); }
+controls.addEventListener('end', () => { if (!playing()) return; CAM.dist = Math.min(14, camera.position.distanceTo(controls.target)); CAM.elev = Math.max(0.12, camElev()); });
+function camTick(dt) {
+  const a = CAM.anim;
+  if (a) {
+    a.t += dt; const k = clamp01(a.t / a.dur), e = k * k * (3 - 2 * k);
+    camPlace(a.fromT.clone().lerp(a.toT, e), lerpAngle(a.fromYaw, a.toYaw, e), a.fromEl + (a.toEl - a.fromEl) * e, a.fromD + (a.toD - a.fromD) * e);
+    if (k >= 1) CAM.anim = null;
+    return;
+  }
+  const who = CAM.focus || hero; if (!who) return;
+  const f = focusPos(who), dlt = f.sub(controls.target).multiplyScalar(Math.min(1, dt * 6));
+  controls.target.add(dlt); camera.position.add(dlt);
+  // while the hero walks, drift around behind them, like a third-person game
+  if (CAM.auto && who === hero && anim) camPlace(controls.target.clone(), lerpAngle(camYaw(), hero.rotation.y, Math.min(1, dt * 1.6)), camElev(), camera.position.distanceTo(controls.target));
+}
+function resetView() {
+  if (!playing()) {
+    controls.target.set(0, 0, 0); camera.position.set(0, 13, 12); controls.update(); return;
+  }
+  CAM.focus = hero; CAM.anim = null; CAM.dist = 3.6; CAM.elev = 0.42;
+  const f = nearestFoe();
+  camPlace(focusPos(hero), f ? Math.atan2(f.x - state.pos.x, f.z - state.pos.z) : (hero.rotation.y || Math.PI), CAM.elev, CAM.dist);
   controls.update();
 }
 function resize() {
@@ -4652,7 +4797,8 @@ function tick() {
     controls.target.set(0, 0, 0); camera.position.set(Math.sin(menuT) * s * 0.6, s * 0.42 + 4, Math.cos(menuT) * s * 0.6);
   }
   if (mode === 'edit') edPan(dt);
-  if (MAP.fog && playing()) {
+  if (playing()) camTick(dt);
+  if (false) {
     follow.copy(hero.position).setY(0).sub(controls.target); follow.y = 0;
     const d = follow.length();
     if (d > 1.5) { follow.multiplyScalar((1 - 1.5 / d) * Math.min(1, dt * 3)); controls.target.add(follow); camera.position.add(follow); }
@@ -4725,6 +4871,7 @@ function setMode(m) {
   controls.maxDistance = ed ? 70 : 30;
   scene.fog.near = ed || m === 'menu' ? 60 : 20; scene.fog.far = ed || m === 'menu' ? 140 : 42;
   $('narr').hidden = true; narrT = 0; clearPath(); edBox.visible = false;
+  ui.panelOpen = false; $('panel').classList.remove('open');
   setTimeout(resize, 0);
 }
 function useMap(key, map = MAPS[key]) { MAP = map; W = MAP.rows[0].length; H = MAP.rows.length; }
