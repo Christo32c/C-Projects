@@ -4450,12 +4450,20 @@ $('screen').addEventListener('click', e => {
   }
   renderScreen();
 });
-function exportDungeon(m) {
-  const blob = new Blob([JSON.stringify({ battleBoardDungeon: 1, map: m }, null, 1)], { type: 'application/json' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = (m.name || 'dungeon').replace(/[^\w -]+/g, '').trim().replace(/\s+/g, '-').toLowerCase() + '.json';
+// In the claude.ai viewer, files go out through the downloads capability; opened locally, a plain download link works
+const downloadsCap = window.claude?.use ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
+async function exportDungeon(m) {
+  const text = JSON.stringify({ battleBoardDungeon: 1, map: m }, null, 1);
+  const filename = (m.name || 'dungeon').replace(/[^\w -]+/g, '').trim().replace(/\s+/g, '-').toLowerCase() + '.json';
+  const dl = await downloadsCap;
+  if (dl) {
+    try { await dl.save({ filename, data: text }); toast('Dungeon file saved. Friends can load it with Import in the Create menu.'); }
+    catch (e) { if (e?.code === 'rate_limited') toast('A save prompt is already open.'); else if (e?.code !== 'declined') toast('Saving files isn\'t available here.'); }
+    return;
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' })); a.download = filename;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-  toast('Dungeon file saved. Send it to a friend; they can import it in the Create menu.');
+  toast('Dungeon file saved. Friends can load it with Import in the Create menu.');
 }
 function importDungeon(file) {
   file.text().then(t => {
