@@ -48,6 +48,17 @@ A seven-floor campaign, picked as one entry in the Adventure menu. Goblins have 
 
 Exit stairs lead to the next floor. You keep your hit points and gear, and your spell slots come back on the stairs. Each floor has its own read-aloud text and its own wandering monsters. `tools/floors.py` generates the floors and checks that each one can be finished: the exit and every monster are reachable, and the puzzle plates can be reached before the portcullis. Paste its output into `MAPS` after changing it.
 
+## Parties
+
+Take up to four adventurers into a dungeon. Choose them on the **Where will … go?** screen: bring other heroes from your roster, or **Hire a companion** (a new level-1 hero with rolled stats). Then pick how the party plays:
+
+- **Command the party**: in a fight, switch between adventurers freely (click one, use their portrait, or press **Tab**). Each has their own movement and action. **End turn** ends everyone's turn, then the monsters act.
+- **Take turns**: each adventurer acts in order. **End turn** passes to the next adventurer, and the camera moves to them. This suits friends sharing one screen.
+
+Switch modes between fights with **P**. Out of combat, whoever you control leads and the others follow. The fog of war clears around everyone. Monsters go for the closest adventurer still standing. Everyone still standing shares the XP from each kill. Your fireballs can hit your friends.
+
+An adventurer at 0 HP falls unconscious. Click them from an adjacent square to help them up (with a potion if you carry one; that uses your action). When the fight ends they get back up with 1 HP. The run is lost only if the whole party falls. Camping and resting restore everyone. The leader's roster card holds the expedition, and companions show "Adventuring with …" and can continue it too.
+
 ## Terrain, props and creatures
 
 - **Animated terrain**: long grass that sways in the wind, flowing water (shallow water is difficult terrain, deep water can't be crossed), and slowly churning lava that glows, spits embers and lights the room. Water and lava flow along their channel.

@@ -258,6 +258,8 @@
            display: flex; flex-direction: column; gap: 8px; text-align: left; }
   .card2.new { border-style: dashed; align-items: center; justify-content: center; min-height: 150px; color: var(--muted); font: 600 19px var(--display); }
   .card2.new:hover { border-color: var(--brass); color: var(--ink); }
+  .card2.pick { cursor: pointer; } .card2.pick.on { border-color: var(--brass); box-shadow: 0 0 0 1px var(--brass); }
+  .card2.new.small { min-height: 0; font-size: 15px; padding: 12px; }
   .card2 .who { display: flex; gap: 10px; align-items: center; }
   .card2 .dotc { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--brass); background: var(--c); flex: none; }
   .card2 .nm { font: 700 20px/1.15 var(--display); overflow-wrap: anywhere; }
@@ -340,6 +342,19 @@
     body[data-mode="play"] .narr { bottom: 190px; }
   }
 
+  .partyframes { position: absolute; left: 12px; top: 56px; display: flex; flex-direction: column; gap: 6px; width: 200px; }
+  .pf-mode { font-size: 11px; color: var(--muted); text-shadow: 0 1px 2px #000; padding-left: 4px; }
+  .pf { display: flex; gap: 8px; align-items: center; text-align: left; padding: 6px 8px 6px 6px; border-radius: 10px; border: 1px solid var(--line);
+        background: color-mix(in srgb, var(--panel) 88%, transparent); }
+  .pf:hover { border-color: var(--muted); } .pf.on { border-color: var(--brass); box-shadow: 0 0 0 1px var(--brass); }
+  .pf.down { opacity: .6; } .pf .por { width: 30px; height: 30px; border-radius: 50%; flex: none; background: var(--c); border: 2px solid var(--brass);
+        display: grid; place-items: center; font: 700 13px var(--display); color: #fff; text-shadow: 0 1px 2px #000; }
+  .pf .vt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .pf .nm { display: flex; justify-content: space-between; gap: 6px; font-size: 11px; } .pf .nm b { font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pf .hpbar2 { height: 11px; } .pf .hpbar2 span { font-size: 9.5px; line-height: 11px; }
+  body:not([data-mode="play"]) #partyFrames { display: none !important; }
+  @media (max-width: 760px) { .partyframes { top: 96px; width: 150px; } }
+
   /* the creator */
   .pal { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 6px; }
   .pal button { display: flex; align-items: center; gap: 7px; padding: 5px 7px; background: var(--panel-2); border: 1px solid var(--line);
@@ -389,11 +404,13 @@
         <span class="hint">Left-drag paints · Right-drag turns · WASD or Shift+right-drag pans · Scroll zooms</span>
       </div>
     </div>
+    <div class="partyframes" id="partyFrames" hidden></div>
     <div class="sidebtns" id="sideBtns">
       <button class="sbtn" data-panel="sheet" title="Character sheet (C)"><b>C</b>Character</button>
       <button class="sbtn" data-panel="inv" title="Inventory (I)"><b>I</b>Inventory</button>
       <button class="sbtn" data-panel="spells" title="Spellbook (K)"><b>K</b>Spells</button>
       <button class="sbtn" data-panel="log" title="Adventure log (L)"><b>L</b>Log</button>
+      <button class="sbtn" id="modeBtn" title="Party: take turns in order, or command everyone freely (P)"><b>P</b><span id="modeLbl">Party</span></button>
       <button class="sbtn" id="camBtn" title="Camera: follow the action, or free (V)"><b>V</b><span id="camLbl">Follow cam</span></button>
       <button class="sbtn" id="viewBtn" title="Snap the camera back behind your hero (R)"><b>R</b>Recenter</button>
       <button class="sbtn" id="soundBtn" title="Turn sound on or off">Sound</button>
@@ -688,7 +705,34 @@ function migrateChar(c) {
   return c;
 }
 
-function freshState(mapKey, carryChar, map = MAPS[mapKey]) {
+// carry: one character, a list of them (a party), or nothing for a fresh hero
+function freshState(mapKey, carry, map = MAPS[mapKey]) {
+  const list = Array.isArray(carry) ? carry : [carry ?? null];
+  const st = freshStateSolo(mapKey, list[0], map), party = [{ id: 'p0', char: st.char, pos: st.pos, turn: { move: 6, action: true } }];
+  list.slice(1).forEach((c, n) => {
+    const ch = migrateChar(JSON.parse(JSON.stringify(c))); ch.slots = freshSlots(); ch.hp = Math.max(ch.hp, 1);
+    party.push({ id: 'p' + (n + 1), char: ch, pos: freeSpotNear(st, st.pos, party.map(m => m.pos)), turn: { move: 6, action: true } });
+  });
+  delete st.char; delete st.pos; delete st.turn;
+  Object.assign(st, { party, active: 0, round: 1, partyMode: 'all', startChar: JSON.parse(JSON.stringify(party.map(m => m.char))) });
+  if (party.length > 1) st.log[0].html = `<b>${party.map(m => m.char.name).join(', ')}</b> enter ${theName(map.name)}.`;
+  return linkParty(st);
+}
+// a saved or old single-hero state gets a party and the active-member accessors
+function linkParty(st) {
+  if (!st.party) {
+    st.party = [{ id: 'p0', char: st.char, pos: st.pos, turn: { move: st.turn?.move ?? 6, action: st.turn?.action ?? true } }];
+    st.round = st.turn?.round || 1; st.active = 0;
+  }
+  st.partyMode ||= 'all'; st.round ||= 1; st.active = Math.max(0, Math.min(st.active || 0, st.party.length - 1));
+  for (const k of ['char', 'pos', 'turn']) {
+    if (Object.getOwnPropertyDescriptor(st, k)?.get) continue;
+    delete st[k];
+    Object.defineProperty(st, k, { get() { return this.party[this.active][k]; }, set(v) { this.party[this.active][k] = v; }, enumerable: false, configurable: true });
+  }
+  return st;
+}
+function freshStateSolo(mapKey, carryChar, map = MAPS[mapKey]) {
   const char = carryChar ? migrateChar(JSON.parse(JSON.stringify(carryChar))) : newCharacter();
   if (carryChar) { char.slots = freshSlots(); }
   char.hp = Math.max(char.hp, 1);
@@ -735,10 +779,11 @@ function load() {
   } catch (e) {}
   return null;
 }
-function save() {   // only real expeditions are saved, into the hero's slot in the roster
+function save() {   // only real expeditions are saved: the leader carries the run, every member's sheet stays current
   if (mode !== 'play' || !curHero) return;
   const h = heroes.find(h => h.id === curHero); if (!h) return;
-  state.log = state.log.slice(-90); h.char = state.char; h.run = state; h.updated = Date.now();
+  state.log = state.log.slice(-90); h.run = state; h.updated = Date.now();
+  for (const m of state.party) { const r = m.heroId ? heroes.find(x => x.id === m.heroId) : h; if (r && (r === h || r.inParty === h.id)) r.char = m.char; }
   saveHeroes();
 }
 function loadPrefs() { try { return JSON.parse(localStorage.getItem(PREF_KEY)) || {}; } catch (e) { return {}; } }
@@ -858,13 +903,16 @@ function los(x0, z0, x1, z1) {
 function computeVisibility() {
   vis = new Uint8Array(W * H);
   if (!MAP.fog || !playing()) { vis.fill(1); return; }
-  const R = MAP.sight || 7, hx = state.pos.x, hz = state.pos.z;
-  for (let z = Math.max(0, hz - R); z <= Math.min(H - 1, hz + R); z++)
-    for (let x = Math.max(0, hx - R); x <= Math.min(W - 1, hx + R); x++) {
-      const dx = x - hx, dz = z - hz;
-      if (dx * dx + dz * dz > (R + 0.5) * (R + 0.5)) continue;
-      if (los(hx, hz, x, z)) { vis[z * W + x] = 1; state.explored[z * W + x] = 1; }
-    }
+  const R = MAP.sight || 7;
+  for (const m of state.party) {
+    const hx = m.pos.x, hz = m.pos.z;
+    for (let z = Math.max(0, hz - R); z <= Math.min(H - 1, hz + R); z++)
+      for (let x = Math.max(0, hx - R); x <= Math.min(W - 1, hx + R); x++) {
+        const dx = x - hx, dz = z - hz;
+        if (vis[z * W + x] || dx * dx + dz * dz > (R + 0.5) * (R + 0.5)) continue;
+        if (los(hx, hz, x, z)) { vis[z * W + x] = 1; state.explored[z * W + x] = 1; }
+      }
+  }
 }
 
 /* ================================================================== *
@@ -2962,10 +3010,11 @@ function kegBlast(c) {
       addLog('hit', `The blast hits the ${MONSTERS[o.type].name.toLowerCase()} for <b>${dmg}</b> fire${sv ? ' (half)' : ''}.`);
       damageCreature(o, dmg, 'dmg');
     }
-    if (cheb(state.pos, c) <= 1 && state.char.hp > 0) {
-      const r = roll(1, 20)[0], sv = r + mod(state.char.abilities.dex) >= 13;
-      hurtHero(sv ? Math.floor(full / 2) : full, `Caught in the keg blast${sv ? ' (Dex save, half)' : ''}`);
-    }
+    state.party.forEach((m, i) => {
+      if (cheb(m.pos, c) > 1 || m.char.hp <= 0) return;
+      const sv = roll(1, 20)[0] + mod(m.char.abilities.dex) >= 13;
+      hurtMember(i, sv ? Math.floor(full / 2) : full, `Caught in the keg blast${sv ? ' (Dex save, half)' : ''}`);
+    });
     refresh(); save();
   });
 }
@@ -2975,7 +3024,7 @@ function summonDead(lich) {
   const spots = [];
   for (let dz = -2; dz <= 2; dz++) for (let dx = -2; dx <= 2; dx++) {
     const x = lich.x + dx, z = lich.z + dz;
-    if ((dx || dz) && WALKABLE.has(tileAt(x, z)) && !state.creatures.some(c => c.alive && c.x === x && c.z === z) && !(state.pos.x === x && state.pos.z === z)) spots.push({ x, z });
+    if ((dx || dz) && WALKABLE.has(tileAt(x, z)) && !state.creatures.some(c => c.alive && c.x === x && c.z === z) && !partyAt(x, z)) spots.push({ x, z });
   }
   spots.sort(() => Math.random() - 0.5);
   let id = Math.max(0, ...state.creatures.map(c => c.id)) + 1;
@@ -3172,7 +3221,8 @@ function descend() {
   showModal(next.floor ? `Floor ${next.floor}: ${next.name}` : next.name, `<p>${esc(MAP.stairsText || 'The stairs wind down into the dark.')}</p>
     <p class="muted">You keep your hit points, gear and gold. Spell slots come back as you catch your breath on the stairs.</p>`, [
     { label: 'Descend', primary: true, fn: () => {
-      const st = freshState(MAP.next, state.char);
+      const st = freshState(MAP.next, partyChars());
+      st.partyMode = state.partyMode; st.party.forEach((m, i) => { m.heroId = state.party[i].heroId; });
       st.stats = { ...state.stats }; st.danger = { steps: 0, noise: 0, waves: 0, rests: state.danger?.rests || 0 };
       enterPlay(st, mode === 'test' ? 'test' : 'play');
       SFX.door();
@@ -3213,7 +3263,7 @@ function setTile(x, z, ch, rebuild = false) {
 const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
 const solidAt = (x, z) => !WALKABLE.has(tileAt(x, z)) || !!(fxGrid[z * W + x] & ICE);
 function occupied(x, z, mover) {
-  if (mover !== 'hero' && state.pos.x === x && state.pos.z === z) return true;
+  for (let i = 0; i < state.party.length; i++) { const q = state.party[i].pos; if (q.x === x && q.z === z && (mover !== 'hero' || i !== state.active)) return true; }
   return state.creatures.some(c => c.alive && c !== mover && c.x === x && c.z === z);
 }
 function dijkstra(sx, sz, budget, mover) {
@@ -3261,7 +3311,7 @@ function placeHero() { hero.position.copy(worldOf(state.pos.x, state.pos.z)); }
 function finishMove(stopped) {
   const a = anim; anim = null;
   if (stopped && a.combat && !exploring()) state.turn.move += a.total - a.costs[a.i];
-  placeHero(); refresh(); save();
+  placeHero(); followLeader(); refresh(); save();
   if (!stopped && a.then) a.then();
 }
 
@@ -3297,7 +3347,7 @@ function wakeCreatures() {
   const woke = [];
   for (const c of state.creatures) {
     if (!c.alive || c.aware || c.dormant || MONSTERS[c.type].ai === 'none') continue;
-    if (cheb(c, state.pos) <= 8 && los(c.x, c.z, state.pos.x, state.pos.z)) { c.aware = true; woke.push(c); }
+    if (state.party.some(m => cheb(c, m.pos) <= 8 && los(c.x, c.z, m.pos.x, m.pos.z))) { c.aware = true; woke.push(c); }
   }
   for (const w of [...woke]) for (const c of state.creatures)   // the noise wakes their friends
     if (c.alive && !c.aware && !c.dormant && MONSTERS[c.type].ai !== 'none' && cheb(c, w) <= 4 && los(c.x, c.z, w.x, w.z)) { c.aware = true; woke.push(c); }
@@ -3328,7 +3378,7 @@ function dirWord(dx, dz) {
 }
 function spawnWanderers(minD, maxD, why) {
   const field = dijkstra(state.pos.x, state.pos.z, Infinity, 'field').dist;
-  const free = i => { const x = i % W, z = (i / W) | 0; return tileAt(x, z) === '.' && !state.traps[keyOf(x, z)] && !state.creatures.some(c => c.x === x && c.z === z) && !(x === state.pos.x && z === state.pos.z); };
+  const free = i => { const x = i % W, z = (i / W) | 0; return tileAt(x, z) === '.' && !state.traps[keyOf(x, z)] && !state.creatures.some(c => c.x === x && c.z === z) && !partyAt(x, z); };
   let cands = [];
   for (let i = 0; i < W * H; i++) if (field[i] >= minD && field[i] <= maxD && free(i) && !vis[i]) cands.push(i);
   if (!cands.length) for (let i = 0; i < W * H; i++) if (field[i] >= minD && field[i] <= maxD + 6 && free(i)) cands.push(i);
@@ -3385,12 +3435,12 @@ function makeCamp() {
   const c = state.char, D = danger(); D.rests++;
   const risk = Math.min(5, 1 + D.rests), r = roll(1, 6)[0];
   if (r <= risk) {
-    c.hp += Math.floor((derived().maxHp - c.hp) / 2);
+    for (const m of state.party) m.char.hp = Math.max(1, m.char.hp + Math.floor((maxHpOf(m.char) - m.char.hp) / 2));
     addLog('hit', `<b>You make camp in the dark.</b> <span class="r">d6 ${r}: interrupted on ${risk} or less</span>`);
     D.waves = Math.min(D.waves, 3);
     if (spawnWanderers(3, 8, 'You jolt awake with only half a rest behind you.')) startCombat();
   } else {
-    c.hp = derived().maxHp; c.slots = freshSlots();
+    for (const m of state.party) { m.char.hp = maxHpOf(m.char); m.char.slots = freshSlots(); }
     addLog('heal', `<b>You make camp in the dark</b> and sleep in fits. Nothing finds you: full HP and spell slots. <span class="r">d6 ${r}</span>`);
     toast('You rest undisturbed. Each camp is riskier than the last.');
   }
@@ -3418,8 +3468,185 @@ function updateDread() {
   $('soundBtn').textContent = SFX.on ? 'Sound on' : 'Sound off';
   $('menuBtn').textContent = mode === 'edit' ? `☰ Menu · ${ed.map.name}` : mode === 'test' ? '← Back to the editor' : `☰ Menu · ${MAP.floor ? `Floor ${MAP.floor}: ` : ''}${MAP.name}`;
 }
+/* ================================================================== *
+ * THE PARTY: several adventurers on one board. state.char, state.pos and state.turn always mean
+ * whoever is acting; the others stand on the board as painted minis and follow the leader.
+ * ================================================================== */
+const PARTY_MAX = 4;
+const allyViews = new Map();   // member id → { g, pivot, ring, anim }
+const partyAt = (x, z) => state.party.some(m => m.pos.x === x && m.pos.z === z);
+const partyUp = () => state.party.some(m => m.char.hp > 0);
+const partyChars = () => state.party.map(m => m.char);
+const firstUp = () => state.party.findIndex(m => m.char.hp > 0);
+const freshTurn = c => ({ move: Math.floor(c.speed / 5), action: true });
+// a painted copy of an adventurer's mini, posed and dressed as they are now
+function snapshotMember(idx) {
+  const keep = state.active, saved = [anim, lunge, castT, heroFlash];
+  state.active = idx; anim = null; lunge = 0; castT = 0; heroFlash = 0;
+  dressHero(); animateHuman(1, 0);
+  for (const mm of heroFlashMats) mm.emissive?.setScalar(0);
+  const g = new THREE.Group(), pivot = new THREE.Group(); g.add(pivot);
+  for (const ch of hero.children) if (ch !== heroRing && ch.visible) pivot.add(ch.clone(true));
+  pivot.traverse(o => {
+    if (!o.isMesh) return;
+    o.material = Array.isArray(o.material) ? o.material.map(x => x.clone()) : o.material.clone();
+    for (const mm of [].concat(o.material)) mm.userData.rim = false;
+  });
+  paintRim(pivot);
+  state.active = keep; [anim, lunge, castT, heroFlash] = saved;
+  dressHero();
+  return { g, pivot };
+}
+function buildAllies() {
+  for (const v of allyViews.values()) { v.g.traverse(o => { if (o.isMesh) [].concat(o.material).forEach(m => m.dispose()); }); v.g.removeFromParent(); }
+  allyViews.clear();
+  if (!state.party || state.party.length < 2 || !playing()) return;
+  state.party.forEach((m, i) => {
+    if (i === state.active) return;
+    const { g, pivot } = snapshotMember(i);
+    const ring = new THREE.Mesh(new THREE.RingGeometry(0.43, 0.5, 40), new THREE.MeshBasicMaterial({ color: m.char.color, transparent: true, opacity: 0.55, side: THREE.DoubleSide, toneMapped: false }));
+    ring.rotation.x = -Math.PI / 2; ring.position.y = 0.012; ring.userData.noShadow = true; g.add(ring);
+    g.position.copy(worldOf(m.pos.x, m.pos.z)); g.rotation.y = m.face ?? 0;
+    if (m.char.hp <= 0) pivot.rotation.x = -1.35;
+    tagAll(g, 'ally', { member: m.id });
+    scene.add(g); allyViews.set(m.id, { g, pivot, ring, anim: null });
+  });
+}
+// hand control to another adventurer
+function switchTo(idx, { cam = true } = {}) {
+  if (idx === state.active || !state.party[idx]) return;
+  state.party[state.active].face = hero.rotation.y;
+  if (ui.spell) { ui.spell = null; ui.aim = null; $('aim').hidden = true; }
+  clearPath();
+  state.active = idx;
+  hero.rotation.y = state.party[idx].face ?? hero.rotation.y; faceAt = null;
+  dressHero(); placeHero(); buildAllies();
+  if (cam && playing()) camToHero(0.6);
+  refresh();
+}
+function clickAlly(id) {
+  const idx = state.party.findIndex(m => m.id === id), m = state.party[idx]; if (!m || busy || anim) return;
+  if (m.char.hp <= 0) return approach(m.pos.x, m.pos.z, () => helpAlly(idx));
+  if (!exploring() && state.partyMode === 'turns') return toast(`It's ${state.char.name}'s turn. ${m.char.name} acts after.`);
+  switchTo(idx);
+}
+function cycleMember() {
+  if (state.party.length < 2 || busy || anim) return;
+  if (!exploring() && state.partyMode === 'turns') return toast(`Turns go in order: it's ${state.char.name}'s turn.`);
+  for (let k = 1; k < state.party.length; k++) { const i = (state.active + k) % state.party.length; if (state.party[i].char.hp > 0) return switchTo(i); }
+}
+// get a fallen friend back on their feet: a potion if you carry one, otherwise a hard shake
+function helpAlly(idx) {
+  const m = state.party[idx];
+  if (!exploring() && !state.turn.action) return toast('Helping an ally takes your action, and it is already spent.');
+  if (!exploring()) state.turn.action = false;
+  const pk = ['potion', 'greater', 'goblinStew'].find(k => invEntry(k));
+  let amount = 1;
+  if (pk) { const [n, d, b] = ITEMS[pk].heal; amount = sum(roll(n, d)) + b; removeOne(pk); }
+  m.char.hp = Math.min(maxHpOf(m.char), Math.max(0, m.char.hp) + amount);
+  addLog('heal', pk ? `${state.char.name} pours a ${ITEMS[pk].name} down ${m.char.name}'s throat: <b>+${amount}</b> HP.` : `${state.char.name} hauls ${m.char.name} back to their feet (1 HP).`);
+  floatText(`+${amount}`, worldOf(m.pos.x, m.pos.z).add(new THREE.Vector3(0, 1.2, 0)), 'heal');
+  SFX.coins();
+  buildAllies(); refresh(); save();
+}
+function hurtMember(idx, n, what) {
+  if (idx === state.active) return hurtHero(n, what);
+  const m = state.party[idx]; if (m.char.hp <= 0) return;
+  m.char.hp = Math.max(0, m.char.hp - n);
+  floatText(`-${n}`, worldOf(m.pos.x, m.pos.z).add(new THREE.Vector3(0, 1.2, 0)), 'dmg');
+  addLog('hit', `${what}: ${m.char.name} takes <b>${n}</b> (${m.char.hp}/${maxHpOf(m.char)}).`);
+  const v = allyViews.get(m.id); if (v) v.pivot.rotation.z = 0.2;
+  if (m.char.hp === 0) { addLog('hit', `<b>${m.char.name} falls unconscious!</b>`); buildAllies(); if (!partyUp()) after(0.6, defeat); }
+}
+// the active adventurer has dropped: someone else carries on
+function memberDown() {
+  const c = state.char;
+  addLog('hit', `<b>${c.name} falls unconscious!</b> Get them up with a potion (click them from next to them), or win the fight and they'll come round.`);
+  toast(`${c.name} is down!`);
+  state.party[state.active].done = true;
+  if (busy) return;   // the enemy turn carries on and picks a new target
+  after(0.9, () => {
+    if (state.char.hp > 0 || state.over) return;
+    const next = state.partyMode === 'turns' && !exploring() ? state.party.findIndex(m => !m.done && m.char.hp > 0) : firstUp();
+    if (next >= 0) switchTo(next); else if (!exploring()) endTurn();
+  });
+}
+// who a monster goes for: the closest adventurer still standing, the weakest on a tie
+function targetFor(c) {
+  let best = -1, bd = Infinity;
+  state.party.forEach((m, i) => { if (m.char.hp <= 0) return; const d = cheb(c, m.pos) * 100 + m.char.hp; if (d < bd) { bd = d; best = i; } });
+  return best;
+}
+// out of a fight, the rest of the party trails after whoever is leading
+function followLeader() {
+  if (!exploring() || state.party.length < 2) return;
+  const lead = state.pos, taken = [];
+  state.party.forEach((m, i) => {
+    if (i === state.active || m.char.hp <= 0) return;
+    if (cheb(m.pos, lead) <= 2 && !taken.some(t => t.x === m.pos.x && t.z === m.pos.z)) { taken.push(m.pos); return; }
+    const r = dijkstra(m.pos.x, m.pos.z, 60, 'ally');
+    let best = -1;
+    for (const rad of [1, 2, 3]) {
+      for (let z = lead.z - rad; z <= lead.z + rad; z++) for (let x = lead.x - rad; x <= lead.x + rad; x++) {
+        if (x < 0 || z < 0 || x >= W || z >= H) continue;
+        const k = z * W + x; if (!(r.dist[k] < Infinity) || taken.some(t => t.x === x && t.z === z) || partyAt(x, z) || state.traps[keyOf(x, z)]?.found) continue;
+        if (best < 0 || r.dist[k] < r.dist[best]) best = k;
+      }
+      if (best >= 0) break;
+    }
+    if (best < 0) return;
+    const path = pathFrom(r, best % W, (best / W) | 0);
+    m.pos = { x: best % W, z: (best / W) | 0 }; taken.push(m.pos);
+    const v = allyViews.get(m.id); if (v && path.length > 1) v.anim = { path, i: 0, t: 0 };
+  });
+}
+function allyTick(dt) {
+  for (const [id, v] of allyViews) {
+    if (v.pivot.rotation.z) v.pivot.rotation.z *= Math.max(0, 1 - dt * 6);
+    const a = v.anim; if (!a) continue;
+    a.t += dt / (reduceMotion ? 0.06 : 0.16);
+    while (a.t >= 1 && v.anim) { a.t -= 1; a.i++; if (a.i >= a.path.length - 1) { v.anim = null; const m = state.party.find(q => q.id === id); v.g.position.copy(worldOf(m.pos.x, m.pos.z)); } }
+    if (v.anim) {
+      const p0 = worldOf(a.path[a.i].x, a.path[a.i].z), p1 = worldOf(a.path[a.i + 1].x, a.path[a.i + 1].z);
+      v.g.position.lerpVectors(p0, p1, a.t); v.g.position.y += Math.sin(Math.PI * a.t) * 0.12;
+      v.g.rotation.y = Math.atan2(p1.x - p0.x, p1.z - p0.z);
+      const m = state.party.find(q => q.id === id); if (m) m.face = v.g.rotation.y;
+    }
+  }
+}
+// a free square near `from`, for placing companions at the start of a dungeon
+function freeSpotNear(st, from, taken) {
+  const seen = new Set([from.x + ',' + from.z]), q = [from];
+  while (q.length) {
+    const p = q.shift();
+    for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]) {
+      const x = p.x + dx, z = p.z + dz, k = x + ',' + z;
+      if (seen.has(k) || z < 0 || z >= st.grid.length || x < 0 || x >= st.grid[0].length) continue;
+      seen.add(k);
+      if (!WALKABLE.has(st.grid[z][x])) continue;
+      if (!st.creatures.some(c => c.x === x && c.z === z) && !taken.some(t => t.x === x && t.z === z) && !st.traps[keyOf(x, z)]) return { x, z };
+      q.push({ x, z });
+    }
+  }
+  return { ...from };
+}
+const HIRELINGS = ['Dain Holloway', 'Sera Vance', 'Tobin Reed', 'Ilsa Marrow', 'Corran Ash', 'Mira Thorne', 'Jory Quill', 'Hesk Dunmore', 'Aldo Fenn', 'Petra Lark'];
+function hireCompanion() {
+  const c = newCharacter();
+  const taken = new Set(heroes.map(h => h.char.name));
+  c.name = HIRELINGS.find(n => !taken.has(n)) || `Sellsword ${heroes.length + 1}`;
+  c.color = ['#8f3f3f', '#3f8f5a', '#7a5a9a', '#9a7a3a', '#3a6a8a', '#8a5a3a'][Math.floor(Math.random() * 6)];
+  c.skin = SKIN_TONES[Math.floor(Math.random() * SKIN_TONES.length)]; c.hair = HAIR_COLORS[Math.floor(Math.random() * HAIR_COLORS.length)];
+  for (const [k] of ABILITIES) c.abilities[k] = roll4d6();
+  c.hp = maxHpOf(c);
+  const h = { id: uid(), char: c, run: null, updated: Date.now() - 1000 };
+  heroes.push(h); saveHeroes();
+  return h;
+}
+
 function startCombat() {
-  state.turn = { round: state.turn.round, move: derived().speedSq, action: state.turn.action };
+  for (const m of state.party) { m.turn = freshTurn(m.char); m.done = m.char.hp <= 0; }
+  for (const v of allyViews.values()) if (v.anim) v.anim.t = 1e3;   // followers snap into place
   addLog('sys', '<b>Combat!</b> Your turn: move up to 30 ft and take one action, then end your turn.');
   toast('Combat! Your turn.');
   camToHero(0.9);
@@ -3427,6 +3654,10 @@ function startCombat() {
 function checkFightOver(wasCombat) {
   if (wasCombat && exploring()) {
     makeNoise(1);
+    const up = state.party.filter(m => m.char.hp <= 0);
+    for (const m of up) { m.char.hp = 1; addLog('heal', `${m.char.name} groans and gets back up (1 HP).`); }
+    for (const m of state.party) m.done = false;
+    if (up.length) { if (state.char.hp <= 0) state.char.hp = 1; buildAllies(); }
     addLog('sys', 'The fight is over. You can move freely again.');
     toast('The fight is over.');
   }
@@ -3813,14 +4044,17 @@ function takeLoot(c, what) {
   dressHero(); refresh(); save();
 }
 
-function gainXp(n) {
-  const c = state.char; c.xp += n;
+function gainXp(n) {   // everyone still standing shares in the victory
   floatText(`+${n} XP`, above(hero, 1.3), 'xp');
-  while (c.level < 20 && c.xp >= XP_TABLE[c.level]) {
-    const before = derived().maxHp; c.level++;
-    c.hp += derived().maxHp - before;
-    addLog('sys', `<b>Level up!</b> ${c.name} is now level ${c.level}.`);
-    toast(`Level ${c.level}! Max HP is now ${derived().maxHp}.`);
+  for (const m of state.party) {
+    const c = m.char; if (c.hp <= 0) continue;
+    c.xp += n;
+    while (c.level < 20 && c.xp >= XP_TABLE[c.level]) {
+      const before = maxHpOf(c); c.level++;
+      c.hp += maxHpOf(c) - before;
+      addLog('sys', `<b>Level up!</b> ${c.name} is now level ${c.level}.`);
+      toast(`${c.name} reaches level ${c.level}! Max HP is now ${maxHpOf(c)}.`);
+    }
   }
 }
 
@@ -3887,7 +4121,9 @@ async function enemyPhase() {
   const actors = state.creatures.filter(c => c.alive && c.aware && MONSTERS[c.type].ai !== 'none');
   if (actors.length) { $('aim').hidden = false; $('aim').style.setProperty('--c', '#d0604b'); $('aim').textContent = 'Enemy turn'; }
   for (const c of actors) {
-    if (!c.alive || state.char.hp <= 0 || state.over) continue;
+    if (!c.alive || !partyUp() || state.over) continue;
+    const tgt = targetFor(c); if (tgt < 0) break;
+    if (tgt !== state.active) switchTo(tgt, { cam: false });
     const v = views.get(c.id);
     if (v && v.g.visible) { camShot(v.g, hero.position, 0.7); $('aim').textContent = `${MONSTERS[c.type].name}'s turn`; await sleep(reduceMotion ? 0.05 : 0.55); }
     else $('aim').textContent = 'Something moves in the dark…';
@@ -3914,6 +4150,13 @@ function curseDrain() {
 async function endTurn() {
   if (anim || busy || state.over) return;
   cancelSpell();
+  // taking turns: each adventurer acts in order before the monsters go
+  if (!exploring() && state.partyMode === 'turns' && state.party.length > 1) {
+    state.party[state.active].done = true;
+    const next = state.party.findIndex(m => !m.done && m.char.hp > 0);
+    if (next >= 0) { switchTo(next); addLog('sys', `${state.char.name}'s turn.`); toast(`${state.char.name}'s turn`); save(); return; }
+  }
+  const lead = state.active;
   // lingering spells act at the end of the round
   for (const e of state.effects) if (e.type === 'firewall') {
     const dice = roll(4, 8);
@@ -3927,14 +4170,19 @@ async function endTurn() {
     addLog('spell', `${SPELLS[e.type].name} ends.`);
   }
   if (isCursed()) curseDrain();
-  if (!exploring() && state.char.hp > 0) await enemyPhase();
+  if (!exploring() && partyUp()) await enemyPhase();
   if (state.over) return;
-  const t = state.turn; t.round++; t.move = derived().speedSq; t.action = true;
+  state.round++;
+  for (const m of state.party) { m.turn = freshTurn(m.char); m.done = m.char.hp <= 0; }
+  if (!exploring() && state.party.length > 1) {
+    const first = state.partyMode === 'turns' || state.party[lead].char.hp <= 0 ? firstUp() : lead;
+    if (first >= 0 && first !== state.active) switchTo(first);
+  }
   for (const c of state.creatures) if (!c.alive && MONSTERS[c.type].respawn) {
     c.alive = true; c.hp = MONSTERS[c.type].hp; c.restrained = false;
     addLog('sys', `The ${MONSTERS[c.type].name.toLowerCase()} is propped back up.`);
   }
-  if (!exploring()) addLog('sys', `Round ${t.round}. Your turn.`);
+  if (!exploring()) addLog('sys', `Round ${state.round}. ${state.party.length > 1 ? `${state.char.name}'s` : 'Your'} turn.`);
   refresh(); save();
 }
 
@@ -3965,7 +4213,8 @@ function hurtHero(n, what, cls = 'dmg') {
   const hf = $('hitflash'); hf.classList.remove('go'); void hf.offsetWidth; hf.classList.add('go');
   addLog('hit', `${what}: ${c.name} takes <b>${n}</b> (${c.hp}/${derived().maxHp}).`);
   if (c.hp === 0) {
-    if (state.creatures.some(cr => MONSTERS[cr.type].ai !== 'none') || grim()) after(0.6, defeat);
+    if (state.party.length > 1 && partyUp()) memberDown();
+    else if (state.creatures.some(cr => MONSTERS[cr.type].ai !== 'none') || grim()) after(0.6, defeat);
     else toast(`${c.name} is at 0 HP. Heal or take a long rest from the sheet.`);
   }
 }
@@ -3974,7 +4223,7 @@ function hurtHero(n, what, cls = 'dmg') {
 function defeat() {
   if (state.over) return;
   state.over = 'defeat'; busy = false; save(); SFX.doom();
-  showModal('You have fallen', `<p>${state.char.name} collapses on the cold stones of ${theName(MAP.name)}. Somewhere in the dark, something laughs.</p>`, [
+  showModal(state.party.length > 1 ? 'Your party has fallen' : 'You have fallen', `<p>${state.party.length > 1 ? 'The last of you' : state.char.name} collapses on the cold stones of ${theName(MAP.name)}. Somewhere in the dark, something laughs.</p>`, [
     { label: 'Try again', primary: true, fn: () => restartMap(state.mapKey, state.startChar) },
     mode === 'test' ? { label: 'Back to the editor', fn: () => openEditor(ed.id, true) } : { label: 'Main menu', fn: () => toMenu() },
   ]);
@@ -3993,15 +4242,16 @@ function victory() {
       <div><span>Level</span><b>${state.char.level} (${state.char.xp} XP)</b></div>
     </div>`, [
     ...(mode === 'test' ? [{ label: 'Back to the editor', primary: true, fn: () => openEditor(ed.id, true) }]
-      : [{ label: 'Play again with this character', primary: true, fn: () => restartMap(state.mapKey, state.char) }, { label: 'Main menu', fn: () => toMenu() }]),
+      : [{ label: 'Play again with this character', primary: true, fn: () => restartMap(state.mapKey, partyChars()) }, { label: 'Main menu', fn: () => toMenu() }]),
     { label: 'Keep exploring' },
   ]);
 }
 function restartMap(key, char) {
   cancelSpell(); clearVisuals(); anim = null; busy = false;
+  const keep = { mode: state.partyMode, ids: state.party.map(m => m.heroId) };
   state = freshState(key, char);
+  state.partyMode = keep.mode; state.party.forEach((m, i) => { m.heroId = keep.ids[i]; m.char.hp = maxHpOf(m.char); });
   MAP = MAPS[key]; W = MAP.rows[0].length; H = MAP.rows.length;
-  state.char.hp = derived().maxHp;
   bootBoard();
   addLog('sys', `${MAP.name}: ${state.char.name} starts fresh.`);
   refresh(); save();
@@ -4095,10 +4345,12 @@ function cast(key, x, z) {
     castFireball({ x, z }, () => {
       const dice = roll(8, 6);
       for (const c of state.creatures) if (c.alive && inTiles(c)) spellHit(sp, c, 'The fireball engulfs', dice);
-      if (inTiles(state.pos)) {
-        const r = roll(1, 20)[0] + mod(state.char.abilities.dex), saved = r >= derived().spellDc;
-        hurtHero(saved ? Math.floor(sum(dice) / 2) : sum(dice), `Caught in your own fireball${saved ? ' (Dex save, half)' : ''}`);
-      }
+      const dc = derived().spellDc, caster = state.char.name;
+      state.party.forEach((m, i) => {
+        if (!inTiles(m.pos) || m.char.hp <= 0) return;
+        const saved = roll(1, 20)[0] + mod(m.char.abilities.dex) >= dc;
+        hurtMember(i, saved ? Math.floor(sum(dice) / 2) : sum(dice), `${i === state.active ? 'Caught in your own fireball' : `Caught in ${caster}'s fireball`}${saved ? ' (Dex save, half)' : ''}`);
+      });
       finish();
     });
     refresh(); return;
@@ -4207,7 +4459,7 @@ function renderHud() {
   const t = state.turn, ex = exploring();
   const foes = state.creatures.filter(c => c.alive && c.aware && MONSTERS[c.type].ai !== 'none').length;
   const hc = ui.hover && creatureById(ui.hover);
-  $('hudChips').innerHTML = ex ? '' : `<span class="chip combat"><i class="dot"></i>Combat · ${foes} ${foes === 1 ? 'foe' : 'foes'} · Round <b>${t.round}</b></span>`;
+  $('hudChips').innerHTML = ex ? '' : `<span class="chip combat"><i class="dot"></i>Combat · ${foes} ${foes === 1 ? 'foe' : 'foes'} · Round <b>${state.round}</b></span>`;
   if (hc && !hc.alive && hc.loot && !hc.looted) $('hudChips').innerHTML += `<span class="chip">${MONSTERS[hc.type].name} remains · click to search</span>`;
   if (hc && hc.alive) { const m = MONSTERS[hc.type];
     $('hudChips').innerHTML += `<span class="chip target">${m.name} <b>${hc.hp}/${m.hp}</b> HP · AC ${m.ac}${hc.restrained ? ' · <b style="color:#a6e07a">Restrained</b>' : ''}</span>`; }
@@ -4236,9 +4488,20 @@ function renderHud() {
       <span class="k">7</span><span class="ic">»</span>Dash</button>`;
   $('endBtn').disabled = busy;
   $('endBtn').textContent = ex ? 'Wait' : 'End turn';
-  $('turnInfo').innerHTML = ex ? 'Exploring' : busy ? 'Enemy turn…' : `Move <b>${t.move * 5} ft</b> · ${t.action ? 'action ready' : 'action used'}`;
+  const who = state.party.length > 1 ? `<b style="color:var(--ink)">${esc(c.name)}</b><br>` : '';
+  $('partyFrames').hidden = state.party.length < 2;
+  $('partyFrames').innerHTML = state.party.length < 2 ? '' : `<span class="pf-mode">${state.partyMode === 'turns' ? 'Taking turns' : 'Commanding the party'} · Tab</span>` + state.party.map((m, i) => {
+    const mf = m.char.hp / maxHpOf(m.char), st = m.char.hp <= 0 ? 'Down' : i === state.active ? (ex ? 'Leading' : 'Acting') : ex ? '' : m.done ? 'Done' : 'Ready';
+    return `<button class="pf ${i === state.active ? 'on' : ''} ${m.char.hp <= 0 ? 'down' : ''}" data-member="${i}" title="${esc(m.char.name)}">
+      <span class="por" style="--c:${esc(m.char.color)}">${esc((m.char.name || '?')[0])}</span>
+      <span class="vt"><span class="nm"><b>${esc(m.char.name)}</b><span class="muted">${st}</span></span>
+      <span class="hpbar2 ${mf <= 0.35 ? 'low' : ''}"><i style="width:${Math.max(0, mf * 100)}%"></i><span>${Math.max(0, m.char.hp)} / ${maxHpOf(m.char)}</span></span></span></button>`;
+  }).join('');
+  $('turnInfo').innerHTML = ex ? `${who}Exploring` : busy ? 'Enemy turn…' : `${who}Move <b>${t.move * 5} ft</b> · ${t.action ? 'action ready' : 'action used'}`;
   for (const b of document.querySelectorAll('[data-panel]')) b.setAttribute('aria-pressed', ui.panelOpen && ui.tab === b.dataset.panel);
   $('camLbl').textContent = CAM.auto ? 'Follow cam' : 'Free cam';
+  $('modeBtn').hidden = state.party.length < 2;
+  $('modeLbl').textContent = state.partyMode === 'turns' ? 'Take turns' : 'Command all';
 }
 
 function renderSheet() {
@@ -4460,8 +4723,9 @@ $('panel').addEventListener('click', e => {
     case 'rest':
       if (!exploring()) { toast('You can\'t rest with enemies hunting you.'); return; }
       if (grim()) { makeCamp(); return; }
-      c.hp = derived().maxHp; c.slots = freshSlots();
-      addLog('heal', `${c.name} takes a long rest: full HP and spell slots.`); break;
+      for (const m of state.party) { m.char.hp = maxHpOf(m.char); m.char.slots = freshSlots(); }
+      buildAllies();
+      addLog('heal', `${state.party.length > 1 ? 'The party takes' : `${c.name} takes`} a long rest: full HP and spell slots.`); break;
     case 'equip': equip(k); dressHero(); break;
     case 'unequip': unequip(k); dressHero(); break;
     case 'use': useItem(k); break;
@@ -4493,6 +4757,18 @@ function setPanel(tab) {
 }
 $('sideBtns').addEventListener('click', e => { const b = e.target.closest('[data-panel]'); if (b) setPanel(b.dataset.panel); });
 $('vitals').addEventListener('click', () => setPanel('sheet'));
+$('partyFrames').addEventListener('click', e => {
+  const b = e.target.closest('[data-member]'); if (!b) return;
+  const i = +b.dataset.member, m = state.party[i];
+  if (i === state.active) return setPanel('sheet');
+  clickAlly(m.id);
+});
+$('modeBtn').addEventListener('click', () => {
+  if (!exploring()) return toast('Change how the party plays between fights.');
+  state.partyMode = state.partyMode === 'turns' ? 'all' : 'turns'; save();
+  toast(state.partyMode === 'turns' ? 'Take turns: in a fight each adventurer acts in order. Good for friends sharing a screen.' : 'Command the party: in a fight, switch between adventurers freely; End turn ends everyone\'s turn.');
+  refresh();
+});
 $('panelClose').addEventListener('click', () => setPanel(null));
 $('camBtn').addEventListener('click', () => { CAM.auto = !CAM.auto; savePrefs(); toast(CAM.auto ? 'Follow cam: the camera swings to whoever is acting.' : 'Free cam: the camera follows, but you choose the angle.'); refresh(); });
 $('viewBtn').addEventListener('click', resetView);
@@ -4509,6 +4785,8 @@ window.addEventListener('keydown', e => {
   else if (e.key === ' ') { e.preventDefault(); if (!busy && !anim) endTurn(); }
   else if ({ c: 'sheet', i: 'inv', k: 'spells', l: 'log' }[key]) setPanel({ c: 'sheet', i: 'inv', k: 'spells', l: 'log' }[key]);
   else if (key === 'v') $('camBtn').click();
+  else if (e.key === 'Tab') { e.preventDefault(); cycleMember(); }
+  else if (key === 'p') $('modeBtn').click();
   else if (key === 'r') resetView();
 });
 
@@ -4530,6 +4808,7 @@ function pick(e) {
   raycaster.setFromCamera(ndc, camera);
   const targets = [hero];
   for (const v of views.values()) if (v.g.visible) targets.push(v.g);
+  for (const v of allyViews.values()) targets.push(v.g);
   for (const m of tileMeshes) if (m && m.visible) targets.push(m);
   for (const p of props) if (p.o.visible) targets.push(p.o);
   const hit = raycaster.intersectObjects(targets, true).find(h => h.object.userData.kind && h.object.userData.kind !== 'deco' && shown(h.object));
@@ -4542,7 +4821,7 @@ function pick(e) {
   if (u.kind === 'creature') { const c = creatureById(u.cid); if (!c) return null; if (!c.alive) return c.loot && !c.looted ? { kind: 'corpse', cid: c.id, x: c.x, z: c.z } : { kind: 'tile', x: c.x, z: c.z }; }
   return u;
 }
-const tileOf = p => !p ? null : p.kind === 'creature' ? (c => ({ x: c.x, z: c.z }))(creatureById(p.cid)) : p.kind === 'hero' ? { ...state.pos } : { x: p.x, z: p.z };
+const tileOf = p => !p ? null : p.kind === 'ally' ? { ...state.party.find(m => m.id === p.member).pos } : p.kind === 'creature' ? (c => ({ x: c.x, z: c.z }))(creatureById(p.cid)) : p.kind === 'hero' ? { ...state.pos } : { x: p.x, z: p.z };
 const hoverBox = new THREE.LineLoop(
   new THREE.BufferGeometry().setFromPoints([[-.46, -.46], [.46, -.46], [.46, .46], [-.46, .46]].map(([a, b]) => new THREE.Vector3(a, 0, b))),
   new THREE.LineBasicMaterial({ color: '#d3aa55', toneMapped: false }));
@@ -4570,7 +4849,7 @@ canvas.addEventListener('pointermove', e => {
   canvas.style.cursor = 'grab'; clearPath();
   if (!p) return;
   if (p.kind === 'creature') { canvas.style.cursor = canAttack(creatureById(p.cid)) ? 'crosshair' : 'pointer'; return; }
-  if (p.kind === 'corpse') { canvas.style.cursor = 'pointer'; return; }
+  if (p.kind === 'corpse' || p.kind === 'ally') { canvas.style.cursor = 'pointer'; return; }
   const ch = tileAt(p.x, p.z), tr = state.traps[keyOf(p.x, p.z)];
   if (p.kind === 'prop' && !WALKABLE.has(ch) || (tr && tr.found)) { canvas.style.cursor = 'pointer'; return; }
   if ((p.kind === 'tile' || p.kind === 'prop') && reachable(p.x, p.z)) { showPath(p.x, p.z); canvas.style.cursor = 'pointer'; }
@@ -4587,7 +4866,8 @@ canvas.addEventListener('pointerup', e => {
   if (!p) return;
   if (p.kind === 'creature') return attack(creatureById(p.cid));
   if (p.kind === 'corpse') return approach(p.x, p.z, () => openLoot(creatureById(p.cid)));
-  if (p.kind === 'hero') { ui.tab = 'sheet'; return renderPanel(); }
+  if (p.kind === 'hero') return setPanel('sheet');
+  if (p.kind === 'ally') return clickAlly(p.member);
   const ch = tileAt(p.x, p.z), tr = state.traps[keyOf(p.x, p.z)];
   if ((p.kind === 'prop' || !WALKABLE.has(ch)) && !isWall(ch) && !WALKABLE.has(ch) && ch !== 'w' && ch !== 'l' || (tr && tr.found)) return interact(p.x, p.z);
   if (isWall(ch)) return toast('Solid stone. Try searching nearby walls for secrets.');
@@ -4660,7 +4940,7 @@ function resize() {
 new ResizeObserver(resize).observe(stage);
 
 function bootBoard(keepView) {
-  buildBoard(); rebuildCreatures(); dressHero(); placeHero();
+  buildBoard(); rebuildCreatures(); dressHero(); placeHero(); buildAllies();
   rebuildFxGrid();
   for (const e of state.effects) spawnVisual(e, true);
   computeVisibility(); applyFog(); if (!keepView) resetView();
@@ -4728,7 +5008,8 @@ function tick() {
   heroFlash = Math.max(0, heroFlash - dt * 3);
   for (const m of heroFlashMats) m.emissive.copy(RED).multiplyScalar(heroFlash * 0.8);
   castT = Math.max(0, castT - dt);
-  animateHuman(dt, time);
+  animateHuman(dt, time); allyTick(dt);
+  { const lay = state.char.hp <= 0 && playing() ? -1.35 : 0; for (const o of [human?.root, heroModel]) if (o) o.rotation.x += (lay - o.rotation.x) * Math.min(1, dt * 6); }
   heroRing.material.opacity = 0.55 + Math.sin(time * 3) * 0.3;
   heroLight.position.copy(hero.position).add(tmp.set(0, 1.6, 0));
 
@@ -4881,9 +5162,8 @@ function stopPlay() { cancelSpell(); clearVisuals(); anim = null; busy = false; 
 function enterPlay(st, m = 'play', fresh = false) {
   stopPlay(); hideScreens();
   setMode(m);
-  state = st; useMap(state.mapKey);
-  migrateChar(state.char);
-  if (fresh) state.char.hp = derived().maxHp;
+  state = linkParty(st); useMap(state.mapKey);
+  for (const m of state.party) { migrateChar(m.char); if (fresh) m.char.hp = maxHpOf(m.char); }
   bootBoard(); hero.visible = true;
   refresh(); save();
 }
@@ -4917,14 +5197,16 @@ const MAP_DESC = {
   crypt: 'A flooded crypt full of the restless dead, a cursed crown and a Grave Warden guarding the only way out.',
   trainingYard: 'A sunny practice yard with a training dummy. Test your spells and gear with nothing on the line.',
 };
+const leaderOf = h => { const l = h.inParty && heroById(h.inParty); return l && l.run && !l.run.over && l.run.party?.some(m => m.heroId === h.id) ? l : null; };
 function heroStatus(h) {
+  const l = leaderOf(h); if (l) return `Adventuring with ${esc(l.char.name)}`;
   const r = h.run;
   if (!r) return 'Ready for an expedition';
   if (!MAPS[r.mapKey]) return 'Their dungeon no longer exists';
   if (r.over === 'defeat') return `Fell in ${esc(theName(MAPS[r.mapKey].name))}`;
-  return `${MAPS[r.mapKey].floor ? `Floor ${MAPS[r.mapKey].floor}, ` : 'In '}${esc(theName(MAPS[r.mapKey].name))} · ${r.char.hp}/${maxHpOf(r.char)} HP`;
+  return `${MAPS[r.mapKey].floor ? `Floor ${MAPS[r.mapKey].floor}, ` : 'In '}${esc(theName(MAPS[r.mapKey].name))}${r.party?.length > 1 ? ` · party of ${r.party.length}` : ''}`;
 }
-const canContinue = h => h.run && !h.run.over && MAPS[h.run.mapKey];
+const canContinue = h => !!leaderOf(h) || !!(h.run && !h.run.over && MAPS[h.run.mapKey]);
 const back = (to = 'title') => `<button class="btn" data-go="${to}">Back</button>`;
 const swatches = (list, cur, act) => list.map(t => `<button class="sw ${cur === t ? 'on' : ''}" style="--sw:${t}" data-act="${act}" data-k="${t}" aria-label="${t}"></button>`).join('');
 const seg = (act, cur, opts) => `<div class="seg" role="group">${opts.map(([k, l]) => `<button data-act="${act}" data-k="${k}" aria-pressed="${cur === k}">${l}</button>`).join('')}</div>`;
@@ -5003,6 +5285,14 @@ const SCREENS = {
           <span class="muted">${m.floors ? `${m.floors} floors, from sunlit ruins to the lich's throne` : `${m.rows[0].length}×${m.rows.length} squares · ${m.dark ? 'dark, fog of war' : 'lit'} · ${monsterCount(m)} monsters`}</span></span></label>`; }).join('')}</div>
       ${h.char.level > 1 || h.run ? `<label class="toggle"><input type="checkbox" id="freshStart" ${scr.fresh ? 'checked' : ''}>
         <span><b>Start again at level 1</b><br><span class="muted">Off: ${esc(h.char.name)} keeps their level, gear and gold.</span></span></label>` : ''}
+      <div class="field"><span>Party (up to ${PARTY_MAX})</span>
+        <div class="cards">${heroes.filter(o => o.id !== h.id).map(o => `
+          <button class="card2 pick ${(scr.companions || []).includes(o.id) ? 'on' : ''}" data-act="togComp" data-id="${o.id}">
+            <span class="who"><span class="dotc" style="--c:${esc(o.char.color)}"></span><span><span class="nm">${esc(o.char.name)}</span><br><span class="st">Level ${o.char.level} · ${(scr.companions || []).includes(o.id) ? 'coming along' : 'stays behind'}</span></span></span>
+          </button>`).join('')}
+          <button class="card2 new small" data-act="hire">+ Hire a companion</button></div>
+        ${(scr.companions || []).length ? `<div class="field"><span>How the party plays</span>${seg('pmode', scr.pmode || 'all', [['all', 'Command the party: you move everyone'], ['turns', 'Take turns: each adventurer in order']])}</div>` : '<p class="muted">Go alone, bring other heroes from your roster, or hire a companion.</p>'}
+      </div>
       ${canContinue(h) ? `<p class="muted">This ends the expedition in progress.</p>` : ''}
       <div class="row"><button class="btn primary" data-act="embark">Enter the dungeon</button></div>
     </div>`;
@@ -5078,10 +5368,15 @@ $('screen').addEventListener('click', e => {
   const id = b.dataset.id, k = b.dataset.k, h = id && heroById(id);
   switch (b.dataset.act) {
     case 'continue': {
-      let run = h.run;
-      migrateChar(run.char);
-      if ((run.rev || 1) !== (MAPS[run.mapKey].rev || 1)) { run = h.run = freshState(run.mapKey, run.char); toast('The dungeon has changed since your last visit, so this expedition starts from the entrance.'); }
-      curHero = h.id; enterPlay(run, 'play');
+      const lead = leaderOf(h) || h;
+      let run = linkParty(lead.run);
+      run.party.forEach(m => migrateChar(m.char));
+      if ((run.rev || 1) !== (MAPS[run.mapKey].rev || 1)) {
+        const keep = { mode: run.partyMode, ids: run.party.map(m => m.heroId) };
+        run = lead.run = freshState(run.mapKey, run.party.map(m => m.char)); run.partyMode = keep.mode; run.party.forEach((m, i) => { m.heroId = keep.ids[i]; });
+        toast('The dungeon has changed since your last visit, so this expedition starts from the entrance.');
+      }
+      curHero = lead.id; enterPlay(run, 'play');
       return;
     }
     case 'expedition': return showScreen('pick', { hero: id, map: h.run && MAPS[h.run.mapKey] ? h.run.mapKey : 'crypt', fresh: false });
@@ -5100,14 +5395,28 @@ $('screen').addEventListener('click', e => {
       return showScreen('pick', { hero: nh.id, map: 'crypt', fresh: false });
     }
     case 'embark': {
-      const hero = heroById(scr.hero), key = scr.map;
-      let c = hero.char;
-      if (scr.fresh) { const fresh = newCharacter(); for (const f of ['name', 'color', 'skin', 'hair', 'model', 'abilities', 'species', 'cls']) fresh[f] = clone(c[f]); c = fresh; }
-      c = clone(c); c.hp = maxHpOf(c); c.curseSteps = 0;
-      hero.run = freshState(key, c); hero.char = hero.run.char; hero.updated = Date.now();
+      const hero = heroById(scr.hero), key = scr.map, members = [hero, ...(scr.companions || []).map(heroById).filter(Boolean)].slice(0, PARTY_MAX);
+      const chars = members.map(m => {
+        let c = m.char;
+        if (scr.fresh) { const fresh = newCharacter(); for (const f of ['name', 'color', 'skin', 'hair', 'model', 'abilities', 'species', 'cls']) fresh[f] = clone(c[f]); c = fresh; }
+        c = clone(c); c.hp = maxHpOf(c); c.curseSteps = 0; return c;
+      });
+      hero.run = freshState(key, chars); hero.run.partyMode = scr.pmode || 'all';
+      hero.run.party.forEach((m, i) => { m.heroId = members[i].id; members[i].char = m.char; });
+      hero.inParty = null; hero.updated = Date.now();
+      for (const m of members.slice(1)) { m.run = null; m.inParty = hero.id; m.updated = Date.now() - 1; }
       curHero = hero.id; enterPlay(hero.run, 'play', true);
       return;
     }
+    case 'togComp': {
+      const list = scr.companions ||= [];
+      if (list.includes(id)) list.splice(list.indexOf(id), 1);
+      else if (list.length >= PARTY_MAX - 1) { toast(`A party holds ${PARTY_MAX} adventurers at most.`); return; }
+      else list.push(id);
+      break;
+    }
+    case 'hire': { if ((scr.companions ||= []).length >= PARTY_MAX - 1) { toast(`A party holds ${PARTY_MAX} adventurers at most.`); return; } scr.companions.push(hireCompanion().id); break; }
+    case 'pmode': scr.pmode = k; break;
     case 'ndFrom': scr.nd.from = k; break;
     case 'ndSize': scr.nd.size = k; break;
     case 'ndDark': scr.nd.dark = k === 'dark'; break;
@@ -5544,6 +5853,7 @@ window.battleBoard = {
   go(key) { enterPlay(freshState(key, state.char), mode === 'test' ? 'test' : 'play', true); },
   overview() { state.explored.fill(1); const s = Math.max(W, H); controls.target.set(0, 0, 0); camera.position.set(0, s * 0.8, s * 0.55); controls.update(); refresh(); },
   walk(x, z) { refresh(); if (!reachable(x, z)) return false; moveTo(x, z); return true; },
+  party() { return state.party.map(m => ({ name: m.char.name, hp: m.char.hp, pos: m.pos, done: !!m.done })) },
   wanderers() { const m = spawnWanderers(6, 13); if (m && exploring() === false) startCombat(); refresh(); return m && m.map(c => c.type); },
 };
 showBackdrop('crypt');
