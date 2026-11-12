@@ -90,13 +90,14 @@ EFFECTS = {
     'wis': 'Perception for Search (secret doors, traps, hidden caches) and passive Perception.',
     'cha': 'No direct rule. It only matters through its talents (party buffs, luck and gold).',
 }
+START = {'str': 14, 'dex': 14, 'con': 14, 'int': 16, 'wis': 10, 'cha': 9}   # the default hero's scores
 for i, (k, name) in enumerate(D['ABILITIES'], start=2):
-    ws.append([name, k.upper(), EFFECTS[k], ', '.join(t['name'] for t in TALENTS[k].values()), 14, f'=INT((E{i}-10)/2)'])
+    ws.append([name, k.upper(), EFFECTS[k], ', '.join(t['name'] for t in TALENTS[k].values()), START[k], f'=INT((E{i}-10)/2)'])
     ws.cell(row=i, column=5).fill = INPUT
 style_rows(ws)
 n = ws.max_row + 2
 ws.cell(row=n, column=1, value='How to use').font = Font(name=FONT, bold=True)
-ws.cell(row=n + 1, column=1, value='Change any yellow Example score to see its modifier. Modifier = round down((score − 10) ÷ 2), the same as the game.').font = Font(name=FONT, size=10)
+ws.cell(row=n + 1, column=1, value='Example scores are the default new hero (point buy, +1 human bonus). Change any yellow Example score to see its modifier. Modifier = round down((score − 10) ÷ 2), the same as the game.').font = Font(name=FONT, size=10)
 ws.cell(row=n + 2, column=1, value='Talents: raising an ability to 12, 14, 16, 18 or 20 with stat points (2 per level) unlocks one talent of that ability.').font = Font(name=FONT, size=10)
 
 ws = sheet(wb, 'Derived stats', ['Stat', 'Formula in the game', 'Inputs for the example', 'Example value', 'Notes'], [22, 58, 24, 14, 50])
@@ -120,10 +121,6 @@ for r in range(2, 6): ws.cell(row=r, column=1).font = Font(name=FONT, size=10, b
 ws.cell(row=ws.max_row + 2, column=1, value='Change the yellow inputs (rows 2–5) to recalculate the examples.').font = Font(name=FONT, size=10, italic=True)
 
 ws = sheet(wb, 'Levels', ['Level', 'Total XP needed', 'Proficiency bonus', 'Max HP (CON below)', 'Max mana (INT below)', 'Stat points earned (total)', 'Spells learned at this level'], [8, 16, 16, 18, 18, 20, 52])
-ws['I1'] = 'CON score'; ws['J1'] = 14; ws['I2'] = 'INT score'; ws['J2'] = 16
-for c in ('J1', 'J2'): ws[c].fill = INPUT; ws[c].font = Font(name=FONT, bold=True)
-for c in ('I1', 'I2'): ws[c].font = Font(name=FONT, bold=True)
-ws['J1'].comment = Comment('Change this to see max HP at every level.', 'Battle Board')
 learn = defaultdict(list)
 for k, sp in SPELLS.items(): learn[sp['unlock']].append(sp['name'])
 for lv in range(1, 21):
@@ -132,6 +129,12 @@ for lv in range(1, 21):
                f'=6+4*A{r}+2*MAX(0,INT(($J$2-10)/2))', f'=2*(A{r}-1)', ', '.join(learn.get(lv, []))])
 style_rows(ws)
 for r in range(2, 22): ws.cell(row=r, column=2).number_format = '#,##0'
+ws['I1'] = 'CON score'; ws['J1'] = 14; ws['I2'] = 'INT score'; ws['J2'] = 16
+for c in ('J1', 'J2'): ws[c].fill = INPUT; ws[c].font = Font(name=FONT, bold=True)
+for c in ('I1', 'I2'): ws[c].font = Font(name=FONT, bold=True)
+ws.column_dimensions['I'].width = 12
+ws['J1'].comment = Comment('Change this to see max HP at every level.', 'Battle Board')
+ws['J2'].comment = Comment('Change this to see max mana at every level.', 'Battle Board')
 
 ws = sheet(wb, 'Talents', ['Ability', 'Talent', 'Effect', 'How you get it'], [16, 22, 70, 46])
 for k, ts in TALENTS.items():
