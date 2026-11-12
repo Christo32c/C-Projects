@@ -34,7 +34,7 @@ Hired companions get a random kit.
 
 ### Settings and controls
 
-The **Settings** button holds combat speed (normal, fast or instant monster turns; hold any key to fast-forward one), text size, effects and ambience volume, effects quality with a frame-rate readout, and key rebinding.
+The **Settings** button holds combat speed (normal, fast or instant monster turns; hold any key to fast-forward one), text size, the view (over the shoulder or first person), the film look, effects and music volume, effects quality with a frame-rate readout, and key rebinding.
 
 - **Shift** (or the Tactical button) lifts the camera overhead while held, for picking far squares. After you turn the camera by hand, the follow cam leaves it alone for 5 seconds.
 - **G** sneaks: monsters only notice you within 20 ft and fewer wanderers find you. Hit a monster before it knows you're there and every monster in that fight **loses its first turn**.
@@ -42,6 +42,34 @@ The **Settings** button holds combat speed (normal, fast or instant monster turn
 - With a buff or healing spell selected, click a **party portrait** to target that adventurer.
 - Messages stack at the bottom left. Level-ups and achievements wait until the fight is over.
 - Effects show an icon and a word; badly hurt and wounded show as words on the health bars.
+
+## Being in the dungeon
+
+**First person (B, or the side button).** See the dungeon through your hero's eyes, with a lantern in one hand and your weapon in the other.
+
+- **W** and **S** (or the up and down arrows) step one square forward and back. **A** and **D** turn a quarter. Drag to look around freely.
+- Walking into a monster attacks it. Walking into a door, chest or font uses it.
+- Clicking still works for everything: squares, monsters, spells and loot.
+- On a monster's turn your head turns to whoever is acting. Being hit jolts the view.
+- **Shift** still lifts you overhead for the tactical view.
+- In the over-the-shoulder view, **W A S D** step relative to the camera.
+
+**A mood for every floor.** Each floor of the Descent has its own light, fog colour, drifting motes, colour grade and musical key. A title card names the floor as you arrive.
+
+**A score that follows the danger.** The music is generated as it plays, so it never loops.
+
+| Situation | Music |
+|---|---|
+| Exploring | Slow pads and a few lonely plucked notes |
+| Something is within 30 ft, or you are badly hurt | A low pulse joins in |
+| A fight | War drums, a driving bass and a horn line |
+| A boss | Faster, with a choir |
+
+**Sound has a place.** Monster footsteps, cries and deaths come from their side of the room and fade with distance. You can hear monsters moving in the dark before you see them, and now and then something unseen stirs nearby.
+
+**Small things.** Water drips from the ceiling and splashes. The light you carry gutters like a flame. A film look adds grain and a lens vignette, drains the colour as your health drops, and splits red from blue when you are hit.
+
+Settings has the view, the film look, and one volume for music and ambience. The film look is off at Low quality.
 
 ## The dungeon creator
 

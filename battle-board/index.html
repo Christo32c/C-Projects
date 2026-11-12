@@ -97,6 +97,11 @@
   @keyframes bloodPulse { 50% { opacity: .95; } }
   .hitflash { background: radial-gradient(ellipse at center, rgba(200,20,0,.12), rgba(200,20,0,.45)); opacity: 0; }
   .hitflash.go { animation: hitFlash .5s ease-out; }
+  .curtain { position: absolute; inset: 0; pointer-events: none; background: #050403; display: grid; place-items: center; text-align: center; opacity: 1; transition: opacity 1.6s ease-in; z-index: 3; }
+  .curtain.up { opacity: 0; }
+  .curtain small { color: var(--brass); letter-spacing: .28em; text-transform: uppercase; font-size: 12px; }
+  .curtain h2 { font-family: var(--display, Georgia, serif); font-size: clamp(26px, 5vw, 46px); margin: 10px 0 8px; color: #efe6d2; font-weight: 600; }
+  .curtain p { color: #a89c86; font-style: italic; max-width: 34em; margin: 0 auto; padding: 0 20px; }
   @keyframes hitFlash { from { opacity: 1; } to { opacity: 0; } }
   .narr { position: absolute; left: 50%; bottom: 128px; transform: translateX(-50%); width: min(540px, calc(100% - 32px)); box-sizing: border-box;
           background: rgba(18,13,9,.93); border: 1px solid var(--brass); border-radius: 10px; padding: 14px 18px 12px; cursor: pointer;
@@ -486,6 +491,7 @@
     <canvas id="c" aria-label="3D battle board"></canvas>
     <div class="vignette" id="vignette"></div>
     <div class="blood" id="blood"></div>
+    <div class="curtain" id="curtain" hidden><div><small id="curS"></small><h2 id="curT"></h2><p id="curP"></p></div></div>
     <div class="hitflash" id="hitflash"></div>
     <div id="fx"></div>
     <div class="narr" id="narr" hidden><h3 id="narrT"></h3><p id="narrP"></p></div>
@@ -519,6 +525,7 @@
       <button class="sbtn" id="viewBtn" title="Snap the camera back behind your hero (R)"><b>R</b>Recenter</button>
       <button class="sbtn" id="sneakBtn" title="Sneak: monsters only notice you within 20 ft, and fewer wanderers find you. Strike first for an ambush (G)"><b>G</b><span id="sneakLbl">Sneak</span></button>
       <button class="sbtn" id="tacBtn" title="Tactical view: lift the camera overhead (hold Shift, or click to toggle)"><b>⇧</b>Tactical</button>
+      <button class="sbtn" id="fpBtn" title="First person: see the dungeon through your hero's eyes. W and S step, A and D turn, drag to look (B)"><b>B</b>First person</button>
       <button class="sbtn" id="soundBtn" title="Turn sound on or off">Sound</button>
       <button class="sbtn" id="setBtn" title="Settings: combat speed, text size, volume and keys"><b>⚙</b>Settings</button>
     </div>
@@ -559,6 +566,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
@@ -1003,6 +1011,24 @@ composer.addPass(new RenderPass(scene, camera));
 const bloom = new UnrealBloomPass(new THREE.Vector2(512, 512), 0.65, 0.5, 1.0);
 bloom.enabled = Q.bloom;
 composer.addPass(bloom);
+// the film look: grain, a lens vignette, colour grading per floor, and a red-blue split when you are hit
+const filmPass = new ShaderPass({
+  uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uGrain: { value: 0.09 }, uVig: { value: 0.2 }, uAb: { value: 0 }, uDesat: { value: 0 }, uTint: { value: new THREE.Vector3(1, 1, 1) } },
+  vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+  fragmentShader: `uniform sampler2D tDiffuse; uniform float uTime, uGrain, uVig, uAb, uDesat; uniform vec3 uTint; varying vec2 vUv;
+    float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233)) + uTime * 7.13) * 43758.5453); }
+    void main(){
+      vec2 d = vUv - 0.5; float r2 = dot(d, d);
+      vec2 o = d * (uAb + 0.003) * r2 * 4.0;
+      vec3 c = vec3(texture2D(tDiffuse, vUv + o).r, texture2D(tDiffuse, vUv).g, texture2D(tDiffuse, vUv - o).b);
+      float l = dot(c, vec3(0.299, 0.587, 0.114)); c = mix(c, vec3(l), uDesat);
+      c *= uTint; c *= 1.0 - uVig * smoothstep(0.1, 0.55, r2);
+      c *= 1.0 + (h(gl_FragCoord.xy) - 0.5) * uGrain;
+      gl_FragColor = vec4(c, 1.0);
+    }`,
+});
+filmPass.enabled = prefs.film !== false && qName !== 'low';
+composer.addPass(filmPass);
 composer.addPass(new OutputPass());
 
 const hemi = new THREE.HemisphereLight('#ffe9c7', '#2a1f14', 0.75);
@@ -1297,6 +1323,7 @@ function buildBoard() {
   const ext = Math.max(W, H) / 2 + 2;
   Object.assign(sun.shadow.camera, { left: -ext, right: ext, top: ext, bottom: -ext, near: 1, far: 50 });
   sun.shadow.camera.updateProjectionMatrix();
+  applyMood();
 }
 
 function clearTile(i) {
@@ -2153,6 +2180,7 @@ const shakeCam = a => { if (!reduceMotion) shake = Math.max(shake, a); };
  * ================================================================== */
 const SFX = (() => {
   let ac = null, master = null, verb = null, amb = null, nb = null, on = prefs.sound ?? true, ambT = 4, ambWant = 0, vf = prefs.volFx ?? 1, vm = prefs.volMusic ?? 1;
+  let mus = null, bus = null, place = null;   // the music bus; where the next sound goes; where in the room it comes from
   const ok = () => ac && on && ac.state === 'running';
   function impulse(sec, decay) {
     const n = Math.floor(ac.sampleRate * sec), b = ac.createBuffer(2, n, ac.sampleRate);
@@ -2165,6 +2193,7 @@ const SFX = (() => {
       const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
       ac = new AC(); master = ac.createGain(); master.gain.value = on ? 0.8 * vf : 0;
       const comp = ac.createDynamicsCompressor(); master.connect(comp); comp.connect(ac.destination);
+      mus = ac.createGain(); mus.gain.value = on ? 0.55 * vm : 0; mus.connect(comp);
       verb = ac.createConvolver(); verb.buffer = impulse(2.6, 2.4);              // a stone-vault echo
       const vg = ac.createGain(); vg.gain.value = 0.4; verb.connect(vg); vg.connect(master);
       nb = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate); const d = nb.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -2179,7 +2208,62 @@ const SFX = (() => {
       setAmbient(ambWant);
     } catch (e) { ac = null; }
   }
-  function out(wet) { const g = ac.createGain(); g.connect(master); if (wet) { const w = ac.createGain(); w.gain.value = wet; g.connect(w); w.connect(verb); } return g; }
+  function out(wet) {
+    const g = ac.createGain(); let n = g;
+    if (place && !bus) {   // a sound with a place: quieter with distance, and in the ear on its side
+      const a = ac.createGain(); a.gain.value = place.v; g.connect(a); n = a;
+      if (ac.createStereoPanner) { const p = ac.createStereoPanner(); p.pan.value = place.p; a.connect(p); n = p; }
+    }
+    n.connect(bus || master);
+    if (wet) { const w = ac.createGain(); w.gain.value = wet * (bus ? 0.5 : 1); n.connect(w); w.connect(verb); }
+    return g;
+  }
+  /* --- the score: written as it plays. Sparse and lonely while you explore, a pulse when something is near,
+         war drums in a fight, and a choir for a boss. Every floor is in its own key. --- */
+  const MUS = { mood: 'off', want: 'off', root: 0, next: 0, step: 0 };
+  const SCALE = [0, 2, 3, 5, 7, 8, 10], PROG = [0, 5, 3, 4];
+  const hz = (d, oct = 0) => 110 * Math.pow(2, (SCALE[((d % 7) + 7) % 7] + 12 * (Math.floor(d / 7) + oct) + MUS.root) / 12);
+  const mT = o => { bus = mus; try { tone(o); } finally { bus = null; } };
+  const mN = o => { bus = mus; try { noise(o); } finally { bus = null; } };
+  const MEL = { combat: [4, , , 6, , , 7, , 4, , , 2, , , , ,], boss: [7, , 8, 9, , 8, 7, , 4, , , 6, 7, , , ,] };
+  function sched(s, at, spb) {
+    const m = MUS.mood, e = s % 8, slow = m === 'explore' || m === 'tense';
+    const chord = PROG[Math.floor(s / (slow ? 16 : 8)) % 4], N = (d, oct) => hz(chord + d, oct);
+    if (slow) {
+      if (s % 16 === 0) for (const [d, v] of [[0, .05], [4, .034], [2, .02]]) {
+        mT({ t: at, dur: spb * 15, wave: 'sawtooth', f0: N(d, -1), vol: v, a: spb * 5, lp: 420, wet: .8 });
+        mT({ t: at, dur: spb * 15, wave: 'sawtooth', f0: N(d, -1) * 1.006, vol: v * .8, a: spb * 6, lp: 380, wet: .8 });
+      }
+      if (Math.random() < (e % 2 ? 0.08 : 0.3)) {
+        const d = [0, 2, 4, 7, 9, 11][Math.floor(Math.random() * 6)];
+        mT({ t: at, dur: 1.9, wave: 'triangle', f0: N(d, 1), vol: .05, a: .004, wet: 1 }); mT({ t: at, dur: .9, f0: N(d, 2), vol: .012, wet: 1 });
+      }
+      if (m === 'tense') {
+        if (e === 0 || e === 3) mT({ t: at, dur: .5, f0: 82, f1: 44, vol: .26, wet: .2 });
+        if (e === 6 && Math.random() < .6) mN({ t: at, dur: spb * 3, type: 'bandpass', f0: N(1, 2), f1: N(0, 2), q: 14, vol: .12, a: spb, wet: 1 });
+      }
+      return;
+    }
+    const boss = m === 'boss';
+    if (e === 0 || e === 3 || e === 6 || (boss && e === 5)) { mT({ t: at, dur: .28, f0: 105, f1: 42, vol: .5, wet: .25 }); mN({ t: at, dur: .06, f0: 900, f1: 200, vol: .22, wet: .2 }); }
+    if (e === 2 || e === 7 || s % 16 >= 13) mT({ t: at, dur: .16, f0: 190 - (s % 16 >= 13 ? (s % 16 - 13) * 25 : 0), f1: 110, vol: .2, wet: .3 });
+    mN({ t: at, dur: .04, type: 'highpass', f0: 6000, vol: e % 2 ? .03 : .06, wet: .1 });
+    mT({ t: at, dur: spb * .9, wave: 'sawtooth', f0: N([0, 0, 7, 0, 0, 6, 0, 4][e], -2), vol: .11, lp: 600, wet: .2 });
+    if (e === 0 || e === 3) for (const d of [0, 2, 4]) mT({ t: at, dur: spb * 2.2, wave: 'sawtooth', f0: N(d, 0), vol: .028, a: .03, lp: 1400, wet: .6 });
+    const md = MEL[m][s % 16];
+    if (md != null) mT({ t: at, dur: spb * 2.6, wave: 'square', f0: hz(md, 0), vol: .03, a: .04, lp: 1300, wet: .7 });
+    if (boss && s % 16 === 0) for (const d of [0, 4, 7]) { mT({ t: at, dur: spb * 15, wave: 'sawtooth', f0: N(d, 1), vol: .016, a: spb * 4, lp: 900, wet: 1 }); mT({ t: at, dur: spb * 15, wave: 'sawtooth', f0: N(d, 1) * 1.008, vol: .012, a: spb * 5, lp: 800, wet: 1 }); }
+  }
+  function music() {
+    if (!ok() || !mus) return;
+    const t = ac.currentTime;
+    if (MUS.mood !== MUS.want && (MUS.mood === 'off' || MUS.step % 8 === 0)) { MUS.mood = MUS.want; MUS.step = 0; }
+    if (MUS.mood === 'off' || MUS.next < t - 0.5) MUS.next = t + 0.05;
+    if (MUS.mood === 'off') return;
+    const spb = 30 / { explore: 66, tense: 76, combat: 108, boss: 124 }[MUS.mood];
+    while (MUS.next < t + 0.25) { sched(MUS.step, MUS.next - t, spb); MUS.next += spb; MUS.step++; }
+  }
+  const _f = new THREE.Vector3(), _r = new THREE.Vector3();
   function env(g, t, a, peak, d) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d); }
   function noise({ t = 0, dur = 0.2, type = 'lowpass', f0 = 800, f1 = f0, q = 1, vol = 0.3, a = 0.005, wet = 0.4 } = {}) {
     if (!ok()) return; const now = ac.currentTime + t;
@@ -2200,8 +2284,18 @@ const SFX = (() => {
   const S = {
     get on() { return on; },
     init, setAmbient,
-    toggle() { on = !on; init(); if (master) master.gain.setTargetAtTime(on ? 0.8 * vf : 0, ac.currentTime, 0.05); return on; },
-    setVol(f, m) { vf = f; vm = m; if (master) master.gain.setTargetAtTime(on ? 0.8 * vf : 0, ac.currentTime, 0.05); setAmbient(ambWant); },
+    toggle() { on = !on; init(); if (master) { master.gain.setTargetAtTime(on ? 0.8 * vf : 0, ac.currentTime, 0.05); mus.gain.setTargetAtTime(on ? 0.55 * vm : 0, ac.currentTime, 0.05); } return on; },
+    setVol(f, m) { vf = f; vm = m; if (master) { master.gain.setTargetAtTime(on ? 0.8 * vf : 0, ac.currentTime, 0.05); mus.gain.setTargetAtTime(on ? 0.55 * vm : 0, ac.currentTime, 0.05); } setAmbient(ambWant); },
+    music, setMusic(mood, root = 0) { MUS.want = mood; MUS.root = root; }, get mood() { return MUS.mood; }, get musicWant() { return MUS.want; },
+    // play fn's sounds from a place in the world, as heard from the camera
+    at(wp, fn) {
+      if (!ok()) return;
+      _r.copy(wp).sub(camera.position); const d = _r.length(); camera.getWorldDirection(_f); _f.cross(camera.up);
+      place = { p: Math.max(-1, Math.min(1, _r.dot(_f) / Math.max(1, d))) * 0.85, v: 1 / (1 + (d / 6) * (d / 6)) };
+      try { fn(); } finally { place = null; }
+    },
+    drip() { tone({ dur: 0.07, f0: R(1100, 1700), f1: R(380, 520), vol: 0.09, wet: 1 }); },
+    bump() { tone({ dur: 0.09, f0: 120, f1: 60, vol: 0.2, wet: 0.2 }); },
     step(v = 1) { noise({ dur: 0.07, f0: R(380, 620), f1: 160, vol: 0.11 * v, wet: 0.25 }); },
     swing() { noise({ dur: 0.18, type: 'bandpass', f0: 500, f1: 2600, q: 2, vol: 0.22, a: 0.04, wet: 0.2 }); },
     hit() { tone({ dur: 0.2, f0: 150, f1: 45, vol: 0.5, wet: 0.3 }); noise({ dur: 0.09, f0: 2500, f1: 300, vol: 0.35, wet: 0.3 }); },
@@ -3569,7 +3663,7 @@ function wakeCreatures() {
     addLog('hit', `<b>${names}</b> ${woke.length > 1 ? 'spot' : 'spots'} you!`);
     for (const c of woke) floatText('!', creatureTop(c), 'crit');
     const boss = woke.find(c => MONSTERS[c.type].boss); if (boss) bossIntro(boss);
-    for (const t of new Set(woke.map(c => c.type))) SFX.alert(t);
+    for (const t of new Set(woke.map(c => c.type))) { const w = woke.find(c => c.type === t); SFX.at(worldOf(w.x, w.z), () => SFX.alert(t)); }
   }
   return woke.length > 0;
 }
@@ -4664,7 +4758,7 @@ function damageCreature(c, dmg, cls) {
 function killCreature(c) {
   const m = MONSTERS[c.type], wasCombat = !exploring();
   c.alive = false; c.restrained = false;
-  SFX.death(c.type);
+  SFX.at(worldOf(c.x, c.z), () => SFX.death(c.type));
   const nm = m.boss ? m.name : `${foeName(m, true)}`;
   addLog('sys', m.object ? `${nm} ${m.breakText}.` : `${nm} ${m.ai === 'none' ? 'is destroyed' : 'falls'}. +${m.xp} XP.`);
   if (m.ai !== 'none') { state.stats.kills++; after(0.8, () => achieve('firstBlood')); }
@@ -4919,7 +5013,7 @@ function hurtHero(n, what, cls = 'dmg') {
   c.hp = Math.max(0, c.hp - n); heroFlash = 1;
   toughOut(c);
   floatText(`-${n}`, above(hero, 1.2), cls);
-  SFX.hurt(); shakeCam(0.1);
+  SFX.hurt(); shakeCam(0.1); FP.kick = 1;
   const hf = $('hitflash'); hf.classList.remove('go'); void hf.offsetWidth; hf.classList.add('go');
   addLog('hit', `${what}: ${c.name} takes <b>${n}</b> (${c.hp}/${derived().maxHp}).`);
   if (c.hp === 0) {
@@ -5559,7 +5653,7 @@ function setQuality(name) {
   qName = name; Q = QUALITY[name]; savePrefs();
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, Q.pr));
   composer.setPixelRatio(Math.min(window.devicePixelRatio, Q.pr));
-  bloom.enabled = Q.bloom;
+  bloom.enabled = Q.bloom; filmPass.enabled = prefs.film !== false && qName !== 'low';
   resize();
   toast(`Effects quality: ${Q.label}. New ice walls use the new setting.`);
 }
@@ -5660,6 +5754,11 @@ const focusPos = o => o.position.clone().setY(o.position.y + CHEST);
 // swing to look past `who` toward `at` (or keep the current heading)
 function camShot(who, at, dur = 0.8) {
   CAM.focus = who;
+  if (fpOn()) {   // through your own eyes: turn your head toward whoever is acting
+    const p = who === hero ? at : who.position;
+    if (p && !(performance.now() < (FP.hold || 0)) && (Math.abs(p.x - hero.position.x) + Math.abs(p.z - hero.position.z)) > 0.2) FP.want = Math.atan2(p.x - hero.position.x, p.z - hero.position.z);
+    return;
+  }
   const to = focusPos(who), yaw = at && CAM.auto && !(performance.now() < (CAM.hold || 0)) ? Math.atan2(at.x - who.position.x, at.z - who.position.z) : camYaw();
   CAM.anim = { t: 0, dur: reduceMotion ? 0.01 : dur, fromT: controls.target.clone(), toT: to, fromYaw: camYaw(), toYaw: yaw,
                fromEl: camElev(), toEl: CAM.elev, fromD: camera.position.distanceTo(controls.target), toD: CAM.dist };
@@ -5698,6 +5797,7 @@ function resetView() {
   }
   CAM.focus = hero; CAM.anim = null; CAM.dist = 3.6; CAM.elev = 0.42;
   const f = nearestFoe(), yaw = f ? Math.atan2(f.x - state.pos.x, f.z - state.pos.z) : (hero.rotation.y || Math.PI);
+  FP.yaw = yaw; FP.want = null; FP.pitch = -0.05;
   if (!anim) { hero.rotation.y = yaw; faceAt = null; }   // the hero looks where the camera looks
   camPlace(focusPos(hero), yaw, CAM.elev, CAM.dist);
   controls.update();
@@ -5718,6 +5818,7 @@ function bootBoard(keepView) {
   computeVisibility(); applyFog(); if (!keepView) resetView();
   SFX.setAmbient(MAP.dark ? (mode === 'edit' ? 0.35 : 1) : 0);
   $('narr').hidden = true; narrT = 0;
+  if (!keepView && mode === 'play' && !state.over) raiseCurtain();
   if (!state.over && playing()) after(1.2, () => { if (playing()) enterRoom(state.pos.x, state.pos.z); });
 }
 
@@ -5750,7 +5851,7 @@ function tick() {
 
   moteT += dt;
   if (moteT > 0.12) { moteT = 0; const c = hero.position; glow.emit({ p: [c.x + rnd(-7, 7), rnd(.4, 3), c.z + rnd(-5, 5)], v: [rnd(-.05, .05), rnd(-.02, .05), rnd(-.05, .05)],
-    life: rnd(4, 7), s: [.025, .025], c0: hdr('#ffd9a0', .7), a: .8, turb: .15, fi: .3 }); }
+    life: rnd(4, 7), s: [.025, .025], c0: hdr(MOOD.mote, MOOD.moteGlow || .7), a: .8, turb: .15, fi: .3 }); }
 
   // hero
   if (anim) {
@@ -5786,6 +5887,7 @@ function tick() {
   { const lay = state.char.hp <= 0 && playing() ? -1.35 : 0; for (const o of [human?.root, heroModel]) if (o) o.rotation.x += (lay - o.rotation.x) * Math.min(1, dt * 6); }
   heroRing.material.opacity = 0.55 + Math.sin(time * 3) * 0.3;
   heroLight.position.copy(hero.position).add(tmp.set(0, 1.6, 0));
+  immersionTick(dt, time);
 
   // creatures
   const r = stage.getBoundingClientRect();
@@ -5796,7 +5898,7 @@ function tick() {
       while (v.anim && a.t >= 1) {
         a.t -= 1; a.i++;
         const cell = a.path[a.i]; c.x = cell.x; c.z = cell.z;
-        if (vis[cell.z * W + cell.x]) SFX.step(c.type === 'warden' ? 1.6 : 0.5);
+        if (vis[cell.z * W + cell.x] || Math.random() < 0.35) SFX.at(worldOf(cell.x, cell.z), () => SFX.step(c.type === 'warden' ? 1.6 : 0.6));   // you hear what you can't see
         if (fxGrid[cell.z * W + cell.x] & FIRE) damageCreature(c, sum(roll(2, 6)), 'dmg');
         if (a.i >= a.path.length - 1 || !c.alive) { v.anim = null; applyFog(); a.res(); }
       }
@@ -5831,7 +5933,7 @@ function tick() {
     v.bar.dataset.st = (c.status || []).map(s => STATUS[s.id].icon).join(' ');
     v.bar.hidden = !showBar;
     if (showBar) {
-      tmp.copy(v.g.position); tmp.y += v.height * v.g.scale.y + 0.35; tmp.project(camera);
+      tmp.copy(v.g.position); tmp.y += v.height * v.g.scale.y + 0.35; tmp.project(camera); if (tmp.z > 1) v.bar.hidden = true;   // behind you
       v.bar.style.left = ((tmp.x + 1) / 2) * r.width + 'px'; v.bar.style.top = ((1 - tmp.y) / 2) * r.height + 'px';
       v.bar.firstChild.style.width = (c.hp / MONSTERS[c.type].hp * 100) + '%';
     }
@@ -5844,7 +5946,7 @@ function tick() {
     tmp.copy(f.pos).add(new THREE.Vector3(0, f.t * 0.6, 0)).project(camera);
     f.el.style.left = ((tmp.x + 1) / 2) * r.width + 'px';
     f.el.style.top = ((1 - tmp.y) / 2) * r.height + 'px';
-    f.el.style.opacity = Math.max(0, 1 - Math.max(0, f.t - 0.9) / 0.6);
+    f.el.style.opacity = tmp.z > 1 ? 0 : Math.max(0, 1 - Math.max(0, f.t - 0.9) / 0.6);
     if (f.t > 1.5) { f.el.remove(); floats.splice(i, 1); }
   }
 
@@ -5854,14 +5956,14 @@ function tick() {
     controls.target.set(0, 0, 0); camera.position.set(Math.sin(menuT) * s * 0.6, s * 0.42 + 4, Math.cos(menuT) * s * 0.6);
   }
   if (mode === 'edit') edPan(dt);
-  if (playing()) camTick(dt * Math.min(PACE, 3));
+  if (playing()) { if (fpOn()) fpTick(dt, time); else camTick(dt * Math.min(PACE, 3)); }
   if (false) {
     follow.copy(hero.position).setY(0).sub(controls.target); follow.y = 0;
     const d = follow.length();
     if (d > 1.5) { follow.multiplyScalar((1 - 1.5 / d) * Math.min(1, dt * 3)); controls.target.add(follow); camera.position.add(follow); }
   }
 
-  controls.update();
+  controls.enabled = !fpOn(); if (controls.enabled) controls.update();
   shake = Math.max(0, shake - dt * 1.6);
   shakeOff.set((Math.random() - .5), (Math.random() - .5), (Math.random() - .5)).multiplyScalar(shake * shake * 0.6);
   camera.position.add(shakeOff);
@@ -7182,7 +7284,7 @@ function itemModel(k) {
 }
 /* --- settings: combat speed, text size, volume, keys, effects quality --- */
 const KEY_ACTIONS = [['potion', 'q', 'Drink a healing potion'], ['mana', 'e', 'Drink a mana potion'], ['search', 'f', 'Search'], ['dash', 'x', 'Dash'], ['sneak', 'g', 'Sneak'],
-  ['sheet', 'c', 'Character sheet'], ['inv', 'i', 'Inventory'], ['spells', 'k', 'Spellbook'], ['log', 'l', 'Log'], ['cam', 'v', 'Camera: follow or free'], ['recenter', 'r', 'Recenter the camera'], ['party', 'p', 'Party mode']];
+  ['sheet', 'c', 'Character sheet'], ['inv', 'i', 'Inventory'], ['spells', 'k', 'Spellbook'], ['log', 'l', 'Log'], ['cam', 'v', 'Camera: follow or free'], ['fp', 'b', 'First-person view'], ['recenter', 'r', 'Recenter the camera'], ['party', 'p', 'Party mode']];
 const boundKey = a => prefs.keys?.[a] || KEY_ACTIONS.find(k => k[0] === a)[1];
 // the key pressed → the built-in key of whatever action it is bound to (a default key that was moved away does nothing)
 function remapKey(k) {
@@ -7201,7 +7303,11 @@ function openSettings() {
       <p class="muted fnote">How fast monster turns play. Hold any key during a monster's turn to fast-forward it.</p></div>
     <div class="field"><span>Text size</span>${seg('setText', String(prefs.text || 1), [['1', 'Normal'], ['1.15', 'Large'], ['1.3', 'Largest']])}</div>
     <label class="field"><span>Effects volume</span><input type="range" id="volFx" min="0" max="1" step="0.05" value="${prefs.volFx ?? 1}"></label>
-    <label class="field"><span>Ambience volume</span><input type="range" id="volMusic" min="0" max="1" step="0.05" value="${prefs.volMusic ?? 1}"></label>
+    <div class="field"><span>View</span>${seg('setView', ui.fp ? 'fp' : 'tp', [['tp', 'Over the shoulder'], ['fp', 'First person']])}
+      <p class="muted fnote">W and S step forward and back. A and D turn in first person, or sidestep otherwise. Drag to look around.</p></div>
+    <div class="field"><span>Film look</span>${seg('setFilm', prefs.film === false ? 'off' : 'on', [['on', 'On'], ['off', 'Off']])}
+      <p class="muted fnote">Grain, a lens vignette and a colour mood for each floor. Off on Low quality.</p></div>
+    <label class="field"><span>Music and ambience volume</span><input type="range" id="volMusic" min="0" max="1" step="0.05" value="${prefs.volMusic ?? 1}"></label>
     <label class="field"><span>Effects quality</span><select id="setQuality">${Object.entries(QUALITY).map(([k, q]) => `<option value="${k}" ${k === qName ? 'selected' : ''}>${q.label}</option>`).join('')}</select>
       <p class="muted fnote">Running at about <b id="fpsOut">${Math.round(1 / Math.max(1e-3, perfSample.avg || 1 / 60))}</b> frames a second.</p></label>
     <div class="field"><span>Keys</span><div class="keys">${KEY_ACTIONS.map(([a, , label]) => `<span>${label}</span><button class="btn small ${ui.rebind === a ? 'on' : ''}" data-set="bind" data-k="${a}">${ui.rebind === a ? 'Press a key…' : boundKey(a).toUpperCase()}</button>`).join('')}</div>
@@ -7213,6 +7319,8 @@ function openSettings() {
     const act = b.dataset.act || b.dataset.set, k = b.dataset.k;
     if (act === 'setPace') prefs.pace = k;
     if (act === 'setText') prefs.text = +k;
+    if (act === 'setView') setFp(k === 'fp');
+    if (act === 'setFilm') { prefs.film = k === 'on'; filmPass.enabled = prefs.film && qName !== 'low'; }
     if (act === 'bind') ui.rebind = ui.rebind === k ? null : k;
     if (act === 'resetKeys') { prefs.keys = {}; ui.rebind = null; }
     applyPrefs(); savePrefs(); redraw();
@@ -7316,6 +7424,226 @@ function storageCheck() {
 }
 applyPrefs();
 
+
+/* ================================================================== *
+ * IMMERSION: a first-person view, a mood for every floor, a score that follows the danger,
+ * sounds with a place in the room, and a dungeon that drips and stirs around you.
+ * ================================================================== */
+const MOOD_DEFAULT = { fog: '#0b0907', light: '#ffb36b', moon: '#8fa3c8', mote: '#ffd9a0', tint: [1, 1, 1], root: 0, drip: 1, line: '' };
+const MOODS = {
+  crypt:    { root: 0, line: 'Cold air, black water, and the smell of old stone.' },
+  descent1: { mote: '#d8ff9a', tint: [0.97, 1.03, 0.93], root: 5, line: 'Ivy has taken the gatehouse. Birds have not.' },
+  descent2: { fog: '#0d0a06', light: '#ff9a4a', tint: [1.05, 0.98, 0.88], root: 0, drip: 0.5, line: 'Smoke, grease and too many small footprints.' },
+  descent3: { fog: '#060b0d', light: '#a8dce4', moon: '#5f9fb0', mote: '#bfeaf2', tint: [0.9, 1.0, 1.07], root: 3, drip: 3, line: 'The walls are wet, and something above you is spinning.' },
+  descent4: { fog: '#070c0a', light: '#b4d4bc', moon: '#6fa894', mote: '#c8ecd4', tint: [0.9, 1.03, 0.98], root: -2, drip: 2, line: 'The water is knee-deep and it is not empty.' },
+  descent5: { fog: '#0a0810', light: '#d8c8ff', moon: '#8a78c8', mote: '#e0d0ff', tint: [1.0, 0.95, 1.08], root: 1, drip: 0.4, line: 'Candles that never burn down. Chanting that never stops.' },
+  descent6: { fog: '#140805', light: '#ff8a48', moon: '#c85a30', mote: '#ff7a30', moteGlow: 2.2, tint: [1.1, 0.95, 0.85], root: -4, drip: 0, line: 'The stone is warm underfoot. Then hot.' },
+  descent7: { fog: '#050a06', light: '#b4ffbc', moon: '#58b070', mote: '#9cffa8', moteGlow: 1.2, tint: [0.92, 1.05, 0.92], root: -5, drip: 0.6, line: 'He has been waiting a very long time.' },
+};
+let MOOD = MOOD_DEFAULT, ceiling = null;
+function applyMood() {
+  MOOD = { ...MOOD_DEFAULT, ...(MOODS[state.mapKey] || MOODS[MAP.base] || {}) };
+  filmPass.uniforms.uTint.value.set(...MOOD.tint);
+  if (MAP.dark) {
+    scene.background.set(MOOD.fog); scene.fog.color.set(MOOD.fog);
+    heroLight.color.set(MOOD.light); sun.color.set(MOOD.moon);
+  }
+  // a low stone ceiling, only there when you look up from inside
+  const ST = stoneSets(), map = ST.top.map.clone(); map.wrapS = map.wrapT = THREE.RepeatWrapping; map.repeat.set(W / 2, H / 2); map.needsUpdate = true;
+  ceiling = new THREE.Mesh(new THREE.PlaneGeometry(W, H), mat('#9a8e80', { map, roughness: 1 }));
+  ceiling.rotation.x = Math.PI / 2; ceiling.position.y = 1.3; ceiling.visible = false; ceiling.userData.noShadow = true;
+  board.add(ceiling);
+}
+function raiseCurtain() {
+  const el = $('curtain');
+  $('curS').textContent = MAP.floor ? `The Lich's Descent · Floor ${MAP.floor} of 7` : MAP.dark ? 'You descend' : 'You arrive';
+  $('curT').textContent = MAP.name; $('curP').textContent = MOOD.line || '';
+  el.hidden = false; el.classList.remove('up'); void el.offsetWidth;
+  clearTimeout(raiseCurtain.t1); clearTimeout(raiseCurtain.t2);
+  raiseCurtain.t1 = setTimeout(() => el.classList.add('up'), reduceMotion ? 300 : 1100);
+  raiseCurtain.t2 = setTimeout(() => { el.hidden = true; }, reduceMotion ? 700 : 2900);
+}
+
+/* --- first person --- */
+const FP = { yaw: Math.PI, pitch: -0.05, want: null, hold: 0, drag: null, kick: 0, face: null, vmKey: null, sway: 0, rig: new THREE.Group(), hand: new THREE.Group(), lamp: new THREE.Group() };
+ui.fp = !!prefs.fp;
+const fpOn = () => !!ui.fp && playing() && !ui.tac;
+scene.add(camera); camera.add(FP.rig); FP.rig.add(FP.hand, FP.lamp); FP.rig.visible = false;
+{ // a lantern for the off hand
+  const frame = new THREE.MeshMatcapMaterial({ color: '#6a5a48' });
+  const cage = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.034, 0.075, 6, 1, true), new THREE.MeshMatcapMaterial({ color: '#6a5a48', wireframe: true }));
+  const top = new THREE.Mesh(new THREE.ConeGeometry(0.042, 0.03, 6), frame); top.position.y = 0.052;
+  const bot = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.036, 0.01, 6), frame); bot.position.y = -0.04;
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.02, 0.004, 6, 12), frame); ring.position.y = 0.085;
+  const core = new THREE.Mesh(new THREE.SphereGeometry(0.02, 10, 8), new THREE.MeshBasicMaterial({ color: hdrColor('#ffb060', 5) }));
+  FP.lamp.add(cage, top, bot, ring, core); FP.lamp.userData.core = core;
+  FP.lamp.position.set(-0.19, -0.13, -0.36);
+  FP.hand.position.set(0.17, -0.2, -0.34);
+}
+function held(m) {
+  m = [].concat(m)[0];
+  const c = m.color ? m.color.clone() : new THREE.Color('#888'), e = m.emissive && m.emissiveIntensity ? m.emissive.clone().multiplyScalar(Math.min(1, m.emissiveIntensity)) : null;
+  if (e) c.add(e);
+  return new THREE.MeshMatcapMaterial({ color: c.multiplyScalar(1.5), transparent: m.transparent, opacity: m.opacity });
+}
+function fpWeapon() {
+  const key = state.char.equipped.weapon || '';
+  if (key === FP.vmKey) return;
+  FP.vmKey = key; FP.hand.clear();
+  if (!key) return;
+  const m = weaponModel(key); m.traverse(o => { o.userData.noShadow = true; o.frustumCulled = false; if (o.isMesh) o.material = held(o.material); });
+  m.rotation.set(-0.75, 0.15, 0.5); FP.hand.add(m);
+}
+function setFp(on) {
+  ui.fp = !!on; prefs.fp = ui.fp; savePrefs();
+  $('fpBtn').setAttribute('aria-pressed', ui.fp);
+  if (!playing()) return;
+  if (ui.fp) { FP.yaw = hero.rotation.y || Math.PI; FP.pitch = -0.05; FP.want = null; toast('First person. W and S step, A and D turn, drag to look around. Shift lifts you overhead.'); }
+  else { hero.visible = true; resetView(); }
+}
+$('fpBtn').setAttribute('aria-pressed', ui.fp);
+$('fpBtn').addEventListener('click', () => setFp(!ui.fp));
+const _fpV = new THREE.Vector3();
+function fpTick(dt, time) {
+  const now = performance.now();
+  if (faceAt !== FP.face) { FP.face = faceAt; if (faceAt && now > FP.hold) FP.want = Math.atan2(faceAt.x - hero.position.x, faceAt.z - hero.position.z); }
+  const y0 = FP.yaw;
+  if (FP.want != null) {
+    FP.yaw = lerpAngle(FP.yaw, FP.want, Math.min(1, dt * 8));
+    if (Math.abs(Math.atan2(Math.sin(FP.want - FP.yaw), Math.cos(FP.want - FP.yaw))) < 0.004) { FP.yaw = FP.want; FP.want = null; }
+  }
+  const down = state.char.hp <= 0, hop = anim ? Math.sin(Math.PI * anim.t) * 0.15 : 0;
+  const bob = reduceMotion ? 0 : anim ? Math.abs(Math.sin(Math.PI * anim.t)) * 0.022 : Math.sin(time * 1.5) * 0.004;
+  FP.eye = (FP.eye ?? 0.62) + ((down ? 0.16 : 0.62) - (FP.eye ?? 0.62)) * Math.min(1, dt * 4);
+  FP.kick = Math.max(0, FP.kick - dt * 3.5);
+  camera.position.set(hero.position.x, hero.position.y - hop + FP.eye + bob, hero.position.z);
+  camera.rotation.order = 'YXZ';
+  camera.rotation.set(FP.pitch + FP.kick * 0.07, FP.yaw + Math.PI, (down ? 0.5 : 0) + FP.kick * 0.05 + (anim && !reduceMotion ? Math.sin(Math.PI * 2 * anim.t) * 0.006 : 0));
+  controls.target.copy(hero.position).setY(hero.position.y + CHEST);
+  // what you hold
+  fpWeapon();
+  const turn = Math.atan2(Math.sin(FP.yaw - y0), Math.cos(FP.yaw - y0));
+  FP.sway += (turn * 6 - FP.sway) * Math.min(1, dt * 6);
+  const sw = lunge > 0 ? Math.sin(Math.PI * lunge) : 0, cast = Math.min(1, castT * 2);
+  FP.hand.position.set(0.21 + FP.sway * 0.05 - sw * 0.12, -0.13 + bob * 0.8 + sw * 0.04, -0.38 - sw * 0.12);
+  FP.hand.rotation.set(-sw * 1.1, 0, sw * 0.6 + FP.sway * 0.1);
+  FP.lamp.visible = MAP.dark; FP.lamp.position.set(-0.25 + FP.sway * 0.06, -0.05 + bob * 1.4 + cast * 0.05, -0.4);
+  FP.lamp.rotation.z = Math.sin(time * 1.3) * 0.04 - FP.sway * 0.3;
+  FP.lamp.userData.core.scale.setScalar(1 + Math.sin(time * 13) * 0.08 + Math.sin(time * 31) * 0.05);
+}
+canvas.addEventListener('pointerdown', e => { if (fpOn()) FP.drag = { x: e.clientX, y: e.clientY }; });
+window.addEventListener('pointermove', e => {
+  const d = FP.drag; if (!d) return; if (!fpOn()) { FP.drag = null; return; }
+  FP.yaw += (e.clientX - d.x) * 0.0045; FP.pitch = Math.max(-0.75, Math.min(0.6, FP.pitch + (e.clientY - d.y) * 0.0035));
+  if (Math.abs(e.clientX - d.x) + Math.abs(e.clientY - d.y) > 1) { FP.want = null; FP.hold = performance.now() + 4000; }
+  d.x = e.clientX; d.y = e.clientY;
+});
+for (const ev of ['pointerup', 'pointercancel', 'blur']) window.addEventListener(ev, () => { FP.drag = null; });
+
+/* --- stepping with the keys, one square at a time --- */
+function facing() {
+  const q = Math.round((fpOn() ? (FP.want ?? FP.yaw) : camYaw()) / (Math.PI / 2)) * (Math.PI / 2);
+  return [Math.round(Math.sin(q)), Math.round(Math.cos(q))];
+}
+function stepKey(f, r) {
+  if (!playing() || anim || busy || state.over || ui.spell || state.char.hp <= 0) return false;
+  const [fx, fz] = facing(), x = state.pos.x + fx * f - fz * r, z = state.pos.z + fz * f + fx * r;
+  const foe = creatureAt(x, z);
+  if (foe) { attack(foe); return true; }
+  if (reachable(x, z)) { moveTo(x, z); return true; }
+  const ch = tileAt(x, z), tr = state.traps[keyOf(x, z)];
+  if ('DCFIGhjq'.includes(ch) || (tr && tr.found)) { interact(x, z); return true; }
+  SFX.bump(); FP.kick = Math.max(FP.kick, 0.25);
+  return false;
+}
+function turnKey(dir) {   // dir: +1 turns right
+  const q = Math.round((FP.want ?? FP.yaw) / (Math.PI / 2)) * (Math.PI / 2);
+  FP.want = q - dir * Math.PI / 2; FP.hold = 0;
+}
+window.addEventListener('keydown', e => {
+  if (!playing() || e.target.closest?.('input, select, textarea') || !$('modal').hidden || e.ctrlKey || e.metaKey || e.altKey) return;
+  const raw = e.key.toLowerCase(), k = remapKey(raw);
+  if (k === 'b' && !e.repeat) return setFp(!ui.fp);
+  const arrow = { arrowup: 'w', arrowdown: 's', arrowleft: 'a', arrowright: 'd' }[raw];
+  const m = arrow || (k === raw && 'wasd'.includes(raw) && raw.length === 1 ? raw : null);
+  if (!m) return;
+  e.preventDefault();
+  if (m === 'w') stepKey(1, 0); else if (m === 's') stepKey(-1, 0);
+  else if (fpOn()) { if (!e.repeat) turnKey(m === 'd' ? 1 : -1); }
+  else stepKey(0, m === 'd' ? 1 : -1);
+});
+
+/* --- the score follows the danger --- */
+function musicMood() {
+  if (mode === 'menu') return 'explore';
+  if (!playing() || state.over) return 'off';
+  if (!exploring()) return state.creatures.some(c => c.alive && c.aware && MONSTERS[c.type].boss) ? 'boss' : 'combat';
+  if (!grim()) return 'explore';
+  const near = state.creatures.some(c => c.alive && !c.dormant && !MONSTERS[c.type].object && MONSTERS[c.type].ai !== 'none' && cheb(c, state.pos) <= 6);
+  return near || state.char.hp <= derived().maxHp * 0.3 ? 'tense' : 'explore';
+}
+let moodT = 0, lurkT = 8, dripT = 2, abT = 0;
+const drops = [];
+function immersionTick(dt, time) {
+  const fp = fpOn(), dark = !!MAP.dark, play = playing();
+  // lens
+  const cw = canvas.clientWidth, chh = canvas.clientHeight, wantFov = fp ? 76 : 45, wantAspect = cw / Math.max(1, chh * (fp ? 1.2 : 1));
+  if (camera.fov !== wantFov || Math.abs(camera.aspect - wantAspect) > 1e-4 || !!camera.view !== fp || (fp && camera.view.fullWidth !== cw)) {
+    if (!fp) { camera.clearViewOffset(); camera.fov = 45; resize(); }
+    else { camera.fov = 76; resize(); camera.aspect = wantAspect; camera.setViewOffset(cw, chh * 1.2, 0, chh * 0.2, cw, chh); }
+  }
+  if (play) hero.visible = !fp;
+  FP.rig.visible = fp && state.char.hp > 0;
+  if (ceiling) ceiling.visible = fp && dark;
+  scene.fog.near = fp ? (dark ? 1.5 : 10) : 20; scene.fog.far = fp ? (dark ? 12 : 38) : 42;
+  // the light you carry gutters like a real flame
+  if (dark && play) {
+    const lit = state.torch > 0;
+    heroLight.intensity = (lit ? 9 : 6) * (0.9 + Math.sin(time * 11) * 0.05 + Math.sin(time * 27.3) * 0.035 + Math.sin(time * 3.1) * 0.04);
+    heroLight.distance = lit ? 9.5 : 7.5;
+    if (fp) { camera.getWorldDirection(_fpV); heroLight.position.copy(camera.position).addScaledVector(_fpV, 0.12); heroLight.position.x += _fpV.z * 0.18; heroLight.position.z -= _fpV.x * 0.18; heroLight.position.y += 0.02; }
+  }
+  // film
+  const u = filmPass.uniforms, hpF = play ? state.char.hp / Math.max(1, derived().maxHp) : 1;
+  abT = Math.max(heroFlash, abT - dt * 2);
+  u.uTime.value = time % 100; u.uAb.value = abT * 0.05 + (hpF <= 0.25 ? 0.012 : 0);
+  u.uDesat.value += ((play && hpF <= 0.5 ? (0.5 - hpF) * 1.3 : 0) - u.uDesat.value) * Math.min(1, dt * 2);
+  u.uVig.value = fp ? 0.42 : dark ? 0.22 : 0.12; u.uGrain.value = dark ? 0.1 : 0.05;
+  // score
+  if ((moodT -= dt) <= 0) { moodT = 0.4; SFX.setMusic(musicMood(), MOOD.root); }
+  SFX.music();
+  if (!play || !dark || state.over) return;
+  // things you can hear but not see
+  if (exploring() && (lurkT -= dt) <= 0) {
+    lurkT = rnd(9, 17);
+    const near = state.creatures.filter(c => c.alive && !c.aware && !c.dormant && !MONSTERS[c.type].object && MONSTERS[c.type].ai !== 'none' && !vis[c.z * W + c.x] && cheb(c, state.pos) <= 10);
+    if (near.length) {
+      const c = near[Math.floor(Math.random() * near.length)];
+      SFX.at(worldOf(c.x, c.z).setY(0.6), () => SFX.alert(c.type, true));
+      if (!state.heard) { state.heard = 1; addLog('sys', `<i>Something stirs in the dark to the ${dirWord(c.x - state.pos.x, c.z - state.pos.z)}. You can hear it, but your light does not reach.</i>`); }
+    }
+  }
+  // water finds its way down
+  if (MOOD.drip > 0 && (dripT -= dt) <= 0) {
+    dripT = rnd(0.5, 2.4) / MOOD.drip;
+    for (let n = 0; n < 5; n++) {
+      const x = state.pos.x + Math.round(rnd(-5, 5)), z = state.pos.z + Math.round(rnd(-5, 5));
+      if (x < 0 || z < 0 || x >= W || z >= H || !vis[z * W + x] || !WALKABLE.has(tileAt(x, z))) continue;
+      const w = worldOf(x, z); w.x += rnd(-.35, .35); w.z += rnd(-.35, .35);
+      drops.push({ w, y: 1.28, v: 0 }); break;
+    }
+  }
+  for (let i = drops.length - 1; i >= 0; i--) {
+    const d = drops[i]; d.v += 7 * dt; d.y -= d.v * dt;
+    glow.emit({ p: [d.w.x, d.y, d.w.z], life: 0.07, s: [.035, .02], c0: hdr('#bfe0f0', 1.6), a: .9, fi: 0 });
+    if (d.y <= d.w.y + 0.02) {
+      drops.splice(i, 1);
+      for (let k = 0; k < 6; k++) glow.emit({ p: [d.w.x, d.w.y + 0.03, d.w.z], v: [rnd(-.5, .5), rnd(.3, .8), rnd(-.5, .5)], g: -4, life: rnd(.18, .3), s: [.025, 0], c0: hdr('#bfe0f0', 1.4), a: .8, fi: 0 });
+      SFX.at(d.w, () => SFX.drip());
+    }
+  }
+}
+
 // a catalogue for tools/tests: every data table, plus a rendered picture of every item and monster
 function renderCatalog(size = 224) {
   const sc = new THREE.Scene(); sc.background = new THREE.Color('#2b241d'); sc.environment = scene.environment;
@@ -7400,7 +7728,8 @@ window.battleBoard = {
     applyKit: (c, k) => applyKit(c, k), newCharacter: () => newCharacter(), preparedSpells: () => preparedSpells(), togglePrepared: k => togglePrepared(k), openMerchant: () => openMerchant(() => {}),
     openSettings: () => openSettings(), reachProblems: m => reachProblems(m), oddsText: id => oddsText(creatureById(id)), bossPhase: id => bossPhase(creatureById(id)), damage: (id, n) => damageCreature(creatureById(id), n, 'dmg'),
     passiveOf: c => passiveOf(c), respec: () => respec(state.char), undoGrowth: () => undoGrowth(), spendPoint: k => spendPoint(k), lightTorch: () => lightTorch(), giveItem: (k, i) => giveItem(k, i),
-    exploreStatusTick: () => exploreStatusTick(), setSneak: on => setSneak(on), remapKey: k => remapKey(k), prefs: () => prefs, toastCount: () => document.getElementById('toast').children.length,
+    exploreStatusTick: () => exploreStatusTick(), setFp: on => setFp(on), fp: () => ({ on: fpOn(), yaw: FP.yaw, look: (y, p) => { FP.yaw = y ?? FP.yaw; FP.pitch = p ?? FP.pitch; }, fov: camera.fov, ceiling: !!ceiling?.visible, rig: FP.rig.visible }), stepKey: (f, r) => stepKey(f, r), turnKey: d => turnKey(d),
+    mood: () => ({ ...MOOD, music: SFX.musicWant }), musicMood: () => musicMood(), film: () => filmPass.enabled, setSneak: on => setSneak(on), remapKey: k => remapKey(k), prefs: () => prefs, toastCount: () => document.getElementById('toast').children.length,
     freshState: (k, chars) => freshState(k, chars), enterPlay: st => enterPlay(st, 'play', true), refresh: () => refresh(), heroes: () => heroes, toast: m => toast(m), itemModelOk: () => Object.keys(ITEMS).every(k => !!itemModel(k)) },
   wanderers() { const m = spawnWanderers(6, 13); if (m && exploring() === false) startCombat(); refresh(); return m && m.map(c => c.type); },
 };
