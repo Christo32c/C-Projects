@@ -32,6 +32,15 @@ Heroes and dungeons are saved in the browser's local storage. A save from before
 
 Hired companions get a random kit.
 
+### The play screen
+
+The board fills the screen and the controls stay out of its way.
+
+- **Health and mana** are two small pills at the top left (♥ and ◆), with icons beside them for effects, wounds, sneaking and a waiting level-up. Hover for the full numbers; click for the character sheet.
+- **The hotbar** is one row at the bottom. Keys **1** to **0** fire the first ten slots. On a narrow screen it scrolls sideways.
+- **Customise it** with the ✎ button: add or remove any spell you know, plus healing potion, mana potion, search, dash, sneak, light a torch, first person and tactical view, and put them in any order (up to 12). Each hero keeps their own hotbar.
+- On screens narrower than 900 px the side buttons fold into a **☰** menu at the top right.
+
 ### Settings and controls
 
 The **Settings** button holds combat speed (normal, fast or instant monster turns; hold any key to fast-forward one), text size, the view (over the shoulder or first person), the film look, effects and music volume, effects quality with a frame-rate readout, and key rebinding.

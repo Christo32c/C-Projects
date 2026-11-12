@@ -476,6 +476,56 @@
   #edBar .tool { color: var(--ink); font-size: 13px; text-shadow: 0 1px 3px #000; background: color-mix(in srgb, var(--panel) 80%, transparent);
                  border-radius: 8px; padding: 6px 10px; max-width: 560px; pointer-events: none !important; }
   #edBar .tool b { color: var(--brass); }
+
+  /* the compact HUD: HP and mana as two small pills top left, and a one-row hotbar you arrange yourself */
+  body:not([data-mode="play"]) #vitals, body:not([data-mode="play"]) #sbToggle { display: none !important; }
+  #vitals { zoom: var(--ui, 1); }
+  .vit { position: absolute; top: 12px; left: 12px; display: flex; gap: 6px; align-items: center; padding: 0; border: 0; background: none; z-index: 2; }
+  .vp { position: relative; display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px 0 8px; border-radius: 14px; border: 1px solid var(--line);
+        background: #120c09; overflow: hidden; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .vp i { position: absolute; inset: 0 auto 0 0; opacity: .6; transition: width .3s; }
+  .vp.vph i { background: linear-gradient(#8fbf6c, #5e8a44); } .vp.vph.low i { background: linear-gradient(#e0705a, #a83a2a); }
+  .vp.vpm i { background: linear-gradient(#7a9cff, #3a5ad0); }
+  .vp span, .vp b { position: relative; text-shadow: 0 1px 2px #000; }
+  .vp.vph span { color: #ffb0a4; } .vp.vpm span { color: #b8caff; }
+  .vp.vph.low { border-color: var(--blood); animation: bloodPulse 1s ease-in-out infinite; }
+  .vit:hover .vp { border-color: var(--brass); }
+  .vit .vx { display: inline-flex; gap: 3px; align-items: center; font-size: 12px; color: var(--brass); text-shadow: 0 1px 2px #000; }
+  .partyframes { top: 48px; }
+  .hotbar-wrap { flex-direction: column; align-items: center; gap: 4px; flex-wrap: nowrap; bottom: 8px; max-width: calc(100% - 16px); }
+  .hotrow { display: flex; gap: 6px; align-items: stretch; max-width: 100%; min-width: 0; }
+  .hotbar { flex-wrap: nowrap; overflow-x: auto; max-width: none; min-width: 0; padding: 4px; gap: 4px; scrollbar-width: none; }
+  .hotbar::-webkit-scrollbar { display: none; }
+  .slot, .slot.sp { width: 46px; height: 44px; font-size: 0; flex: none; gap: 0; padding: 0; }
+  .slot .k, .slot .q { font-size: 9px; } .slot .ic { width: 26px; height: 26px; font-size: 15px; margin-top: 6px; }
+  .slot.gap { margin-left: 0; }
+  .slot.edit { width: 26px; height: auto; font-size: 14px; color: var(--muted); background: color-mix(in srgb, var(--panel) 92%, transparent); border-radius: 10px; }
+  .slot.edit:hover { color: var(--brass); }
+  .hotrow #endBtn { padding: 0 14px; white-space: nowrap; border-radius: 10px; flex: none; }
+  .turninfo { padding: 2px 10px; border-radius: 10px; background: color-mix(in srgb, var(--panel) 78%, transparent); }
+  #sbToggle.sbtn { display: none; position: absolute; top: 12px; right: 12px; padding: 5px 10px; font-size: 15px; z-index: 3; }
+  .hbrow { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--line); }
+  .hbrow .ic { width: 26px; height: 26px; border-radius: 6px; display: grid; place-items: center; font-weight: 700; flex: none;
+               color: var(--c); background: color-mix(in srgb, var(--c) 20%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 45%, transparent); }
+  .hbrow .nm { flex: 1; min-width: 0; } .hbrow .nm small { color: var(--muted); display: block; }
+  .hbrow .kk { width: 22px; text-align: center; color: var(--muted); font-weight: 700; font-size: 12px; }
+  body[data-mode="play"] .toast { bottom: 84px; }
+  body[data-mode="play"] .aim { bottom: 92px; }
+  body[data-mode="play"] .narr { top: 110px; bottom: auto; }
+  @media (max-width: 900px) {
+    #sbToggle.sbtn { display: inline-flex; }
+    #sideBtns { display: none; top: 48px; left: auto; right: 12px; flex-direction: column; flex-wrap: nowrap; align-items: stretch; z-index: 3;
+                padding: 6px; border-radius: 10px; background: color-mix(in srgb, var(--panel) 94%, transparent); border: 1px solid var(--line); max-height: calc(100% - 150px); overflow-y: auto; }
+    body.sb-open #sideBtns { display: flex; }
+    #sideBtns .sbtn { font-size: 13px; padding: 5px 10px 5px 6px; } #sideBtns .sbtn b ~ * { font-size: 13px; }
+    .slot, .slot.sp { width: 40px; height: 40px; } .slot .ic { width: 22px; height: 22px; font-size: 13px; }
+    .hotrow #endBtn { padding: 0 10px; font-size: 13px; }
+    .hotbar-wrap { left: 8px; right: 8px; transform: none; width: auto; max-width: none; }
+    .hotrow { width: 100%; justify-content: center; }
+    .vp { height: 24px; padding: 0 8px 0 6px; font-size: 12px; }
+    #menuBtn { max-width: 34vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .partyframes { top: 44px; width: 132px; } .pf-mode { display: none; } .pf { padding: 4px 6px 4px 4px; } .pf .por { width: 24px; height: 24px; font-size: 11px; } .pf .nm span { display: none; }
+  }
 </style>
 <script type="importmap">
 { "imports": {
@@ -529,10 +579,15 @@
       <button class="sbtn" id="soundBtn" title="Turn sound on or off">Sound</button>
       <button class="sbtn" id="setBtn" title="Settings: combat speed, text size, volume and keys"><b>⚙</b>Settings</button>
     </div>
+    <button class="vit" id="vitals" title="Open the character sheet"></button>
+    <button class="sbtn sbtoggle" id="sbToggle" aria-expanded="false" aria-controls="sideBtns" title="Show or hide the side buttons">☰</button>
     <div class="hotbar-wrap" id="playBar">
-      <button class="vitals-card" id="vitals" title="Open the character sheet"></button>
-      <div class="hotbar" id="spellbar" role="toolbar" aria-label="Hotbar"></div>
-      <div class="turnbox"><span class="turninfo" id="turnInfo"></span><button class="btn primary" id="endBtn" title="End your turn (Space)">End turn</button></div>
+      <span class="turninfo" id="turnInfo"></span>
+      <div class="hotrow">
+        <div class="hotbar" id="spellbar" role="toolbar" aria-label="Hotbar"></div>
+        <button class="slot edit" id="hotEdit" title="Customise the hotbar: choose what is on it and in what order">✎</button>
+        <button class="btn primary" id="endBtn" title="End your turn (Space)">End turn</button>
+      </div>
     </div>
   </main>
 
@@ -5286,32 +5341,27 @@ function renderHud() {
   if (hc && hc.alive) { const m = MONSTERS[hc.type];
     $('hudChips').innerHTML += `<span class="chip target">${m.name} <b>${hc.hp}/${m.hp}</b> HP · AC ${acOf(hc)}${hc.restrained ? ' · <b style="color:#a6e07a">Restrained</b>' : ''}</span>`;
     const odds = oddsText(hc); if (odds) $('hudChips').innerHTML += `<span class="chip odds">${odds}</span>`; }
-  // the vitals card: portrait, HP and spell slots
-  const c = state.char, d = derived(), f = c.hp / d.maxHp;
-  $('vitals').innerHTML = `<span class="por" style="--c:${esc(c.color)}">${esc((c.name || '?')[0])}</span>
-    <span class="vt"><span class="nm"><b>${esc(c.name)}</b><span class="muted">Lv ${c.level} · AC ${d.ac}</span></span>
-    <span class="hpbar2 ${f <= 0.35 ? 'low' : ''}"><i style="width:${Math.max(0, f * 100)}%"></i><span>${c.hp} / ${d.maxHp}${c.hp > 0 && f <= 0.35 ? ' · badly hurt' : c.wounds ? ` · ${c.wounds} wound${c.wounds > 1 ? 's' : ''}` : ''}</span></span>
-    <span class="mpbar"><i style="width:${Math.max(0, (c.mp ?? 0) / maxMpOf(c) * 100)}%"></i><span>${c.mp ?? 0} / ${maxMpOf(c)} MP</span></span>
-    <span class="slots-mini">${(c.statPoints > 0 || c.pendingTalents?.length) ? `<span class="lvlup">★ ${c.pendingTalents?.length ? 'Choose a talent' : `${c.statPoints} stat points`}</span>` : ''}${state.sneak ? '<span class="sneaky">Sneaking</span>' : ''}${stWords(c) || (c.statPoints > 0 || c.pendingTalents?.length ? '' : '<span class="muted">No effects</span>')}
-      <span style="margin-left:auto">${c.gold} gp</span></span></span>`;
-  // the hotbar: spells, then a potion, search and dash
-  const potion = ['potion', 'greater', 'goblinStew'].map(k => invEntry(k)).find(Boolean);
+  // vitals: two small pills, top left
+  const c = state.char, d = derived(), f = c.hp / d.maxHp, mmp = maxMpOf(c), lvl = c.statPoints > 0 || c.pendingTalents?.length;
+  $('vitals').innerHTML = `<span class="vp vph ${c.hp > 0 && f <= 0.35 ? 'low' : ''}"><i style="width:${Math.max(0, f * 100)}%"></i><span>♥\uFE0E</span><b>${c.hp}</b></span>
+    <span class="vp vpm"><i style="width:${Math.max(0, (c.mp ?? 0) / mmp * 100)}%"></i><span>◆</span><b>${c.mp ?? 0}</b></span>
+    <span class="vx">${lvl ? '<span class="lvlstar">★</span>' : ''}${state.sneak ? '<span title="Sneaking">☾</span>' : ''}${c.wounds ? `<span title="Wounds: −10% maximum HP each until you camp" style="color:#ff8a7a">✚${c.wounds}</span>` : ''}${stIcons(c)}</span>`;
+  $('vitals').title = `${c.name} · Level ${c.level} · AC ${d.ac}\nHP ${c.hp} / ${d.maxHp}${c.wounds ? ` (${c.wounds} wound${c.wounds > 1 ? 's' : ''})` : ''} · Mana ${c.mp ?? 0} / ${mmp} · ${c.gold} gp${lvl ? '\n★ ' + (c.pendingTalents?.length ? 'Choose a talent' : `${c.statPoints} stat points to spend`) : ''}\nClick for the character sheet`;
+  $('vitals').setAttribute('aria-label', `Health ${c.hp} of ${d.maxHp}, mana ${c.mp ?? 0} of ${mmp}. Open the character sheet`);
+  // the hotbar: whatever you put on it, in your order
   const actOk = ex || t.action;
-  const known = preparedSpells(c), cur = entryOf(), heroTurn = ex || (cur?.t === 'h' && !busy);
-  $('spellbar').innerHTML = known.map((k, n) => {
-    const sp = SPELLS[k], off = busy || !heroTurn || (!freeCast() && ((!ex && !t.action) || (c.mp ?? 0) < costOf(sp, c)));
-    return `<button class="slot sp" style="--c:${sp.color}" data-spell="${k}" aria-pressed="${ui.spell === k}" ${off ? 'disabled' : ''}
-      title="${sp.name} (${n < 10 ? (n + 1) % 10 : 'click'}): ${sp.cost} MP · ${sp.area} · ${sp.range * 5} ft. ${esc(sp.desc)}">${n < 10 ? `<span class="k">${(n + 1) % 10}</span>` : ''}<span class="q">${costOf(sp, c)}</span>
-      <span class="ic">${sp.icon || '✦'}</span>${sp.name}</button>`;
-  }).join('') + `
-    <button class="slot gap" style="--c:#e0605a" data-hot="potion" ${!potion || busy || !actOk ? 'disabled' : ''} title="Drink ${potion ? ITEMS[potion.key].name : 'a healing potion'} (Q)">
-      <span class="k">Q</span>${potion ? `<span class="q">×${potion.qty}</span>` : ''}<span class="ic">♥</span>${potion ? (potion.key === 'goblinStew' ? 'Stew' : 'Potion') : 'No potion'}</button>
-    <button class="slot" style="--c:#6f9cff" data-hot="mana" ${!invEntry('manaPotion') || busy || !actOk ? 'disabled' : ''} title="Drink a Potion of Mana (E)">
-      <span class="k">E</span>${invEntry('manaPotion') ? `<span class="q">×${invEntry('manaPotion').qty}</span>` : ''}<span class="ic">◆</span>Mana</button>
-    <button class="slot" style="--c:#d3aa55" data-hot="search" ${busy || !actOk ? 'disabled' : ''} title="Search (F): a Perception check for traps, secret doors and hidden caches within 15 ft">
-      <span class="k">F</span><span class="ic">⌕</span>Search</button>
-    <button class="slot" style="--c:#7aa7cb" data-hot="dash" ${ex || !t.action || busy ? 'disabled' : ''} title="Dash (X): use your action to double your movement">
-      <span class="k">X</span><span class="ic">»</span>Dash</button>`;
+  const cur = entryOf(), heroTurn = ex || (cur?.t === 'h' && !busy);
+  $('spellbar').innerHTML = hotbarOf(c).map((id, n) => {
+    const key = n < 10 ? `<span class="k">${(n + 1) % 10}</span>` : '';
+    if (id.startsWith('s:')) {
+      const k = id.slice(2), sp = SPELLS[k], off = busy || !heroTurn || (!freeCast() && ((!ex && !t.action) || (c.mp ?? 0) < costOf(sp, c)));
+      return `<button class="slot sp" style="--c:${sp.color}" data-spell="${k}" aria-pressed="${ui.spell === k}" ${off ? 'disabled' : ''} aria-label="${sp.name}"
+        title="${sp.name}${n < 10 ? ` (${(n + 1) % 10})` : ''}: ${costOf(sp, c)} MP · ${sp.area} · ${sp.range * 5} ft. ${esc(sp.desc)}">${key}<span class="q">${costOf(sp, c)}</span><span class="ic">${sp.icon || '✦'}</span></button>`;
+    }
+    const A = HOT_ACTIONS[id], s = A.state(c, { ex, t, actOk });
+    return `<button class="slot" style="--c:${A.color}" data-hot="${id}" ${s.off || busy ? 'disabled' : ''} aria-pressed="${!!s.on}" aria-label="${A.name}" title="${A.name}${n < 10 ? ` (${(n + 1) % 10}, or ${A.key})` : ` (${A.key})`}: ${A.desc}">
+      ${key}${s.qty ? `<span class="q">×${s.qty}</span>` : ''}<span class="ic">${A.icon}</span></button>`;
+  }).join('');
   // initiative tracker and boss health
   const cb = state.combat;
   $('initBar').hidden = !cb || ex;
@@ -5327,7 +5377,7 @@ function renderHud() {
   $('endBtn').disabled = busy || !heroTurn;
   $('endBtn').textContent = ex ? 'Pass a round' : 'End turn';
   $('endBtn').title = ex ? 'Let a round go by: walls of fire and ice run down, and effects tick (Space). It does not restore mana.' : 'End your turn (Space)';
-  const who = state.party.length > 1 ? `<b style="color:var(--ink)">${esc(c.name)}</b><br>` : '';
+  const who = state.party.length > 1 ? `<b style="color:var(--ink)">${esc(c.name)}</b> · ` : '';
   $('partyFrames').hidden = state.party.length < 2;
   $('partyFrames').innerHTML = state.party.length < 2 ? '' : `<span class="pf-mode">${ex ? 'Party · Tab to switch leader' : 'Party · initiative order'}</span>` + state.party.map((m, i) => {
     const mf = m.char.hp / maxHpOf(m.char), st = m.char.hp <= 0 ? 'Down' : [i === state.active ? (ex ? 'Leading' : 'Acting') : '', mf <= 0.35 ? 'badly hurt' : '', m.char.wounds ? `${m.char.wounds}× wounded` : ''].filter(Boolean).join(' · ');
@@ -5596,6 +5646,10 @@ $('panel').addEventListener('click', e => {
 $('endBtn').addEventListener('click', endTurn);
 function useHot(h) {
   if (busy || anim || state.over) return;
+  if (h === 'sneak') return setSneak(!state.sneak);
+  if (h === 'torch') { lightTorch(); refresh(); return; }
+  if (h === 'fp') return setFp(!ui.fp);
+  if (h === 'tac') return setTac(ui.tac ? false : 'toggle');
   if (h === 'search') return search();
   if (h === 'dash') return dash();
   if (h === 'potion') { const p = ['potion', 'greater', 'goblinStew'].find(k => invEntry(k)); if (!p) return toast('You have no healing left.'); useItem(p); refresh(); save(); }
@@ -5634,8 +5688,8 @@ $('setBtn').addEventListener('click', () => openSettings());
 $('narr').addEventListener('click', () => { narrT = Math.min(narrT, 0.01); });
 window.addEventListener('keydown', e => {
   if (!playing() || e.target.closest('input, select, textarea') || !$('modal').hidden) return;
-  const key = remapKey(e.key.toLowerCase()), digit = /^[0-9]$/.test(e.key) ? (+e.key + 9) % 10 : -1, k = digit >= 0 ? preparedSpells()[digit] : null;
-  if (k) { selectSpell(k); e.preventDefault(); }
+  const key = remapKey(e.key.toLowerCase()), digit = /^[0-9]$/.test(e.key) ? (+e.key + 9) % 10 : -1, k = digit >= 0 ? hotbarOf()[digit] : null;
+  if (k) { if (k.startsWith('s:')) selectSpell(k.slice(2)); else useHot(k); e.preventDefault(); }
   else if (e.key === 'Escape') { if (ui.spell) cancelSpell(); else if (ui.panelOpen) setPanel(null); }
   else if (key === 'q') useHot('potion');
   else if (key === 'e') useHot('mana');
@@ -7112,6 +7166,7 @@ function togglePrepared(k) {
   if (cur.includes(k)) c.prepared = cur.filter(x => x !== k);
   else if (cur.length >= PREP_MAX) return toast(`Your hotbar holds ${PREP_MAX} spells. Unprepare one first.`);
   else c.prepared = [...cur, k].sort((a, b) => SPELL_ORDER.indexOf(a) - SPELL_ORDER.indexOf(b));
+  if (Array.isArray(c.hotbar)) { const on = c.prepared.includes(k), id = 's:' + k; c.hotbar = on ? (c.hotbar.includes(id) || c.hotbar.length >= HOT_MAX ? c.hotbar : [...c.hotbar, id]) : c.hotbar.filter(x => x !== id); }
 }
 // sneaking and the tactical view
 function setSneak(on) {
@@ -7645,6 +7700,64 @@ function immersionTick(dt, time) {
   }
 }
 
+
+/* ================================================================== *
+ * THE HOTBAR: one row, and yours to arrange. Spells and actions share it; keys 1 to 0 fire the first ten.
+ * ================================================================== */
+const HOT_MAX = 12;
+const HOT_ACTIONS = {
+  potion: { name: 'Healing potion', icon: '♥', color: '#e0605a', key: 'Q', desc: 'Drink the weakest healing potion or stew you carry.',
+            state: (c, s) => { const p = ['potion', 'greater', 'goblinStew'].map(k => invEntry(k)).find(Boolean); return { off: !p || !s.actOk, qty: p?.qty }; } },
+  mana:   { name: 'Mana potion', icon: '◆', color: '#6f9cff', key: 'E', desc: 'Drink a Potion of Mana.', state: (c, s) => ({ off: !invEntry('manaPotion') || !s.actOk, qty: invEntry('manaPotion')?.qty }) },
+  search: { name: 'Search', icon: '⌕', color: '#d3aa55', key: 'F', desc: 'A Perception check for traps, secret doors and hidden caches within 15 ft.', state: (c, s) => ({ off: !s.actOk }) },
+  dash:   { name: 'Dash', icon: '»', color: '#7aa7cb', key: 'X', desc: 'Use your action to double your movement this turn.', state: (c, s) => ({ off: s.ex || !s.t.action }) },
+  sneak:  { name: 'Sneak', icon: '☾', color: '#9a8cff', key: 'G', desc: 'Monsters only notice you within 20 ft. Strike first and they lose their first turn.', state: () => ({ on: state.sneak }) },
+  torch:  { name: 'Light a torch', icon: '♨', color: '#ff9a4a', key: 'click', desc: 'See 10 ft further for the next 80 squares you walk.', state: () => ({ off: !invEntry('torch') || state.torch > 0 || !MAP.dark, qty: invEntry('torch')?.qty, on: state.torch > 0 }) },
+  fp:     { name: 'First person', icon: '◉', color: '#e8e2d4', key: 'B', desc: 'See the dungeon through your hero\'s eyes.', state: () => ({ on: ui.fp }) },
+  tac:    { name: 'Tactical view', icon: '⇧', color: '#e8e2d4', key: 'Shift', desc: 'Lift the camera overhead.', state: () => ({ on: !!ui.tac }) },
+};
+const hotValid = (c, id) => id.startsWith('s:') ? knownSpells(c).includes(id.slice(2)) : !!HOT_ACTIONS[id];
+function hotbarOf(c = state.char) {
+  if (Array.isArray(c.hotbar)) return c.hotbar.filter(id => hotValid(c, id)).slice(0, HOT_MAX);
+  return [...preparedSpells(c).map(k => 's:' + k), 'potion', 'mana', 'search', 'dash'].slice(0, HOT_MAX);
+}
+function openHotbar() {
+  const c = state.char;
+  const row = (id, n, on) => {
+    const sp = id.startsWith('s:') ? SPELLS[id.slice(2)] : null, A = sp ? null : HOT_ACTIONS[id];
+    return `<div class="hbrow" style="--c:${sp ? sp.color : A.color}">${on ? `<span class="kk">${n < 10 ? (n + 1) % 10 : ''}</span>` : ''}<span class="ic">${sp ? sp.icon || '✦' : A.icon}</span>
+      <span class="nm">${sp ? sp.name : A.name}<small>${sp ? `${costOf(sp, c)} MP · ${sp.range * 5} ft` : esc(A.desc)}</small></span>
+      ${on ? `<button class="btn small" data-hb="up" data-k="${id}" ${n === 0 ? 'disabled' : ''} aria-label="Move ${sp ? sp.name : A.name} earlier">◀</button><button class="btn small" data-hb="down" data-k="${id}" aria-label="Move later">▶</button><button class="btn small" data-hb="off" data-k="${id}">Remove</button>`
+           : `<button class="btn small" data-hb="on" data-k="${id}">Add</button>`}</div>`;
+  };
+  const body = () => {
+    const bar = hotbarOf(c), rest = [...knownSpells(c).map(k => 's:' + k), ...Object.keys(HOT_ACTIONS)].filter(id => !bar.includes(id));
+    return `<p class="muted">Up to ${HOT_MAX} slots. Keys 1 to 0 fire the first ten, left to right. Each hero has their own hotbar.</p>
+      <h3>On the hotbar (${bar.length})</h3>${bar.map((id, n) => row(id, n, true)).join('') || '<p class="muted">Nothing yet.</p>'}
+      <h3 style="margin-top:14px">Available</h3>${rest.map(id => row(id, 0, false)).join('') || '<p class="muted">Everything is on the hotbar.</p>'}
+      <div class="row" style="margin-top:12px"><button class="btn small" data-hb="reset">Reset to the default</button></div>`;
+  };
+  showModal('Customise the hotbar', body(), [{ label: 'Done', primary: true }]);
+  const mb = $('mBody');
+  mb.onclick = e => {
+    const b = e.target.closest('[data-hb]'); if (!b) return;
+    const act = b.dataset.hb, id = b.dataset.k; let bar = hotbarOf(c);
+    if (act === 'reset') { delete c.hotbar; }
+    else {
+      const i = bar.indexOf(id);
+      if (act === 'on') { if (bar.length >= HOT_MAX) return toast(`The hotbar holds ${HOT_MAX}. Remove something first.`); bar.push(id); }
+      if (act === 'off') bar.splice(i, 1);
+      if (act === 'up' && i > 0) [bar[i - 1], bar[i]] = [bar[i], bar[i - 1]];
+      if (act === 'down' && i < bar.length - 1) [bar[i + 1], bar[i]] = [bar[i], bar[i + 1]];
+      c.hotbar = bar;
+    }
+    mb.innerHTML = body(); refresh(); save();
+  };
+}
+$('hotEdit').addEventListener('click', openHotbar);
+$('sbToggle').addEventListener('click', () => { const on = document.body.classList.toggle('sb-open'); $('sbToggle').setAttribute('aria-expanded', on); });
+$('sideBtns').addEventListener('click', () => { document.body.classList.remove('sb-open'); $('sbToggle').setAttribute('aria-expanded', false); });
+
 // a catalogue for tools/tests: every data table, plus a rendered picture of every item and monster
 function renderCatalog(size = 224) {
   const sc = new THREE.Scene(); sc.background = new THREE.Color('#2b241d'); sc.environment = scene.environment;
@@ -7729,7 +7842,7 @@ window.battleBoard = {
     applyKit: (c, k) => applyKit(c, k), newCharacter: () => newCharacter(), preparedSpells: () => preparedSpells(), togglePrepared: k => togglePrepared(k), openMerchant: () => openMerchant(() => {}),
     openSettings: () => openSettings(), reachProblems: m => reachProblems(m), oddsText: id => oddsText(creatureById(id)), bossPhase: id => bossPhase(creatureById(id)), damage: (id, n) => damageCreature(creatureById(id), n, 'dmg'),
     passiveOf: c => passiveOf(c), respec: () => respec(state.char), undoGrowth: () => undoGrowth(), spendPoint: k => spendPoint(k), lightTorch: () => lightTorch(), giveItem: (k, i) => giveItem(k, i),
-    exploreStatusTick: () => exploreStatusTick(), setFp: on => setFp(on), fp: () => ({ on: fpOn(), yaw: FP.yaw, look: (y, p) => { FP.yaw = y ?? FP.yaw; FP.pitch = p ?? FP.pitch; }, fov: camera.fov, ceiling: !!ceiling?.visible, rig: FP.rig.visible }), stepKey: (f, r) => stepKey(f, r), turnKey: d => turnKey(d),
+    exploreStatusTick: () => exploreStatusTick(), hotbar: () => hotbarOf(), openHotbar: () => openHotbar(), setFp: on => setFp(on), fp: () => ({ on: fpOn(), yaw: FP.yaw, look: (y, p) => { FP.yaw = y ?? FP.yaw; FP.pitch = p ?? FP.pitch; }, fov: camera.fov, ceiling: !!ceiling?.visible, rig: FP.rig.visible }), stepKey: (f, r) => stepKey(f, r), turnKey: d => turnKey(d),
     mood: () => ({ ...MOOD, music: SFX.musicWant }), musicMood: () => musicMood(), film: () => filmPass.enabled, setSneak: on => setSneak(on), remapKey: k => remapKey(k), prefs: () => prefs, toastCount: () => document.getElementById('toast').children.length,
     freshState: (k, chars) => freshState(k, chars), enterPlay: st => enterPlay(st, 'play', true), refresh: () => refresh(), heroes: () => heroes, toast: m => toast(m), itemModelOk: () => Object.keys(ITEMS).every(k => !!itemModel(k)) },
   wanderers() { const m = spawnWanderers(6, 13); if (m && exploring() === false) startCombat(); refresh(); return m && m.map(c => c.type); },
