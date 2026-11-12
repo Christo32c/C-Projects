@@ -150,9 +150,10 @@ await check('combat: everyone rolls initiative and monsters act in order', async
   await ev(() => battleBoard.walk(3, 8)); await wait(3);
   const c = await ev(() => battleBoard.combat());
   assert(c && c.order.some(o => o.startsWith('h:')) && c.order.some(o => o.startsWith('m:')), 'no initiative order: ' + JSON.stringify(c));
+  // play four of the party's turns; monster turns in between can take a while
   for (let i = 0; i < 4; i++) {
-    for (let k = 0; k < 40 && await ev(() => document.getElementById('endBtn').disabled); k++) await wait(0.5);
-    if (!(await ev(() => battleBoard.combat()))) break;
+    for (let k = 0; k < 240 && await ev(() => document.getElementById('endBtn').disabled); k++) await wait(0.5);
+    if (!(await ev(() => battleBoard.combat())) || await ev(() => document.getElementById('endBtn').disabled)) break;
     await page.click('#endBtn'); await wait(1);
   }
   const log = await ev(() => battleBoard.state.log.map(l => l.html).join(' '));
@@ -203,11 +204,12 @@ await check('levelling: XP gives a level, stat points, and a talent at an even s
     const st = battleBoard.state; battleBoard.xp(300);
     const c = st.char, k = ['str', 'dex', 'con', 'int', 'wis', 'cha'].find(k => c.abilities[k] % 2 === 0 && c.abilities[k] < 20) || 'str';
     const lvl = c.level, pts = c.statPoints;
-    document.querySelectorAll('[data-notice-act]').forEach(b => b.click());
     return { lvl, pts, k };
   });
   assert(r.lvl >= 2 && r.pts >= 2, JSON.stringify(r));
-  await page.keyboard.press('c'); await wait(0.3);
+  // open the sheet from the announcement's own button
+  await ev(() => document.querySelector('[data-notice-act="sheet"]')?.click()); await wait(0.3);
+  if (!(await ev(() => document.getElementById('panel').classList.contains('open')))) { await page.keyboard.press('c'); await wait(0.3); }
   for (let i = 0; i < 2; i++) { await page.click(`[data-act="spend"][data-k="${r.k}"]`); await wait(0.2); }
   const choice = await page.$('[data-act="talent"]');
   assert(choice, 'no talent offered after raising ' + r.k);
