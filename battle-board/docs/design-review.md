@@ -269,29 +269,45 @@ Hotbar labels (9–10 px), effect counters and party bars are small. Some states
 
 ## Test results
 
-Run with `node tests/run-tests.mjs` (Playwright, headless Chromium with software WebGL). **25 of 25 checks passed** (about 81 minutes on a software renderer).
+Re-run after the fixes were applied. Both suites pass.
+
+**Regression suite** (`node tests/run-tests.mjs`, Playwright, headless Chromium with software WebGL): **25 of 25 checks passed** (about 64 minutes on a software renderer).
 
 | Area | Result |
 |---|---|
 | Boot to the title screen | ✅ |
-| Catalogue render: 33 items, 21 monsters and props | ✅ |
+| Catalogue render: 37 items, 21 monsters and props | ✅ |
 | Data: loot tables, monsters, 16 spells, 12 effects, 27 talents | ✅ |
 | Maps: one start, closed border, legal tiles (9 maps) | ✅ (Training Yard's open edge is deliberate) |
 | Create a hero with a companion and enter the Sunken Crypt | ✅ |
 | Load all 9 maps (1–32 creatures each) | ✅ |
-| Combat initiative: order was Tester 22, rat 20, rat 14, rat 6, skeleton 3 | ✅ |
+| Combat initiative: rat 22, rat 21, rat 17, Tester 12, skeleton 12 | ✅ |
 | Every spell casts without errors | ✅ |
 | Hex lands; statuses count down at the end of a turn | ✅ |
 | Casting costs mana (16 → 14 MP) | ✅ |
+| **Mana is not restored by passing rounds** (14 → 14 MP after 6 rounds) | ✅ (was the free-refill probe; now an assertion) |
 | Levelling: XP, stat points, STR 12 unlocks *Heavy Hitter* | ✅ |
 | Save and continue | ✅ |
 | Creator: paint, playtest, return | ✅ |
 | No uncaught errors during the whole run | ✅ |
 
-**Design probe (confirmed):** pressing *Wait* outside a fight refills mana for free (14 → 16 MP after 6 waits). See the Economy section above.
+**Fix checks** (`node tests/review-fixes.mjs`): **17 of 17 passed**. They cover:
+- mana only from camping, potions and the Siphoning Charm;
+- Fire Bolt's new cost and range;
+- kits and prepared spells (8 slots);
+- the hit-odds chip;
+- statuses ticking out of combat;
+- wounds;
+- boss stun immunity and boss phases;
+- party scaling;
+- ambush;
+- the merchant, undo and respec;
+- settings and key remapping;
+- the toast stack;
+- creator reachability warnings;
+- item models;
+- no errors.
 
 **Notes:**
-- The first run failed 3 checks, but all three were problems in the test script, not the game.
-  - The combat check clicked *End turn* during a long monster round. A trace showed the hero's turn arriving about 2 s later.
-  - The levelling check closed the character sheet that the level-up notice had already opened.
-- A long monster round can keep *End turn* disabled for many seconds. This matches the 🟠 "long enemy rounds" item above.
+- An earlier run of the first suite was cut off by a 30-minute time limit, and its last 8 checks never ran. The full re-run above passed with no changes to the game.
+- The first run before the fixes failed 3 checks. All three were problems in the test script, not the game.
