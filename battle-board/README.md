@@ -32,6 +32,36 @@ Heroes and dungeons are saved in the browser's local storage. A save from before
 
 Hired companions get a random kit.
 
+### Hitting and missing
+
+Every monster defends in one of two ways: **armour** (skeletons, goblins with shields, spiders, the Grave Warden) or **dodging** (rats, wolves, archers, wraiths). A miss says which: *Blocked* or *Dodged*. Your own Defence works the same way, from whichever is better of your armour and shield or your Dexterity.
+
+Weak monsters have low Defence, so missing one is bad luck, not the norm. Bosses are still hard to hit.
+
+| Level-1 hero | Giant Rat | Skeleton | Goblin | Grave Warden (boss) |
+|---|---|---|---|---|
+| Spellblade | 90% | 80% | 70% | 55% |
+| Warden | 95% | 90% | 80% | 65% |
+| Ranger (bow) | 95% | 90% | 80% | 65% |
+
+### Techniques
+
+Wardens and Rangers have **martial training** (Warden: +2 to hit and +2 damage with melee weapons; Ranger: +2 to hit and +1 damage with bows) and **techniques**: weapon skills that cost no mana. Each is ready again after a few of your own turns, and all are ready at the start of every fight. Most are armed first and ride on your next attack; Esc cancels.
+
+| Technique | Who | Level | Cooldown | What it does |
+|---|---|---|---|---|
+| Cleave | Warden | 1 | 2 turns | Your next melee attack also hits every other enemy next to you for the weapon's dice |
+| Shield Bash | Warden | 1 | 3 turns | 1d4 + Strength, and the target loses its next turn. Needs a shield |
+| Second Wind | Warden | 1 | once a fight | No action: regain 1d10 + your level |
+| Rending Strike | Warden 2, Spellblade 2 | 2 | 2 turns | An extra weapon die, and the target bleeds for 3 rounds |
+| Stand Fast | Warden | 3 | 4 turns | Action: +4 Defence for 2 rounds. Needs a shield |
+| Aimed Shot | Ranger | 1 | 2 turns | Roll twice and keep the better, with an extra weapon die |
+| Tumble | Ranger | 1 | 3 turns | No action, in a fight: 20 ft of extra movement |
+| Volley | Ranger | 2 | 3 turns | Extra arrows at up to two enemies within 10 ft of the target |
+| Pinning Shot | Ranger | 3 | 4 turns | The target loses its next turn |
+
+Techniques appear first on the hotbar and are listed at the top of the Spells tab.
+
 ### The play screen
 
 The board fills the screen and the controls stay out of its way.

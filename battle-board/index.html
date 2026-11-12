@@ -779,31 +779,31 @@ const rarityTag = k => rarityOf(k) === 'common' ? '' : `<span class="tag rar" st
 const UNARMED = { name: 'Unarmed strike', type: 'weapon', dice: [1, 1], dmgType: 'bludgeoning', ability: 'str', range: 1 };
 
 const MONSTERS = {
-  dummy:    { name: 'Training Dummy', hp: 40, ac: 11, xp: 50, speed: 0, ai: 'none', saves: { dex: 0, str: 2 }, respawn: true },
-  rat:      { name: 'Giant Rat', hp: 7, ac: 12, xp: 25, speed: 6, ai: 'melee', atk: 4, dmg: [1, 4, 2], dmgType: 'piercing', range: 1, saves: { dex: 2, str: -2 }, verb: 'bites' },
-  skeleton: { name: 'Skeleton', hp: 13, ac: 13, xp: 50, speed: 6, ai: 'melee', atk: 4, dmg: [1, 6, 2], dmgType: 'slashing', range: 1, saves: { dex: 2, str: 0 }, verb: 'slashes' },
-  archer:   { name: 'Goblin Archer', hp: 7, ac: 13, xp: 50, speed: 6, ai: 'ranged', atk: 4, dmg: [1, 6, 2], dmgType: 'piercing', range: 16, saves: { dex: 2, str: -1 }, verb: 'shoots' },
-  goblin:   { name: 'Goblin', hp: 7, ac: 15, xp: 50, speed: 6, ai: 'melee', atk: 4, dmg: [1, 6, 2], dmgType: 'slashing', range: 1, saves: { dex: 2, str: -1 }, verb: 'hacks' },
-  goblinBoss: { name: 'Chief Grizzlegut', epithet: 'King of the Warren', onHit: { status: 'bleeding', rounds: 2, chance: 0.5 }, hp: 32, ac: 16, xp: 300, speed: 6, ai: 'melee', atk: 5, dmg: [2, 6, 3], dmgType: 'slashing', range: 1, saves: { dex: 2, str: 2 }, verb: 'cleaves', boss: true, scale: 1.3 },
-  wolf:     { name: 'Wolf', hp: 11, ac: 13, xp: 50, speed: 8, ai: 'melee', atk: 4, dmg: [2, 4, 2], dmgType: 'piercing', range: 1, saves: { dex: 2, str: 1 }, verb: 'bites' },
-  spider:   { name: 'Giant Spider', hp: 26, ac: 14, xp: 200, speed: 6, ai: 'melee', atk: 5, dmg: [1, 8, 3], dmgType: 'piercing', range: 1, saves: { dex: 3, str: 2 }, verb: 'stabs with venomous fangs', onHit: { status: 'poisoned', rounds: 2, chance: 0.5 } },
-  zombie:   { name: 'Zombie', hp: 22, ac: 8, xp: 50, speed: 4, ai: 'melee', atk: 3, dmg: [1, 6, 1], dmgType: 'bludgeoning', range: 1, saves: { dex: -2, str: 1 }, verb: 'claws' },
-  cultist:  { name: 'Bone Cultist', hp: 18, ac: 12, xp: 100, speed: 6, ai: 'ranged', atk: 4, dmg: [2, 6, 0], dmgType: 'necrotic', range: 12, proj: 'bolt', saves: { dex: 1, str: 0 }, verb: 'hurls a bolt of grave-light', onHit: { status: 'hexed', rounds: 2, chance: 0.35 } },
-  wraith:   { name: 'Wraith', hp: 45, ac: 13, xp: 450, speed: 6, ai: 'melee', atk: 6, dmg: [3, 6, 2], dmgType: 'necrotic', range: 1, saves: { dex: 3, str: 0 }, verb: 'drains your life', float: true, aura: '#8af2ff', onHit: { status: 'weakened', rounds: 2, chance: 0.4 } },
-  lich:     { name: 'Vael Morrow', epithet: 'Lich of the Pale Crown', onHit: { status: 'chilled', rounds: 2, chance: 0.5 }, hp: 110, ac: 16, xp: 3000, speed: 5, ai: 'ranged', atk: 7, dmg: [4, 8, 0], dmgType: 'necrotic', range: 14, proj: 'bolt', saves: { dex: 3, str: 1 }, verb: 'unleashes a bolt of death', boss: true, summon: true, aura: '#5fffd0' },
+  dummy:    { name: 'Training Dummy', hp: 40, ac: 8, guard: 'armor', xp: 50, speed: 0, ai: 'none', saves: { dex: 0, str: 2 }, respawn: true },
+  rat:      { name: 'Giant Rat', hp: 7, ac: 7, guard: 'dodge', xp: 25, speed: 6, ai: 'melee', atk: 4, dmg: [1, 4, 2], dmgType: 'piercing', range: 1, saves: { dex: 2, str: -2 }, verb: 'bites' },
+  skeleton: { name: 'Skeleton', hp: 13, ac: 9, guard: 'armor', xp: 50, speed: 6, ai: 'melee', atk: 4, dmg: [1, 6, 2], dmgType: 'slashing', range: 1, saves: { dex: 2, str: 0 }, verb: 'slashes' },
+  archer:   { name: 'Goblin Archer', hp: 7, ac: 9, guard: 'dodge', xp: 50, speed: 6, ai: 'ranged', atk: 4, dmg: [1, 6, 2], dmgType: 'piercing', range: 16, saves: { dex: 2, str: -1 }, verb: 'shoots' },
+  goblin:   { name: 'Goblin', hp: 7, ac: 11, guard: 'armor', xp: 50, speed: 6, ai: 'melee', atk: 4, dmg: [1, 6, 2], dmgType: 'slashing', range: 1, saves: { dex: 2, str: -1 }, verb: 'hacks' },
+  goblinBoss: { name: 'Chief Grizzlegut', epithet: 'King of the Warren', onHit: { status: 'bleeding', rounds: 2, chance: 0.5 }, hp: 32, ac: 13, guard: 'armor', xp: 300, speed: 6, ai: 'melee', atk: 5, dmg: [2, 6, 3], dmgType: 'slashing', range: 1, saves: { dex: 2, str: 2 }, verb: 'cleaves', boss: true, scale: 1.3 },
+  wolf:     { name: 'Wolf', hp: 11, ac: 9, guard: 'dodge', xp: 50, speed: 8, ai: 'melee', atk: 4, dmg: [2, 4, 2], dmgType: 'piercing', range: 1, saves: { dex: 2, str: 1 }, verb: 'bites' },
+  spider:   { name: 'Giant Spider', hp: 26, ac: 11, guard: 'armor', xp: 200, speed: 6, ai: 'melee', atk: 5, dmg: [1, 8, 3], dmgType: 'piercing', range: 1, saves: { dex: 3, str: 2 }, verb: 'stabs with venomous fangs', onHit: { status: 'poisoned', rounds: 2, chance: 0.5 } },
+  zombie:   { name: 'Zombie', hp: 22, ac: 5, guard: 'armor', xp: 50, speed: 4, ai: 'melee', atk: 3, dmg: [1, 6, 1], dmgType: 'bludgeoning', range: 1, saves: { dex: -2, str: 1 }, verb: 'claws' },
+  cultist:  { name: 'Bone Cultist', hp: 18, ac: 8, guard: 'dodge', xp: 100, speed: 6, ai: 'ranged', atk: 4, dmg: [2, 6, 0], dmgType: 'necrotic', range: 12, proj: 'bolt', saves: { dex: 1, str: 0 }, verb: 'hurls a bolt of grave-light', onHit: { status: 'hexed', rounds: 2, chance: 0.35 } },
+  wraith:   { name: 'Wraith', hp: 45, ac: 12, guard: 'dodge', xp: 450, speed: 6, ai: 'melee', atk: 6, dmg: [3, 6, 2], dmgType: 'necrotic', range: 1, saves: { dex: 3, str: 0 }, verb: 'drains your life', float: true, aura: '#8af2ff', onHit: { status: 'weakened', rounds: 2, chance: 0.4 } },
+  lich:     { name: 'Vael Morrow', epithet: 'Lich of the Pale Crown', onHit: { status: 'chilled', rounds: 2, chance: 0.5 }, hp: 110, ac: 14, guard: 'dodge', xp: 3000, speed: 5, ai: 'ranged', atk: 7, dmg: [4, 8, 0], dmgType: 'necrotic', range: 14, proj: 'bolt', saves: { dex: 3, str: 1 }, verb: 'unleashes a bolt of death', boss: true, summon: true, aura: '#5fffd0' },
   crate:    { name: 'Crate', hp: 8, ac: 10, xp: 0, speed: 0, ai: 'none', object: true, saves: { dex: -5, str: -5 }, debris: '#7a5530', breakText: 'splinters apart' },
   barrel:   { name: 'Barrel', hp: 10, ac: 10, xp: 0, speed: 0, ai: 'none', object: true, saves: { dex: -5, str: -5 }, debris: '#6a4a2a', breakText: 'bursts its hoops' },
   keg:      { name: 'Powder Keg', hp: 4, ac: 10, xp: 0, speed: 0, ai: 'none', object: true, saves: { dex: -5, str: -5 }, debris: '#5a1a14', breakText: 'cracks open' },
   urn:      { name: 'Clay Urn', hp: 3, ac: 9, xp: 0, speed: 0, ai: 'none', object: true, saves: { dex: -5, str: -5 }, debris: '#a8603a', breakText: 'shatters' },
-  wolfRider: { name: 'Grak the Wolf-Rider', epithet: 'Terror of the Thornwick Road', hp: 36, ac: 14, xp: 450, speed: 8, ai: 'melee', atk: 5, dmg: [2, 6, 3], dmgType: 'piercing', range: 1,
+  wolfRider: { name: 'Grak the Wolf-Rider', epithet: 'Terror of the Thornwick Road', hp: 36, ac: 12, guard: 'dodge', xp: 450, speed: 8, ai: 'melee', atk: 5, dmg: [2, 6, 3], dmgType: 'piercing', range: 1,
                saves: { dex: 3, str: 3, con: 2, wis: 0 }, verb: 'rides you down', boss: true, scale: 1, onHit: { status: 'bleeding', rounds: 3, chance: 0.6 } },
-  spiderQueen: { name: 'Mother of Webs', epithet: 'Queen of the Weeping Caves', hp: 70, ac: 15, xp: 1100, speed: 6, ai: 'melee', atk: 6, dmg: [2, 8, 3], dmgType: 'piercing', range: 1,
+  spiderQueen: { name: 'Mother of Webs', epithet: 'Queen of the Weeping Caves', hp: 70, ac: 13, guard: 'armor', xp: 1100, speed: 6, ai: 'melee', atk: 6, dmg: [2, 8, 3], dmgType: 'piercing', range: 1,
                saves: { dex: 3, str: 3, con: 3, wis: 1 }, verb: 'sinks her fangs in', boss: true, scale: 1, summon: 'spider', onHit: { status: 'poisoned', rounds: 3 } },
-  abbot:    { name: 'The Drowned Abbot', epithet: 'First of the Risen', hp: 85, ac: 12, xp: 1800, speed: 4, ai: 'melee', atk: 6, dmg: [2, 8, 3], dmgType: 'necrotic', range: 1,
+  abbot:    { name: 'The Drowned Abbot', epithet: 'First of the Risen', hp: 85, ac: 10, guard: 'armor', xp: 1800, speed: 4, ai: 'melee', atk: 6, dmg: [2, 8, 3], dmgType: 'necrotic', range: 1,
                saves: { dex: -1, str: 4, con: 4, wis: 2 }, verb: 'crushes you in rotten arms', boss: true, scale: 1, summon: 'zombie', onHit: { status: 'weakened', rounds: 2, chance: 0.5 } },
-  highPriest: { name: 'High Priest Ossian', epithet: 'Voice of the Pale Crown', hp: 80, ac: 14, xp: 2300, speed: 6, ai: 'ranged', atk: 7, dmg: [3, 6, 2], dmgType: 'necrotic', range: 12, proj: 'bolt',
+  highPriest: { name: 'High Priest Ossian', epithet: 'Voice of the Pale Crown', hp: 80, ac: 12, guard: 'dodge', xp: 2300, speed: 6, ai: 'ranged', atk: 7, dmg: [3, 6, 2], dmgType: 'necrotic', range: 12, proj: 'bolt',
                saves: { dex: 2, str: 0, con: 2, wis: 5 }, verb: 'speaks a word of death', boss: true, scale: 1, blessAllies: true, aura: '#7dff8a', onHit: { status: 'hexed', rounds: 3, chance: 0.6 } },
-  warden:   { name: 'Grave Warden', epithet: 'Keeper of the Last Stair', onHit: { status: 'stunned', rounds: 1, chance: 0.25 }, hp: 45, ac: 16, xp: 450, speed: 5, ai: 'melee', atk: 5, dmg: [2, 6, 3], dmgType: 'slashing', range: 1, saves: { dex: 0, str: 3 }, verb: 'cleaves', boss: true },
+  warden:   { name: 'Grave Warden', epithet: 'Keeper of the Last Stair', onHit: { status: 'stunned', rounds: 1, chance: 0.25 }, hp: 45, ac: 14, guard: 'armor', xp: 450, speed: 5, ai: 'melee', atk: 5, dmg: [2, 6, 3], dmgType: 'slashing', range: 1, saves: { dex: 0, str: 3 }, verb: 'cleaves', boss: true },
 };
 // What each enemy carries. Rolled when it dies; click the body to search it.
 const LOOT_TABLES = {
@@ -886,6 +886,8 @@ const theName = n => /^the /i.test(n) ? n : `the ${n}`;   // "the Sunken Crypt",
 const cheb = (a, b) => Math.max(Math.abs(a.x - b.x), Math.abs(a.z - b.z));
 const keyOf = (x, z) => x + ',' + z;
 
+// martial training: wardens and rangers are simply better with their weapons
+const MARTIAL = { warden: { melee: true, hit: 2, dmg: 2 }, ranger: { ranged: true, hit: 2, dmg: 1 } };
 function derived() {
   const c = state.char, m = k => mod(c.abilities[k]);
   const prof = 2 + Math.floor((c.level - 1) / 4);
@@ -903,7 +905,10 @@ function derived() {
   ac += (st('shielded') ? 4 : 0) + (st('hasted') ? 2 : 0) - (st('chilled') ? 1 : 0);
   const atkMod = (st('blessed') ? 2 : 0) - (st('poisoned') ? 2 : 0);
   let speedSq = Math.floor(c.speed / 5) + (st('hasted') ? 3 : 0) + (tl('quickstep') ? 2 : 0) - (weight > c.abilities.str * 15 ? 2 : 0); if (st('chilled')) speedSq = Math.floor(speedSq / 2);
-  return { prof, maxHp, ac, weapon, atk: am + prof + atkMod + (weapon.ranged && tl('sharpshooter') ? 2 : 0), dmgMod: am, init: m('dex'),
+  const mt = MARTIAL[c.kit], trained = mt && (weapon.ranged ? mt.ranged : mt.melee) && weapon !== UNARMED ? mt : null;
+  const armorPart = (armor ? armor.ac - 10 : 0) + (c.equipped.shield ? 2 : 0), dexPart = armor ? Math.min(m('dex'), armor.maxDex) : m('dex');
+  return { prof, maxHp, ac, weapon, atk: am + prof + atkMod + (weapon.ranged && tl('sharpshooter') ? 2 : 0) + (trained ? trained.hit : 0), dmgMod: am + (trained ? trained.dmg : 0), init: m('dex'),
+           trained: !!trained, guard: armorPart >= dexPart ? 'armor' : 'dodge',
            speedSq, weight, cap: c.abilities.str * 15, heavy: weight > c.abilities.str * 15,
            spellDc: 8 + prof + cm, spellAtk: prof + cm + atkMod + (tl('spellSniper') ? 2 : 0),
            perception: m('wis') + prof + (c.equipped.neck ? ITEMS[c.equipped.neck].perception || 0 : 0) + (tl('keenSenses') ? 3 : 0),
@@ -4195,7 +4200,8 @@ function endCombat() {
   if (!state.combat) return;
   state.combat = null; busy = false;
   for (const c of state.creatures) c.status = [];   // the party's effects keep counting down as they walk
-  for (const m of state.party) { m.turn = freshTurn(m.char); m.done = false; }
+  for (const m of state.party) { m.turn = freshTurn(m.char); m.done = false; m.char.cd = {}; }
+  ui.tech = null;
   after(0.8, () => { if (!noticeBusy && noticeQ.length) showNextNotice(); });
   refresh();
 }
@@ -4225,6 +4231,7 @@ async function beginTurn(e) {
     const idx = state.party.findIndex(m => m.id === e.id), m = state.party[idx];
     CAM.hold = 0; switchTo(idx);
     m.turn = freshTurn(m.char); m.done = false;
+    for (const k in (m.char.cd || {})) if (m.char.cd[k] > 0) m.char.cd[k]--;
     const skip = statusTurnStart(m.char);
     if (state.over) return;
     if (m.char.hp <= 0 || skip) {
@@ -4838,6 +4845,7 @@ function attack(c) {
   const d = derived(), w = d.weapon, m = MONSTERS[c.type];
   if (!c.alive) return;
   if (!state.turn.action) return toast('You have already used your action. End your turn to act again.');
+  const tech = ui.tech && techReady(ui.tech, true) ? TECHS[ui.tech] : null, techId = tech ? ui.tech : null;
   const dist = cheb(state.pos, c);
   if (dist > w.range) {
     if (w.ranged) return toast(`Your ${w.name.toLowerCase()} reaches ${w.range * 5} ft. The ${m.name.toLowerCase()} is ${dist * 5} ft away.`);
@@ -4851,7 +4859,8 @@ function attack(c) {
   const ammoKey = w.ranged ? state.char.equipped.ammo : null, ammo = ammoKey && invEntry(ammoKey) ? ITEMS[ammoKey] : null;
   if (ammo) { removeOne(ammoKey); if (!invEntry(ammoKey)) { state.char.equipped.ammo = null; after(0.8, () => toast(`That was your last ${ammo.name.toLowerCase()}.`)); } }
   const tac = acOf(c);
-  const disadv = w.ranged && dist <= 1, adv = c.restrained;
+  const disadv = w.ranged && dist <= 1, adv = c.restrained || !!tech?.adv;
+  if (tech) { (state.char.cd ||= {})[techId] = tech.cd; ui.tech = null; $('aim').hidden = true; }
   const n = adv !== disadv ? 2 : 1, r = roll(n, 20);
   let nat = n === 1 ? r[0] : adv ? Math.max(...r) : Math.min(...r), total = nat + d.atk;
   const critAt = hasT(state.char, 'brute') && !w.ranged ? 19 : 20;
@@ -4870,17 +4879,20 @@ function attack(c) {
   const resolve = () => {
     if (hit) { SFX.hit(); if (c.type === 'skeleton' || c.type === 'warden') SFX.clank(); }
     if (!hit) {
-      addLog('', `<b>${w.name}</b> misses ${foeName(m)}. ${rollTxt}${nat === 1 ? ' Natural 1.' : ''}`);
-      floatText('Miss', creatureTop(c), 'miss');
+      const why = nat === 1 ? 'A wild swing' : m.guard === 'dodge' ? `${foeName(m, true)} twists out of the way` : m.object ? 'The blow skids off' : `The blow glances off ${foeName(m)}'s ${c.type === 'skeleton' ? 'bones' : c.type === 'spider' || c.type === 'spiderQueen' ? 'shell' : 'armour'}`;
+      addLog('', `<b>${tech ? tech.name : w.name}</b> misses. ${why}. ${rollTxt}`);
+      floatText(nat === 1 ? 'Miss' : m.guard === 'dodge' ? 'Dodged' : 'Blocked', creatureTop(c), 'miss');
     } else {
-      const dice = roll(w.dice[0] * (crit ? 2 : 1), w.dice[1]);
+      const wd = tech?.dmg || w.dice, dice = roll((wd[0] + (tech?.dice || 0)) * (crit ? 2 : 1), wd[1]);
       let dmg = Math.max(1, sum(dice) + d.dmgMod), extraTxt = '';
       if (w.extra) { const ex = roll(w.extra[0] * (crit ? 2 : 1), w.extra[1]); dmg += sum(ex); extraTxt = ` + [${ex.join(', ')}] ${w.extra[2]}`; }
       ({ dmg, extraTxt } = heroHitBonus(c, w, ammo, crit, dmg, extraTxt));
-      addLog(crit ? 'crit' : 'hit', `<b>${crit ? 'Critical hit!' : 'Hit.'}</b> ${w.name} deals <b>${dmg}</b> to ${foeName(m)}. ${rollTxt} <span class="r">dmg [${dice.join(', ')}] ${fmt(d.dmgMod)}${extraTxt}</span>`);
+      if (tech) floatText(tech.name + '!', above(hero, 1.5), 'xp');
+      addLog(crit ? 'crit' : 'hit', `<b>${crit ? 'Critical hit!' : 'Hit.'}</b> ${tech ? tech.name : w.name} deals <b>${dmg}</b> to ${foeName(m)}. ${rollTxt} <span class="r">dmg [${dice.join(', ')}] ${fmt(d.dmgMod)}${extraTxt}</span>`);
       if (state.char.equipped.weapon === 'eel') { const p = creatureTop(c); burst(glow, 30, () => ({ p: [p.x, p.y - .3, p.z], v: [rnd(-2, 2), rnd(-1, 2), rnd(-2, 2)], life: rnd(.15, .35), s: [.06, .01], c0: hdr('#bff8ff', 9), c1: hdr('#4fe0ff', 2), a: 1 })); }
       damageCreature(c, dmg, crit ? 'crit' : 'dmg');
       heroHitAfter(c, w, ammo, dmg);
+      if (tech?.onHit) tech.onHit(c, dmg, w, d);
       if (state.char.equipped.weapon === 'whisper' && Math.random() < 1 / 6) {
         const self = roll(1, 4)[0];
         after(0.4, () => { hurtHero(self, 'The Whispering Blade hisses your secrets and bites your hand', 'dmg'); refresh(); });
@@ -5007,8 +5019,8 @@ async function creatureAttack(c) {
     addLog('', rollTxt);
     if (m.onHit && victim.hp > 0 && Math.random() < (m.onHit.chance ?? 1)) addStatus(victim, m.onHit.status, m.onHit.rounds);
   } else {
-    floatText('Miss', above(hero, 1.2), 'miss');
-    addLog('', `${foeName(m, true)} ${m.verb} and misses. ${rollTxt}`);
+    floatText(nat === 1 ? 'Miss' : d.guard === 'dodge' ? 'Dodged' : 'Blocked', above(hero, 1.2), 'miss');
+    addLog('', `${foeName(m, true)} ${m.verb} and misses: ${nat === 1 ? 'a clumsy lunge' : d.guard === 'dodge' ? `${state.char.name} slips aside` : `it glances off ${state.char.name}'s ${state.char.equipped.shield ? 'shield' : 'armour'}`}. ${rollTxt}`);
   }
   refresh();
   await sleep(0.35);
@@ -5339,7 +5351,7 @@ function renderHud() {
   $('hudChips').innerHTML = '';
   if (hc && !hc.alive && hc.loot && !hc.looted) $('hudChips').innerHTML += `<span class="chip">${MONSTERS[hc.type].name} remains · click to search</span>`;
   if (hc && hc.alive) { const m = MONSTERS[hc.type];
-    $('hudChips').innerHTML += `<span class="chip target">${m.name} <b>${hc.hp}/${m.hp}</b> HP · AC ${acOf(hc)}${hc.restrained ? ' · <b style="color:#a6e07a">Restrained</b>' : ''}</span>`;
+    $('hudChips').innerHTML += `<span class="chip target">${m.name} <b>${hc.hp}/${m.hp}</b> HP · Defence ${acOf(hc)} (${m.guard === 'dodge' ? 'nimble' : m.object ? 'solid' : 'armoured'})${hc.restrained ? ' · <b style="color:#a6e07a">Restrained</b>' : ''}</span>`;
     const odds = oddsText(hc); if (odds) $('hudChips').innerHTML += `<span class="chip odds">${odds}</span>`; }
   // vitals: two small pills, top left
   const c = state.char, d = derived(), f = c.hp / d.maxHp, mmp = maxMpOf(c), lvl = c.statPoints > 0 || c.pendingTalents?.length;
@@ -5357,6 +5369,11 @@ function renderHud() {
       const k = id.slice(2), sp = SPELLS[k], off = busy || !heroTurn || (!freeCast() && ((!ex && !t.action) || (c.mp ?? 0) < costOf(sp, c)));
       return `<button class="slot sp" style="--c:${sp.color}" data-spell="${k}" aria-pressed="${ui.spell === k}" ${off ? 'disabled' : ''} aria-label="${sp.name}"
         title="${sp.name}${n < 10 ? ` (${(n + 1) % 10})` : ''}: ${costOf(sp, c)} MP · ${sp.area} · ${sp.range * 5} ft. ${esc(sp.desc)}">${key}<span class="q">${costOf(sp, c)}</span><span class="ic">${sp.icon || '✦'}</span></button>`;
+    }
+    if (id.startsWith('t:')) {
+      const k = id.slice(2), T = TECHS[k], cd = c.cd?.[k] || 0, why = techBlock(k, c), off = busy || !heroTurn || !!why;
+      return `<button class="slot tech" style="--c:${T.color}" data-tech="${k}" aria-pressed="${ui.tech === k}" ${off ? 'disabled' : ''} aria-label="${T.name}"
+        title="${T.name}${n < 10 ? ` (${(n + 1) % 10})` : ''}: ${esc(T.desc)} Ready again after ${T.cd ? T.cd + ' turns' : 'the fight'}.${why ? ' — ' + esc(why) : ''}">${key}${cd ? `<span class="q">${cd}⏳</span>` : ''}<span class="ic">${T.icon}</span></button>`;
     }
     const A = HOT_ACTIONS[id], s = A.state(c, { ex, t, actOk });
     return `<button class="slot" style="--c:${A.color}" data-hot="${id}" ${s.off || busy ? 'disabled' : ''} aria-pressed="${!!s.on}" aria-label="${A.name}" title="${A.name}${n < 10 ? ` (${(n + 1) % 10}, or ${A.key})` : ` (${A.key})`}: ${A.desc}">
@@ -5553,6 +5570,7 @@ function renderPanel() {
   for (const b of document.querySelectorAll('.tabs button')) b.setAttribute('aria-selected', b.dataset.tab === ui.tab);
   for (const t of ['sheet', 'spells', 'inv', 'log']) $('tab-' + t).hidden = ui.tab !== t;
   ({ sheet: renderSheet, spells: renderSpells, inv: renderInv, log: renderLog })[ui.tab]();
+  if (ui.tab === 'spells') $('tab-spells').insertAdjacentHTML('afterbegin', techHtml(c));
 }
 
 function refreshBoard() {
@@ -5689,8 +5707,8 @@ $('narr').addEventListener('click', () => { narrT = Math.min(narrT, 0.01); });
 window.addEventListener('keydown', e => {
   if (!playing() || e.target.closest('input, select, textarea') || !$('modal').hidden) return;
   const key = remapKey(e.key.toLowerCase()), digit = /^[0-9]$/.test(e.key) ? (+e.key + 9) % 10 : -1, k = digit >= 0 ? hotbarOf()[digit] : null;
-  if (k) { if (k.startsWith('s:')) selectSpell(k.slice(2)); else useHot(k); e.preventDefault(); }
-  else if (e.key === 'Escape') { if (ui.spell) cancelSpell(); else if (ui.panelOpen) setPanel(null); }
+  if (k) { if (k.startsWith('s:')) selectSpell(k.slice(2)); else if (k.startsWith('t:')) useTech(k.slice(2)); else useHot(k); e.preventDefault(); }
+  else if (e.key === 'Escape') { if (ui.tech) { ui.tech = null; $('aim').hidden = true; refresh(); } else if (ui.spell) cancelSpell(); else if (ui.panelOpen) setPanel(null); }
   else if (key === 'q') useHot('potion');
   else if (key === 'e') useHot('mana');
   else if (key === 'f') useHot('search');
@@ -7716,22 +7734,22 @@ const HOT_ACTIONS = {
   fp:     { name: 'First person', icon: '◉', color: '#e8e2d4', key: 'B', desc: 'See the dungeon through your hero\'s eyes.', state: () => ({ on: ui.fp }) },
   tac:    { name: 'Tactical view', icon: '⇧', color: '#e8e2d4', key: 'Shift', desc: 'Lift the camera overhead.', state: () => ({ on: !!ui.tac }) },
 };
-const hotValid = (c, id) => id.startsWith('s:') ? knownSpells(c).includes(id.slice(2)) : !!HOT_ACTIONS[id];
+const hotValid = (c, id) => id.startsWith('s:') ? knownSpells(c).includes(id.slice(2)) : id.startsWith('t:') ? knownTechs(c).includes(id.slice(2)) : !!HOT_ACTIONS[id];
 function hotbarOf(c = state.char) {
   if (Array.isArray(c.hotbar)) return c.hotbar.filter(id => hotValid(c, id)).slice(0, HOT_MAX);
-  return [...preparedSpells(c).map(k => 's:' + k), 'potion', 'mana', 'search', 'dash'].slice(0, HOT_MAX);
+  return [...knownTechs(c).map(k => 't:' + k), ...preparedSpells(c).map(k => 's:' + k), 'potion', 'mana', 'search', 'dash'].slice(0, HOT_MAX);
 }
 function openHotbar() {
   const c = state.char;
   const row = (id, n, on) => {
-    const sp = id.startsWith('s:') ? SPELLS[id.slice(2)] : null, A = sp ? null : HOT_ACTIONS[id];
+    const T = id.startsWith('t:') ? TECHS[id.slice(2)] : null, sp = id.startsWith('s:') ? SPELLS[id.slice(2)] : null, A = sp ? null : T ? { ...T, desc: T.desc } : HOT_ACTIONS[id];
     return `<div class="hbrow" style="--c:${sp ? sp.color : A.color}">${on ? `<span class="kk">${n < 10 ? (n + 1) % 10 : ''}</span>` : ''}<span class="ic">${sp ? sp.icon || '✦' : A.icon}</span>
       <span class="nm">${sp ? sp.name : A.name}<small>${sp ? `${costOf(sp, c)} MP · ${sp.range * 5} ft` : esc(A.desc)}</small></span>
       ${on ? `<button class="btn small" data-hb="up" data-k="${id}" ${n === 0 ? 'disabled' : ''} aria-label="Move ${sp ? sp.name : A.name} earlier">◀</button><button class="btn small" data-hb="down" data-k="${id}" aria-label="Move later">▶</button><button class="btn small" data-hb="off" data-k="${id}">Remove</button>`
            : `<button class="btn small" data-hb="on" data-k="${id}">Add</button>`}</div>`;
   };
   const body = () => {
-    const bar = hotbarOf(c), rest = [...knownSpells(c).map(k => 's:' + k), ...Object.keys(HOT_ACTIONS)].filter(id => !bar.includes(id));
+    const bar = hotbarOf(c), rest = [...knownTechs(c).map(k => 't:' + k), ...knownSpells(c).map(k => 's:' + k), ...Object.keys(HOT_ACTIONS)].filter(id => !bar.includes(id));
     return `<p class="muted">Up to ${HOT_MAX} slots. Keys 1 to 0 fire the first ten, left to right. Each hero has their own hotbar.</p>
       <h3>On the hotbar (${bar.length})</h3>${bar.map((id, n) => row(id, n, true)).join('') || '<p class="muted">Nothing yet.</p>'}
       <h3 style="margin-top:14px">Available</h3>${rest.map(id => row(id, 0, false)).join('') || '<p class="muted">Everything is on the hotbar.</p>'}
@@ -7757,6 +7775,70 @@ function openHotbar() {
 $('hotEdit').addEventListener('click', openHotbar);
 $('sbToggle').addEventListener('click', () => { const on = document.body.classList.toggle('sb-open'); $('sbToggle').setAttribute('aria-expanded', on); });
 $('sideBtns').addEventListener('click', () => { document.body.classList.remove('sb-open'); $('sbToggle').setAttribute('aria-expanded', false); });
+
+
+/* ================================================================== *
+ * TECHNIQUES: weapon skills for fighters and archers. No mana: each has a cooldown counted in your own turns.
+ * Most are armed first and ride on your next attack; a few act at once.
+ * ================================================================== */
+const TECHS = {
+  cleave:  { name: 'Cleave', icon: '⚔', color: '#e8b04a', cd: 2, unlock: 1, needs: 'melee', desc: 'Your next melee attack also hits every other enemy next to you for the weapon\'s dice.',
+             onHit(c, dmg, w) { for (const o of state.creatures.filter(o => o.alive && o !== c && MONSTERS[o.type].ai !== 'none' && cheb(o, state.pos) <= 1)) { const n = sum(roll(w.dice[0], w.dice[1])); damageCreature(o, n, 'dmg'); addLog('hit', `The sweep carries on into ${foeName(MONSTERS[o.type])} for <b>${n}</b>.`); } shakeCam(0.12); } },
+  bash:    { name: 'Shield Bash', icon: '⛨', color: '#9fc0e8', cd: 3, unlock: 1, needs: 'shield', dmg: [1, 4], desc: 'Slam your shield into a foe: 1d4 + Strength, and it is stunned and loses its next turn.',
+             onHit(c) { if (c.alive) addStatus(c, 'stunned', 1); shakeCam(0.15); } },
+  wind:    { name: 'Second Wind', icon: '❤', color: '#7ff0a0', cd: 0, unlock: 1, needs: 'fight', self: true, desc: 'Once a fight, without using your action: catch your breath and regain 1d10 + your level.' },
+  rend:    { name: 'Rending Strike', icon: '✂', color: '#e0405a', cd: 2, unlock: 2, needs: 'melee', dice: 1, desc: 'Your next melee attack rolls an extra weapon die and leaves the target bleeding for 3 rounds.',
+             onHit(c) { if (c.alive) addStatus(c, 'bleeding', 3); } },
+  guard:   { name: 'Stand Fast', icon: '▣', color: '#8ab8ff', cd: 4, unlock: 3, needs: 'shield', self: true, action: true, desc: 'Use your action to set your feet behind your shield: +4 Defence for 2 rounds.' },
+  aimed:   { name: 'Aimed Shot', icon: '◎', color: '#e8b04a', cd: 2, unlock: 1, needs: 'ranged', adv: true, dice: 1, desc: 'Take a breath: your next shot rolls twice and keeps the better, with an extra weapon die.' },
+  tumble:  { name: 'Tumble', icon: '⤳', color: '#7ad8ff', cd: 3, unlock: 1, needs: 'any', self: true, desc: 'In a fight, without using your action: 20 ft of extra movement this turn.' },
+  volley:  { name: 'Volley', icon: '⋔', color: '#c8e06a', cd: 3, unlock: 2, needs: 'ranged', desc: 'Your next shot is followed by arrows at up to two other enemies within 10 ft of the target, for the weapon\'s dice each.',
+             onHit(c, dmg, w) { for (const o of state.creatures.filter(o => o.alive && o !== c && MONSTERS[o.type].ai !== 'none' && cheb(o, c) <= 2 && vis[o.z * W + o.x]).slice(0, 2)) { const n = sum(roll(w.dice[0], w.dice[1])) + 1; damageCreature(o, n, 'dmg'); addLog('hit', `A second arrow finds ${foeName(MONSTERS[o.type])} for <b>${n}</b>.`); } } },
+  pin:     { name: 'Pinning Shot', icon: '⚲', color: '#ffe066', cd: 4, unlock: 3, needs: 'ranged', desc: 'Your next shot nails the target in place: it is stunned and loses its next turn.',
+             onHit(c) { if (c.alive) addStatus(c, 'stunned', 1); } },
+};
+const KIT_TECHS = { warden: ['cleave', 'bash', 'wind', 'rend', 'guard'], ranger: ['aimed', 'tumble', 'volley', 'pin'], spellblade: ['rend'] };
+const knownTechs = (c = state.char) => (KIT_TECHS[c.kit] || []).filter(k => TECHS[k].unlock <= c.level || freeCast());
+// why a technique can't be used right now (or '' if it can)
+function techBlock(k, c = state.char) {
+  const T = TECHS[k], w = c.equipped.weapon ? ITEMS[c.equipped.weapon] : null;
+  if ((c.cd?.[k] || 0) > 0) return `Ready in ${c.cd[k]} turn${c.cd[k] > 1 ? 's' : ''}.`;
+  if (T.needs === 'melee' && (!w || w.ranged)) return 'Needs a melee weapon in hand.';
+  if (T.needs === 'ranged' && !w?.ranged) return 'Needs a bow in hand.';
+  if (T.needs === 'shield' && !c.equipped.shield) return 'Needs a shield.';
+  if ((T.needs === 'fight' || k === 'tumble') && exploring()) return 'Only in a fight.';
+  if (T.needs === 'fight' && c.fight?.wind) return 'Already used this fight.';
+  if ((!T.self || T.action) && !exploring() && !state.turn.action) return 'Your action is spent.';
+  return '';
+}
+const techReady = (k, quiet) => { const why = knownTechs().includes(k) ? techBlock(k) : 'You do not know that technique.'; if (why && !quiet) toast(why); return !why; };
+function useTech(k) {
+  if (busy || anim || state.over || !playing()) return;
+  const T = TECHS[k], c = state.char;
+  if (ui.tech === k) { ui.tech = null; $('aim').hidden = true; return refresh(); }
+  if (!techReady(k)) return;
+  if (ui.spell) cancelSpell();
+  if (!T.self) {   // armed: it rides on your next attack
+    ui.tech = k;
+    $('aim').hidden = false; $('aim').style.setProperty('--c', T.color); $('aim').textContent = `${T.name}: choose a target (Esc to cancel)`;
+    return refresh();
+  }
+  if (k === 'wind') { (c.fight ||= {}).wind = true; const n = roll(1, 10)[0] + c.level; heal(n); addLog('spell', `<b>Second Wind.</b> ${c.name} steadies and regains <b>${n}</b>.`); }
+  if (k === 'guard') { state.turn.action = false; addStatus(c, 'shielded', 2); addLog('spell', `<b>Stand Fast.</b> ${c.name} sets the shield.`); }
+  if (k === 'tumble') { state.turn.move += 4; addLog('spell', `<b>Tumble.</b> ${c.name} rolls clear: +20 ft of movement.`); }
+  if (T.cd) (c.cd ||= {})[k] = T.cd;
+  floatText(T.name + '!', above(hero, 1.5), 'xp'); SFX.swing();
+  refresh(); save();
+}
+$('spellbar').addEventListener('click', e => { const b = e.target.closest('[data-tech]'); if (b) useTech(b.dataset.tech); });
+function techHtml(c) {
+  const all = KIT_TECHS[c.kit] || []; if (!all.length) return '';
+  const mt = MARTIAL[c.kit];
+  return `<div class="section"><h3>Techniques</h3>
+    <p class="muted">Weapon skills. They cost no mana: each one is ready again after a few of your own turns.${mt ? ` Your training gives +${mt.hit} to hit and +${mt.dmg} damage with ${mt.ranged ? 'bows' : 'melee weapons'}.` : ''}</p>
+    ${all.map(k => { const T = TECHS[k], ok = T.unlock <= c.level || freeCast(); return `<div class="spellcard ${ok ? '' : 'locked'}" style="--c:${T.color}"><div class="t"><b>${T.icon} ${T.name}</b><span class="muted">${ok ? (T.cd ? `${T.cd}-turn cooldown` : 'once a fight') : `Level ${T.unlock}`}</span></div><p>${esc(T.desc)}</p></div>`; }).join('')}
+  </div>`;
+}
 
 // a catalogue for tools/tests: every data table, plus a rendered picture of every item and monster
 function renderCatalog(size = 224) {
@@ -7820,7 +7902,7 @@ function catalogData() {
   const tools = TOOLS.map(t => ({ id: t.id, g: t.g, ch: t.ch, label: t.label, hint: t.hint }));
   const maps = Object.fromEntries(Object.entries(MAPS).filter(([k]) => k !== '_test').map(([k, m]) => [k, { name: m.name, floor: m.floor, rows: m.rows, chests: m.chests, loot: m.loot, stash: m.stash, rooms: (m.rooms || []).map(r => ({ name: r.name, boss: !!r.boss })) }]));
   return { ITEMS, MONSTERS, LOOT_TABLES, SPELLS, STATUS, TALENTS, XP_TABLE, CREATURE_CHARS, ABILITIES, tools, maps, UNDEAD: [...UNDEAD],
-           VALUES, RARITY, rarity: Object.fromEntries(Object.keys(ITEMS).map(k => [k, rarityOf(k)])), KITS, PHASES: Object.fromEntries(Object.entries(PHASES).map(([k, p]) => [k, { title: p[0], text: p[1] }])), MERCHANT_STOCK, MERCHANT_SPECIALS };
+           TECHS: Object.fromEntries(Object.entries(TECHS).map(([k, t]) => [k, { name: t.name, cd: t.cd, unlock: t.unlock, needs: t.needs, desc: t.desc, kits: Object.keys(KIT_TECHS).filter(q => KIT_TECHS[q].includes(k)) }])), MARTIAL, VALUES, RARITY, rarity: Object.fromEntries(Object.keys(ITEMS).map(k => [k, rarityOf(k)])), KITS, PHASES: Object.fromEntries(Object.entries(PHASES).map(([k, p]) => [k, { title: p[0], text: p[1] }])), MERCHANT_STOCK, MERCHANT_SPECIALS };
 }
 // handy for debugging from the browser console
 window.battleBoard = {
@@ -7842,7 +7924,7 @@ window.battleBoard = {
     applyKit: (c, k) => applyKit(c, k), newCharacter: () => newCharacter(), preparedSpells: () => preparedSpells(), togglePrepared: k => togglePrepared(k), openMerchant: () => openMerchant(() => {}),
     openSettings: () => openSettings(), reachProblems: m => reachProblems(m), oddsText: id => oddsText(creatureById(id)), bossPhase: id => bossPhase(creatureById(id)), damage: (id, n) => damageCreature(creatureById(id), n, 'dmg'),
     passiveOf: c => passiveOf(c), respec: () => respec(state.char), undoGrowth: () => undoGrowth(), spendPoint: k => spendPoint(k), lightTorch: () => lightTorch(), giveItem: (k, i) => giveItem(k, i),
-    exploreStatusTick: () => exploreStatusTick(), hotbar: () => hotbarOf(), openHotbar: () => openHotbar(), setFp: on => setFp(on), fp: () => ({ on: fpOn(), yaw: FP.yaw, look: (y, p) => { FP.yaw = y ?? FP.yaw; FP.pitch = p ?? FP.pitch; }, fov: camera.fov, ceiling: !!ceiling?.visible, rig: FP.rig.visible }), stepKey: (f, r) => stepKey(f, r), turnKey: d => turnKey(d),
+    exploreStatusTick: () => exploreStatusTick(), knownTechs: () => knownTechs(), useTech: k => useTech(k), attack: id => attack(creatureById(id)), derived: () => { const d = derived(); return { atk: d.atk, dmgMod: d.dmgMod, ac: d.ac, guard: d.guard, trained: d.trained }; }, hitChance: id => hitChance(derived().atk, acOf(creatureById(id))), hotbar: () => hotbarOf(), openHotbar: () => openHotbar(), setFp: on => setFp(on), fp: () => ({ on: fpOn(), yaw: FP.yaw, look: (y, p) => { FP.yaw = y ?? FP.yaw; FP.pitch = p ?? FP.pitch; }, fov: camera.fov, ceiling: !!ceiling?.visible, rig: FP.rig.visible }), stepKey: (f, r) => stepKey(f, r), turnKey: d => turnKey(d),
     mood: () => ({ ...MOOD, music: SFX.musicWant }), musicMood: () => musicMood(), film: () => filmPass.enabled, setSneak: on => setSneak(on), remapKey: k => remapKey(k), prefs: () => prefs, toastCount: () => document.getElementById('toast').children.length,
     freshState: (k, chars) => freshState(k, chars), enterPlay: st => enterPlay(st, 'play', true), refresh: () => refresh(), heroes: () => heroes, toast: m => toast(m), itemModelOk: () => Object.keys(ITEMS).every(k => !!itemModel(k)) },
   wanderers() { const m = spawnWanderers(6, 13); if (m && exploring() === false) startCombat(); refresh(); return m && m.map(c => c.type); },
