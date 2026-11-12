@@ -271,7 +271,7 @@ Hotbar labels (9–10 px), effect counters and party bars are small. Some states
 
 Re-run after the fixes were applied. Both suites pass.
 
-**Regression suite** (`node tests/run-tests.mjs`, Playwright, headless Chromium with software WebGL): **25 of 25 checks passed** (about 64 minutes on a software renderer).
+**Regression suite** (`node tests/run-tests.mjs`, Playwright, headless Chromium with software WebGL): **25 of 25 checks passed** (about 79 minutes on a software renderer; last run after the balance and techniques change).
 
 | Area | Result |
 |---|---|

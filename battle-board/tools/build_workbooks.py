@@ -151,6 +151,17 @@ for k, K in D['KITS'].items():
                ', '.join(D['SPELLS'][x]['name'] for x in (K['spells'] or D['SPELLS'].keys())), K['blurb']])
 style_rows(ws)
 
+ws = sheet(wb, 'Techniques', ['Technique', 'Kits', 'Learned at level', 'Ready again after (own turns)', 'Needs', 'Mana cost', 'What it does'], [18, 20, 10, 16, 22, 9, 80])
+NEEDS = {'melee': 'a melee weapon', 'ranged': 'a bow', 'shield': 'a shield', 'fight': 'to be in a fight', 'any': 'to be in a fight'}
+for k, t in D.get('TECHS', {}).items():
+    ws.append([t['name'], ', '.join(D['KITS'][q]['cls'] for q in t['kits']), t['unlock'], t['cd'] if t['cd'] else 'once a fight', NEEDS.get(t['needs'], t['needs']), 0, t['desc']])
+style_rows(ws)
+r = ws.max_row + 2
+ws.cell(row=r, column=1, value='Techniques cost no mana. Cooldowns count down at the start of your own turn and everything is ready again when a fight ends.').font = Font(name=FONT, size=10, italic=True)
+for q, m in D.get('MARTIAL', {}).items():
+    r += 1
+    ws.cell(row=r, column=1, value=f"Martial training, {D['KITS'][q]['cls']}: +{m['hit']} to hit and +{m['dmg']} damage with {'melee weapons' if m.get('melee') else 'bows'}.").font = Font(name=FONT, size=10, italic=True)
+
 ws = sheet(wb, 'Spells', ['Spell', 'Learned at level', 'Mana cost', 'Range (squares)', 'Range (ft)', 'Area', 'Targets', 'Damage', 'Damage type', 'Resolved by', 'Applies effect', 'Effect rounds', 'Chance', 'Description'],
            [18, 10, 9, 10, 9, 14, 10, 10, 11, 16, 14, 9, 9, 70])
 for i, (k, sp) in enumerate(SPELLS.items(), start=2):
@@ -216,8 +227,8 @@ for k, it in ITEMS.items():
     add_image(ws, f'A{ws.max_row}', IMG['items'][k])
 style_rows(ws, height=96)
 
-ws = sheet(wb, 'Monsters & props', ['Picture', 'Name', 'Key', 'Editor letter', 'Kind', 'HP', 'AC', 'Speed (ft)', 'Attack bonus', 'Damage', 'Reach / range', 'XP', 'On-hit effect', 'Special', 'Loot', 'Appears in'],
-           [18, 22, 12, 9, 9, 7, 6, 9, 9, 14, 12, 8, 20, 36, 40, 40])
+ws = sheet(wb, 'Monsters & props', ['Picture', 'Name', 'Key', 'Editor letter', 'Kind', 'HP', 'Defence', 'Defends by', 'Speed (ft)', 'Attack bonus', 'Damage', 'Reach / range', 'XP', 'On-hit effect', 'Special', 'Loot', 'Appears in'],
+           [18, 22, 12, 9, 9, 7, 8, 10, 9, 9, 14, 12, 8, 20, 36, 40, 40])
 order = sorted(MONSTERS, key=lambda t: (MONSTERS[t].get('object', False), MONSTERS[t].get('boss', False), MONSTERS[t]['hp']))
 for t in order:
     m = MONSTERS[t]
@@ -239,7 +250,7 @@ for t in order:
     onTxt = f"{STATUS[on['status']]['name']} {on['rounds']} rd" + (f" ({int(on.get('chance', 1) * 100)}%)" if on.get('chance', 1) < 1 else '') if on else ''
     loot = '; '.join((f"{e['gold'][0]}–{e['gold'][1]} gp" if e.get('gold') else f"{ITEMS[e['item']]['name']} ({int(round(e['p'] * 100))}%)") for e in LOOT.get(t, []))
     seen = '; '.join(f'{k} ×{v}' for k, v in appears[t].items())
-    ws.append(['', m['name'], t, ', '.join(CHAR_OF[t]), kind, m['hp'], m['ac'], (m.get('speed') or 0) * 5, m.get('atk', ''),
+    ws.append(['', m['name'], t, ', '.join(CHAR_OF[t]), kind, m['hp'], m['ac'], {'armor': 'Armour (Blocked)', 'dodge': 'Dodging (Dodged)'}.get(m.get('guard'), ''), (m.get('speed') or 0) * 5, m.get('atk', ''),
                (dice(m['dmg']) + f" {m.get('dmgType', '')}") if m.get('dmg') else '', (f"{m['range'] * 5} ft" if m.get('range') else ''), m['xp'], onTxt, '; '.join(special), loot, seen])
     add_image(ws, f'A{ws.max_row}', IMG['monsters'][t])
 style_rows(ws, height=96)
