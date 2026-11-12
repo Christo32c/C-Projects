@@ -83,11 +83,11 @@ for key, m in D['maps'].items():
 wb = Workbook()
 ws = sheet(wb, 'Abilities', ['Ability', 'Short', 'What it does in the game', 'Talents it unlocks', 'Example score', 'Modifier'], [16, 7, 70, 46, 13, 11], first=True)
 EFFECTS = {
-    'str': 'Melee attack and damage with Strength weapons (longsword, greatswords). Strength saves (Vine Growth). Carrying capacity = score × 15 lb.',
+    'str': 'Melee attack and damage with Strength weapons (longsword, greatswords). Strength saves (Vine Growth). Carrying capacity = score × 15 lb; carry more and you lose 10 ft of movement.',
     'dex': 'Armour Class (light armour adds all of it, chain shirt max +2). Initiative. Attack and damage with bows and finesse weapons (dagger, Eelblade, Venom Fang). Dex saves against traps, fireballs and keg blasts.',
     'con': 'Hit points: 10 + CON mod at level 1, then 6 + CON mod per level.',
-    'int': 'Spellcasting: spell save DC = 8 + proficiency + INT mod; spell attack = proficiency + INT mod. Maximum mana (+2 per point of modifier). Healing Word adds INT mod.',
-    'wis': 'Perception for Search (secret doors, traps, hidden caches) and passive Perception.',
+    'int': 'Spellcasting for Spellblades: spell save DC = 8 + proficiency + INT mod; spell attack = proficiency + INT mod. Maximum mana (+2 per point of modifier). Healing Word adds the casting modifier.',
+    'wis': 'Spellcasting for Wardens and Rangers (same formulas as INT). Perception for Search, and passive Perception (10 + WIS mod + proficiency): hidden traps, secret doors and caches within 10 ft whose DC is at or below it are spotted as you walk past.',
     'cha': 'No direct rule. It only matters through its talents (party buffs, luck and gold).',
 }
 START = {'str': 14, 'dex': 14, 'con': 14, 'int': 16, 'wis': 10, 'cha': 9}   # the default hero's scores
@@ -107,14 +107,15 @@ ws.append(['INT score (input)', '', '', 16, ''])
 ws.append(['DEX score (input)', '', '', 14, ''])
 for r in range(2, 6): ws.cell(row=r, column=4).fill = INPUT
 ws.append(['Proficiency bonus', '2 + round down((level − 1) ÷ 4)', 'Level', '=2+INT((D2-1)/4)', 'Added to weapon attacks, spell attacks, spell DC and Perception.'])
-ws.append(['Maximum HP', '10 + CON mod + (level − 1) × (6 + CON mod)', 'Level, CON', '=10+INT((D3-10)/2)+(D2-1)*(6+INT((D3-10)/2))', 'Tough talent adds 2 × level.'])
-ws.append(['Maximum mana', '6 + 4 × level + 2 × max(0, INT mod)', 'Level, INT', '=6+4*D2+2*MAX(0,INT((D4-10)/2))', 'Arcane Reservoir adds 6. Regain 1 per turn in a fight (2 with Mana Spring) and 1 per 4 squares walked.'])
+ws.append(['Maximum HP', '10 + CON mod + (level − 1) × (6 + CON mod)', 'Level, CON', '=10+INT((D3-10)/2)+(D2-1)*(6+INT((D3-10)/2))', 'Tough talent adds 2 × level. In a real dungeon each knockout leaves a wound: −10% of this (at least 2) per wound, up to 3, until the party makes camp.'])
+ws.append(['Maximum mana', '6 + 4 × level + 2 × max(0, INT mod)', 'Level, INT', '=6+4*D2+2*MAX(0,INT((D4-10)/2))', 'Arcane Reservoir adds 6. Mana never comes back on its own: only making camp, Potions of Mana (2d4+2, doubled by Mana Spring) and the Siphoning Charm (+2 per kill) restore it.'])
 ws.append(['Spell save DC', '8 + proficiency + INT mod', 'Level, INT', '=8+D6+INT((D4-10)/2)', 'Monsters roll d20 + their save bonus against this.'])
 ws.append(['Spell attack', 'proficiency + INT mod', 'Level, INT', '=D6+INT((D4-10)/2)', '+2 with Blessed, −2 with Poisoned, +2 with Spell Sniper.'])
-ws.append(['Armour Class (chain shirt + shield)', '13 + min(DEX mod, 2) + 2', 'DEX', '=13+MIN(INT((D5-10)/2),2)+2', 'Leather: 11 + full DEX mod. No armour: 10 + DEX mod. Helms +1/+2. Warded +4, Hasted +2, Chilled −1.'])
+ws.append(['Armour Class (chain shirt + shield)', '13 + min(DEX mod, 2) + 2', 'DEX', '=13+MIN(INT((D5-10)/2),2)+2', 'Leather: 11 + full DEX mod. Splint mail: 17 flat. No armour: 10 + DEX mod. Helms +1/+2. Warded +4, Hasted +2, Chilled −1.'])
 ws.append(['Initiative', 'd20 + DEX mod', 'DEX', '=INT((D5-10)/2)', 'Shown as the bonus. Lightning Reflexes +5; Commanding Voice +3 for the party.'])
 ws.append(['Movement', '30 ft (6 squares) a turn', '', 30, 'Hasted +15 ft, Quickstep +10 ft, Chilled halves it. Dash doubles it. Rubble, shallow water and vines cost double.'])
 ws.append(['Weapon attack', 'd20 + ability mod + proficiency', '', '', 'Strength for most weapons, Dexterity for bows, the better of the two for finesse weapons.'])
+ws.append(['Hit chance shown on hover', 'natural 20 always hits, natural 1 always misses', '', '', 'Hovering a target shows your chance to hit and the damage, or the chance a monster resists your spell.'])
 ws.append(['Critical hit', 'natural 20 (19–20 with Brute, melee)', '', '', 'Doubles the damage dice.'])
 style_rows(ws)
 for r in range(2, 6): ws.cell(row=r, column=1).font = Font(name=FONT, size=10, bold=True)
@@ -140,6 +141,14 @@ ws = sheet(wb, 'Talents', ['Ability', 'Talent', 'Effect', 'How you get it'], [16
 for k, ts in TALENTS.items():
     for tid, t in ts.items():
         ws.append([ABIL[k], t['name'], t['desc'], f'Raise {ABIL[k]} to 12, 14, 16, 18 or 20 with stat points, then pick it.'])
+style_rows(ws)
+
+ws = sheet(wb, 'Kits', ['Kit', 'Casts with', 'Suggested scores', 'Starting gear', 'Equipped', 'Spells it can learn', 'In short'], [12, 10, 30, 52, 34, 52, 60])
+for k, K in D['KITS'].items():
+    ws.append([K['cls'], K['cast'].upper(), ', '.join(f"{a.upper()} {v}" for a, v in K['scores'].items()),
+               ', '.join((f"{q} × " if q > 1 else '') + ITEMS[i]['name'] for i, q in K['inventory']),
+               ', '.join(f"{sl}: {ITEMS[i]['name']}" for sl, i in K['equipped'].items()),
+               ', '.join(D['SPELLS'][x]['name'] for x in (K['spells'] or D['SPELLS'].keys())), K['blurb']])
 style_rows(ws)
 
 ws = sheet(wb, 'Spells', ['Spell', 'Learned at level', 'Mana cost', 'Range (squares)', 'Range (ft)', 'Area', 'Targets', 'Damage', 'Damage type', 'Resolved by', 'Applies effect', 'Effect rounds', 'Chance', 'Description'],
@@ -171,9 +180,11 @@ wb.save(os.path.join(out_dir, 'stats-and-rules.xlsx'))
 
 # ======================================================================= items and monsters
 wb = Workbook()
-ws = sheet(wb, 'Items', ['Picture', 'Item', 'Key', 'Type', 'Damage', 'Bonus damage', 'Properties', 'Defence / healing / uses', 'On-hit effect', 'Description', 'Where it is found'],
-           [18, 20, 13, 11, 10, 18, 22, 20, 22, 48, 44], first=True)
-STARTING = ('longsword', 'shortbow', 'dagger', 'chain', 'shield', 'potion', 'rope', 'torch', 'rations')
+ws = sheet(wb, 'Items', ['Picture', 'Item', 'Key', 'Rarity', 'Price (gp)', 'Type', 'Damage', 'Bonus damage', 'Properties', 'Defence / healing / uses', 'On-hit effect', 'Description', 'Where it is found'],
+           [18, 20, 13, 11, 10, 11, 10, 18, 22, 20, 22, 48, 44], first=True)
+STARTING = {}
+for K in D['KITS'].values():
+    for i, q in K['inventory']: STARTING.setdefault(i, []).append(K['cls'])
 TYPE = {'weapon': 'Weapon', 'armor': 'Armour', 'shield': 'Shield', 'head': 'Head', 'neck': 'Neck', 'consumable': 'Consumable', 'gear': 'Gear', 'ammo': 'Arrows'}
 for k, it in ITEMS.items():
     props = []
@@ -190,17 +201,18 @@ for k, it in ITEMS.items():
     if it.get('undeadBane'): bonus.append(f"+{dice(it['undeadBane'][:2])} {it['undeadBane'][2]} vs undead")
     if it.get('lifesteal'): bonus.append(f"heals {int(it['lifesteal'] * 100)}% of damage")
     defn = ''
-    if it['type'] == 'armor': defn = f"AC {it['ac']} + DEX" + (f" (max +{it['maxDex']})" if it['maxDex'] < 20 else '')
+    if it['type'] == 'armor': defn = f"AC {it['ac']} (no DEX)" if it['maxDex'] == 0 else f"AC {it['ac']} + DEX" + (f" (max +{it['maxDex']})" if it['maxDex'] < 20 else '')
     elif it['type'] == 'shield': defn = f"+{it['ac']} AC"
     elif it.get('acBonus'): defn = f"+{it['acBonus']} AC"
     elif it.get('heal'): defn = f"heals {dice(it['heal'])}"
     elif it.get('mana'): defn = f"restores {dice(it['mana'])} mana"
     elif it.get('perception'): defn = f"+{it['perception']} Perception"
+    elif it.get('siphon'): defn = f"+{it['siphon']} mana per kill"
     on = it.get('onHit')
     onTxt = f"{STATUS[on['status']]['name']} {on['rounds']} rd" + (f" ({int(on.get('chance', 1) * 100)}%)" if on.get('chance', 1) < 1 else '') if on else ''
     note = it.get('note', '') + (' ' + it['curseNote'] if it.get('curseNote') else '')
-    ws.append(['', it['name'], k, TYPE.get(it['type'], it['type']), dice(it.get('dice')) + (f" {it['dmgType']}" if it.get('dmgType') else ''), '; '.join(bonus), ', '.join(props), defn, onTxt, note,
-               '; '.join((['Starting gear'] if k in STARTING else []) + sorted(found[k]))])
+    ws.append(['', it['name'], k, D['RARITY'][D['rarity'][k]]['name'], D['VALUES'].get(k, 10), TYPE.get(it['type'], it['type']), dice(it.get('dice')) + (f" {it['dmgType']}" if it.get('dmgType') else ''), '; '.join(bonus), ', '.join(props), defn, onTxt, note,
+               '; '.join(([f"Starting gear ({', '.join(STARTING[k])})"] if k in STARTING else []) + (['Stair Merchant'] if k in D['MERCHANT_STOCK'] else ['Stair Merchant special (some floors)'] if k in D['MERCHANT_SPECIALS'] else []) + sorted(found[k]))])
     add_image(ws, f'A{ws.max_row}', IMG['items'][k])
 style_rows(ws, height=96)
 
@@ -221,6 +233,8 @@ for t in order:
     if m.get('object'): special.append('blocks movement until smashed; spills loot')
     if m.get('respawn'): special.append('props itself back up each round')
     if t == 'skeleton': special.append("letter 'b' places one disguised as a bone pile")
+    if m.get('boss'): special.append("can't be stunned again for 2 rounds after a stun")
+    if t in D['PHASES']: special.append(f"at half HP: {D['PHASES'][t]['title']} ({D['PHASES'][t]['text']})")
     on = m.get('onHit')
     onTxt = f"{STATUS[on['status']]['name']} {on['rounds']} rd" + (f" ({int(on.get('chance', 1) * 100)}%)" if on.get('chance', 1) < 1 else '') if on else ''
     loot = '; '.join((f"{e['gold'][0]}–{e['gold'][1]} gp" if e.get('gold') else f"{ITEMS[e['item']]['name']} ({int(round(e['p'] * 100))}%)") for e in LOOT.get(t, []))

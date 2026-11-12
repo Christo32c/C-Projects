@@ -4,6 +4,53 @@ What feels bad, what's broken by design, and how to fix each.
 
 **How this was put together:** an automated run of every map, combat, every spell, levelling, the creator and saves (results at the end); playtest sessions in a headless browser; and a read through the rules code. The game was only ever run on a software renderer, so performance on real phones and laptops is a guess.
 
+## Status: fixes applied
+
+Every ★ recommendation below is now in the game, with two changes of direction from the playtester:
+
+- **Mana only comes back from camping, potions or items.** It no longer returns at the start of a turn, while walking, on the stairs or by passing a round. A new item, the **Siphoning Charm**, restores 2 mana for each foe you slay.
+- **Less of the D&D rulebook.** Lasting **wounds** replace death saves, and a short **stun immunity** replaces "legendary resistance". An **ambush** rule (strike first and the monsters lose their first turn) replaces the surprise round.
+
+| # | Issue | What changed |
+|---|---|---|
+| 1 | Wait refilled mana | Mana returns only by camping, Potions of Mana, or the Siphoning Charm. Mana Spring now doubles potion mana and survives an interrupted camp. |
+| 2 | Gold had no use | The **Stair Merchant** on every landing sells potions, mana potions, arrows, rations, torches and one special item per floor. He buys anything not equipped (trophies at full price) and runs a respec shrine. |
+| 3 | Hold Monster locked bosses | After a stun, a boss shrugs off stuns for 2 rounds. |
+| 4 | Fire Bolt beat weapons | Fire Bolt now costs 2 mana, reaches 60 ft and deals 1d10. With finite mana, weapons do the everyday work. |
+| 5 | Falling had no stakes | Each knockout in a real dungeon leaves a wound: −10% max HP, up to 3 wounds, until camp. |
+| 6 | Long monster rounds | **Combat speed** setting (normal, fast, instant), hold any key to fast-forward, and unseen monsters move instantly. |
+| 7 | One class | Three **kits**: Spellblade, Warden and Ranger, each with its own gear, casting ability and spell list. Hirelings get a random kit. |
+| 8 | Floor loot all looked alike | Floor loot shows the item's real model, glowing in its rarity colour. The mana potion is blue. |
+| 9 | Far squares were fiddly | **Tactical view**: hold Shift, or use the button. The follow cam waits 5 s after you orbit by hand. |
+| 10 | Overlays talked over each other | One message stack at the bottom left. Level-ups and achievements wait until the fight ends. The aim prompt moved down above the hotbar. |
+| — | Passive Perception and capacity unused | Passive Perception spots traps, secret doors and caches within 10 ft. Overloaded packs cost 10 ft of movement. |
+| — | Junk | Rations feed the camp (2d4 if it's interrupted), torches add 10 ft of sight, rope gives +2 to disarm, and trophies sell. |
+| — | No Give | **Give** button for a friend within 5 ft (it takes your action in a fight). |
+| — | Monsters going first | **Sneak** (G) halves how far monsters see you. Strike first and the monsters lose their first turn. |
+| — | "Wait" naming | Renamed **Pass a round**, with a tooltip. |
+| — | Odds hidden | Hovering a target shows % to hit and damage, or % to resist a spell. |
+| — | Hotbar overload | Up to 8 **prepared spells** on the hotbar, chosen on the Spells tab. |
+| — | Invisible talents | Bulwark and Dread Presence float a "miss!" label when they turn a hit; Keen Senses shows on searches. |
+| — | Statuses vanished after fights | The party's effects tick down one round per 2 squares walked. |
+| — | No respec | Undo last choice until the sheet closes, plus the shrine respec (25 gp × level). |
+| — | XP curve | Bigger parties meet about 25% more monsters per extra adventurer. Each floor's boss tops the party up to about one level per floor. |
+| — | Static companions | Waiting companions breathe and sway, and flinch when hit. |
+| — | Ally targeting | Click a party portrait (or your own card) with a buff selected. |
+| — | Bosses were just bigger monsters | Every boss has a **half-HP phase** with its own banner: wolves, rage, brood, flood, prayer, honour guard, or the lich's shadow-step. |
+| — | Invisible rarity | Common white, magic blue, weird violet and boss gold, on names, tags, loot windows, floor glows and the workbook. |
+| — | Performance | Per-frame particle budget on Medium and Low, a frame-rate readout in Settings, and a one-time hint to lower quality if the board runs below 28 fps. |
+| — | Creator checks | Reachability check for the exit, monsters and chests, plus boss arenas with no boss. **Fill a rectangle** brush and a **Boss arena** tool. Touch camera was already two-finger. |
+| — | Saves in one browser | **Export / Import a backup** of every hero, expedition and dungeon, and a warning when storage is nearly full. |
+| — | Accessibility | Text size, effects and ambience volume, key rebinding, and words beside effect icons and on hurt health bars. |
+
+**Not done yet:**
+- Fully animated rigs for every companion. Waiting companions breathe and flinch, but only the acting hero has the full rig.
+- Merged or instanced floor meshes.
+- Rope crossings over deep water.
+- Batching monsters of the same type into one turn.
+
+These need deeper engine work; they are left for a later pass.
+
 **Severity**
 - 🔴 **Breaks the game.** An exploit, a dead system, or something that makes the game trivial or unfair.
 - 🟠 **Hurts the feel.** It works, but it's frustrating, slow, confusing or flat.

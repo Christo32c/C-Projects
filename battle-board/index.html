@@ -71,9 +71,24 @@
   .toast, .aim { position: absolute; left: 50%; transform: translateX(-50%); max-width: min(460px, calc(100% - 32px));
            background: var(--panel); border: 1px solid var(--brass); border-radius: 8px; padding: 8px 12px;
            font-size: 14px; text-align: center; pointer-events: none; }
-  .toast { top: 100px; transition: opacity .25s; }
-  .toast.off { opacity: 0; }
-  .aim { top: 56px; border-color: var(--c, var(--brass)); }
+  .toast { top: auto; bottom: 150px; left: 12px; transform: none; display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+           background: none; border: 0; padding: 0; max-width: min(320px, calc(100% - 32px)); z-index: 4; zoom: var(--ui, 1); }
+  .tmsg { background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--brass); border-radius: 8px; padding: 7px 11px; text-align: left;
+          box-shadow: 0 6px 20px rgba(0,0,0,.45); animation: tmsgIn .2s ease-out; transition: opacity .35s; }
+  .tmsg.off { opacity: 0; }
+  @keyframes tmsgIn { from { opacity: 0; transform: translateX(-12px); } }
+  .aim { top: auto; bottom: 122px; border-color: var(--c, var(--brass)); zoom: var(--ui, 1); }
+  .chip.odds { border-color: #d3aa55; color: #ffe3a0; }
+  .tag.rar { color: var(--rc); border-color: var(--rc); }
+  .fnote { margin: 2px 0 0; text-transform: none; letter-spacing: 0; font-size: 13px; }
+  .lootlist .btn { white-space: nowrap; }
+  .sneaky { color: #9fd0a0; font-weight: 700; margin-right: 6px; }
+  .sti.w { width: auto; padding: 0 5px; font-style: normal; font-size: 11px; gap: 3px; }
+  .sbtn[aria-pressed="true"] { border-color: var(--brass); color: var(--brass); }
+  .keys { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; }
+  .keys .btn { min-width: 64px; }
+  #playBar, #sideBtns, #partyFrames, #initBar, #bossBar, #hud, .narr, .notice, #panel, #edPanel { zoom: var(--ui, 1); }
+  @media (max-width: 760px) { .toast { bottom: 170px; } }
   .vignette, .blood, .hitflash { position: absolute; inset: 0; pointer-events: none; }
   .vignette { background: radial-gradient(ellipse 75% 70% at 50% 45%, transparent 40%, rgba(4,2,1,.72) 100%); }
   .blood { background: radial-gradient(ellipse 70% 65% at 50% 45%, transparent 45%, rgba(150,8,0,.6) 100%); opacity: 0; transition: opacity .6s; }
@@ -502,7 +517,10 @@
       <button class="sbtn" id="modeBtn" title="Party: take turns in order, or command everyone freely (P)"><b>P</b><span id="modeLbl">Party</span></button>
       <button class="sbtn" id="camBtn" title="Camera: follow the action, or free (V)"><b>V</b><span id="camLbl">Follow cam</span></button>
       <button class="sbtn" id="viewBtn" title="Snap the camera back behind your hero (R)"><b>R</b>Recenter</button>
+      <button class="sbtn" id="sneakBtn" title="Sneak: monsters only notice you within 20 ft, and fewer wanderers find you. Strike first for an ambush (G)"><b>G</b><span id="sneakLbl">Sneak</span></button>
+      <button class="sbtn" id="tacBtn" title="Tactical view: lift the camera overhead (hold Shift, or click to toggle)"><b>⇧</b>Tactical</button>
       <button class="sbtn" id="soundBtn" title="Turn sound on or off">Sound</button>
+      <button class="sbtn" id="setBtn" title="Settings: combat speed, text size, volume and keys"><b>⚙</b>Settings</button>
     </div>
     <div class="hotbar-wrap" id="playBar">
       <button class="vitals-card" id="vitals" title="Open the character sheet"></button>
@@ -649,11 +667,11 @@ const ITEMS = {
                curseNote: 'Cursed: it won\'t come off, and it drains 1 HP at the end of each of your turns. Something in this crypt might wash the curse away.' },
   potion:    { name: 'Potion of Healing', type: 'consumable', heal: [2, 4, 2], weight: 0.5, note: 'Action: regain 2d4 + 2 HP' },
   greater:   { name: 'Greater Healing Potion', type: 'consumable', heal: [4, 4, 4], weight: 0.5, note: 'Action: regain 4d4 + 4 HP' },
-  rope:      { name: 'Hempen Rope (50 ft)', type: 'gear', weight: 10, note: 'Adventuring gear' },
-  torch:     { name: 'Torch', type: 'gear', weight: 1, note: 'Bright light 20 ft' },
-  rations:   { name: 'Rations (1 day)', type: 'gear', weight: 2, note: 'Adventuring gear' },
-  teeth:     { name: 'Bag of Mostly Teeth', type: 'gear', weight: 1, note: 'Mostly teeth. One of them is warm.' },
-  ratTail:   { name: 'Giant Rat Tail', type: 'gear', weight: 0.2, note: 'Someone in town might pay for these. Probably not.' },
+  rope:      { name: 'Hempen Rope (50 ft)', type: 'gear', weight: 10, note: 'While you carry it, +2 to disarm traps: you tie off the mechanism before you touch it.' },
+  torch:     { name: 'Torch', type: 'gear', use: 'torch', weight: 1, note: 'Light it in a dark dungeon to see 10 ft further for the next 80 squares you walk.' },
+  rations:   { name: 'Rations (1 day)', type: 'gear', weight: 2, note: 'Eaten when the party makes camp. If the camp is interrupted, a hot meal still heals 2d4.' },
+  teeth:     { name: 'Bag of Mostly Teeth', type: 'gear', weight: 1, note: 'Mostly teeth. One of them is warm. The Stair Merchant pays 6 gp, no questions asked.' },
+  ratTail:   { name: 'Giant Rat Tail', type: 'gear', weight: 0.2, note: 'The Stair Merchant pays 3 gp apiece. Nobody knows what for.' },
   arrows:    { name: 'Bundle of Arrows (20)', type: 'gear', weight: 1, note: 'Goblin-made. Most of them are straight.' },
   goblinStew:{ name: 'Goblin Stew', type: 'consumable', heal: [1, 4, 1], weight: 1, note: 'Action: regain 1d4 + 1 HP. Smells like regret.' },
   boneCharm: { name: 'Bone Charm', type: 'neck', perception: 1, weight: 0.2, note: '+1 Perception. A knuckle bone on a cord that rattles when something is hidden nearby.' },
@@ -681,7 +699,20 @@ const ITEMS = {
   bloodthirst:{ name: 'Bloodthirst', type: 'weapon', magic: true, dice: [1, 10], dmgType: 'slashing', ability: 'str', range: 1, twoHanded: true, weight: 5, fx: '#d0304b', lifesteal: 0.4,
                note: '1d10, two-handed. Every hit heals you for 40% of the damage dealt. The lich\'s own blade.' },
   wardenHelm:{ name: 'Warden\'s Helm', type: 'head', acBonus: 1, weight: 4, note: '+1 AC. Horned iron, still faintly cold inside.' },
+  siphon:    { name: 'Siphoning Charm', type: 'neck', siphon: 2, magic: true, weight: 0.2, note: 'A violet stone that drinks the last breath of the dying: whenever you slay a foe, you regain 2 mana.' },
+  splint:    { name: 'Splint Mail', type: 'armor', ac: 17, maxDex: 0, weight: 60, note: 'Heavy armor, AC 17. Dexterity doesn\'t help, and it is very heavy.' },
+  greatsword:{ name: 'Greatsword', type: 'weapon', dice: [2, 6], dmgType: 'slashing', ability: 'str', range: 1, twoHanded: true, weight: 6, note: '2d6 slashing, two-handed' },
+  mace:      { name: 'Mace', type: 'weapon', dice: [1, 6], dmgType: 'bludgeoning', ability: 'str', range: 1, weight: 4, note: 'Simple melee. Rattles skeletons.' },
 };
+// what the Stair Merchant charges (it pays half, or full price for odd trophies)
+const VALUES = { longsword: 15, dagger: 2, shortbow: 25, whisper: 120, eel: 120, sunder: 120, leather: 10, chain: 50, shield: 10, crown: 150, potion: 25, greater: 60, rope: 2, torch: 1,
+  rations: 1, teeth: 6, ratTail: 3, arrows: 5, goblinStew: 8, boneCharm: 40, wardenBlade: 180, manaPotion: 40, arrowFire: 30, arrowFrost: 30, arrowVenom: 30, arrowStorm: 40,
+  flametongue: 220, frostbrand: 220, venomFang: 180, stormblade: 240, dawnbringer: 300, bloodthirst: 400, wardenHelm: 90, siphon: 150, splint: 200, greatsword: 50, mace: 5 };
+// rarity: common white, magic blue, weird violet, boss loot gold
+const RARITY = { common: { name: 'Common', color: '#e8e2d4' }, magic: { name: 'Magic', color: '#6fa8ff' }, weird: { name: 'Weird', color: '#c48bff' }, boss: { name: 'Boss loot', color: '#ffc94a' } };
+const BOSS_LOOT = new Set(['flametongue', 'frostbrand', 'venomFang', 'stormblade', 'dawnbringer', 'bloodthirst', 'wardenBlade', 'wardenHelm']);
+const rarityOf = k => BOSS_LOOT.has(k) ? 'boss' : (ITEMS[k]?.weird || ITEMS[k]?.cursed) ? 'weird' : (ITEMS[k]?.magic || k === 'manaPotion' || k === 'greater') ? 'magic' : 'common';
+const rarityTag = k => rarityOf(k) === 'common' ? '' : `<span class="tag rar" style="--rc:${RARITY[rarityOf(k)].color}">${RARITY[rarityOf(k)].name}</span>`;
 const UNARMED = { name: 'Unarmed strike', type: 'weapon', dice: [1, 1], dmgType: 'bludgeoning', ability: 'str', range: 1 };
 
 const MONSTERS = {
@@ -721,8 +752,8 @@ const LOOT_TABLES = {
   wolf:     [{ item: 'teeth', p: 0.3 }],
   spider:   [{ gold: [0, 10] }, { item: 'potion', p: 0.3 }],
   zombie:   [{ gold: [0, 6] }, { item: 'teeth', p: 0.2 }],
-  cultist:  [{ gold: [5, 15] }, { item: 'potion', p: 0.25 }, { item: 'manaPotion', p: 0.4 }, { item: 'boneCharm', p: 0.15 }],
-  wraith:   [{ gold: [10, 25] }, { item: 'greater', p: 0.5 }],
+  cultist:  [{ gold: [5, 15] }, { item: 'potion', p: 0.25 }, { item: 'manaPotion', p: 0.4 }, { item: 'boneCharm', p: 0.15 }, { item: 'siphon', p: 0.08 }],
+  wraith:   [{ gold: [10, 25] }, { item: 'greater', p: 0.5 }, { item: 'siphon', p: 0.35 }, { item: 'manaPotion', p: 0.3 }],
   lich:     [{ gold: [200, 300] }, { item: 'greater', p: 1 }, { item: 'crown', p: 1 }, { item: 'bloodthirst', p: 1 }],
   wolfRider: [{ gold: [20, 40] }, { item: 'arrowFire', p: 1 }, { item: 'greater', p: 1 }, { item: 'manaPotion', p: 1 }],
   spiderQueen: [{ gold: [40, 80] }, { item: 'venomFang', p: 1 }, { item: 'arrowVenom', p: 1 }, { item: 'manaPotion', p: 1 }],
@@ -795,7 +826,7 @@ const keyOf = (x, z) => x + ',' + z;
 function derived() {
   const c = state.char, m = k => mod(c.abilities[k]);
   const prof = 2 + Math.floor((c.level - 1) / 4);
-  const maxHp = Math.max(1, 10 + m('con') + (c.level - 1) * (6 + m('con')) + (c.talents?.includes('tough') ? 2 * c.level : 0));
+  const maxHp = maxHpOf(c);
   const armor = c.equipped.armor ? ITEMS[c.equipped.armor] : null;
   let ac = armor ? armor.ac + Math.min(m('dex'), armor.maxDex) : 10 + m('dex');
   if (c.equipped.shield) ac += ITEMS.shield.ac;
@@ -808,9 +839,9 @@ function derived() {
   const cm = m(c.castAbility || 'int'), st = id => c.status?.some(s => s.id === id);
   ac += (st('shielded') ? 4 : 0) + (st('hasted') ? 2 : 0) - (st('chilled') ? 1 : 0);
   const atkMod = (st('blessed') ? 2 : 0) - (st('poisoned') ? 2 : 0);
-  let speedSq = Math.floor(c.speed / 5) + (st('hasted') ? 3 : 0) + (tl('quickstep') ? 2 : 0); if (st('chilled')) speedSq = Math.floor(speedSq / 2);
+  let speedSq = Math.floor(c.speed / 5) + (st('hasted') ? 3 : 0) + (tl('quickstep') ? 2 : 0) - (weight > c.abilities.str * 15 ? 2 : 0); if (st('chilled')) speedSq = Math.floor(speedSq / 2);
   return { prof, maxHp, ac, weapon, atk: am + prof + atkMod + (weapon.ranged && tl('sharpshooter') ? 2 : 0), dmgMod: am, init: m('dex'),
-           speedSq, weight, cap: c.abilities.str * 15,
+           speedSq, weight, cap: c.abilities.str * 15, heavy: weight > c.abilities.str * 15,
            spellDc: 8 + prof + cm, spellAtk: prof + cm + atkMod + (tl('spellSniper') ? 2 : 0),
            perception: m('wis') + prof + (c.equipped.neck ? ITEMS[c.equipped.neck].perception || 0 : 0) + (tl('keenSenses') ? 3 : 0),
            passive: 10 + m('wis') + prof + (c.equipped.neck ? ITEMS[c.equipped.neck].perception || 0 : 0) };
@@ -829,6 +860,7 @@ function migrateChar(c) {
   growthInit(c);
   c.status ||= []; if (c.mp == null) c.mp = 6 + 4 * c.level + 2 * Math.max(0, Math.floor((c.abilities.int - 10) / 2));
   if (c.cls === 'Fighter') c.cls = 'Spellblade';
+  c.kit ||= ({ Warden: 'warden', Ranger: 'ranger' })[c.cls] || 'spellblade'; c.undo = [];
   if (!('head' in c.equipped)) c.equipped.head = null;
   if (!('neck' in c.equipped)) c.equipped.neck = null;
   c.model ||= 'adventurer'; c.skin ||= '#d6a982'; c.hair ||= '#5a3a20';
@@ -839,7 +871,9 @@ function migrateChar(c) {
 // carry: one character, a list of them (a party), or nothing for a fresh hero
 function freshState(mapKey, carry, map = MAPS[mapKey]) {
   const list = Array.isArray(carry) ? carry : [carry ?? null];
-  const st = freshStateSolo(mapKey, list[0], map), party = [{ id: 'p0', char: st.char, pos: st.pos, turn: { move: 6, action: true } }];
+  const st = freshStateSolo(mapKey, list[0], map);
+  if (list.length > 1 && (map.danger ?? map.dark)) scaleEncounters(st, list.length);
+  const party = [{ id: 'p0', char: st.char, pos: st.pos, turn: { move: 6, action: true } }];
   list.slice(1).forEach((c, n) => {
     const ch = migrateChar(JSON.parse(JSON.stringify(c))); ch.slots = freshSlots(); ch.hp = Math.max(ch.hp, 1);
     party.push({ id: 'p' + (n + 1), char: ch, pos: freeSpotNear(st, st.pos, party.map(m => m.pos)), turn: { move: 6, action: true } });
@@ -918,7 +952,7 @@ function save() {   // only real expeditions are saved: the leader carries the r
   saveHeroes();
 }
 function loadPrefs() { try { return JSON.parse(localStorage.getItem(PREF_KEY)) || {}; } catch (e) { return {}; } }
-function savePrefs() { try { localStorage.setItem(PREF_KEY, JSON.stringify({ sandbox: ui.sandbox, quality: qName, sound: SFX.on, autoCam: CAM.auto })); } catch (e) {} }
+function savePrefs() { try { localStorage.setItem(PREF_KEY, JSON.stringify({ ...prefs, sandbox: ui.sandbox, quality: qName, sound: SFX.on, autoCam: CAM.auto })); } catch (e) {} }
 
 let state = freshState('crypt');
 let mode = 'menu', curHero = null;
@@ -934,9 +968,9 @@ const freeCast = () => ui.sandbox && !grim();   // the dungeon always plays by t
  * RENDERER — HDR pipeline: scene → bloom → ACES tone map
  * ================================================================== */
 const QUALITY = {
-  high:   { label: 'High',   pr: 2,    bloom: true,  mult: 1,    transmission: true },
-  medium: { label: 'Medium', pr: 1.25, bloom: true,  mult: 0.6,  transmission: false },
-  low:    { label: 'Low',    pr: 1,    bloom: false, mult: 0.35, transmission: false },
+  high:   { label: 'High',   pr: 2,    bloom: true,  mult: 1,    transmission: true,  cap: 4000 },
+  medium: { label: 'Medium', pr: 1.25, bloom: true,  mult: 0.6,  transmission: false, cap: 900 },
+  low:    { label: 'Low',    pr: 1,    bloom: false, mult: 0.35, transmission: false, cap: 260 },
 };
 let qName = QUALITY[prefs.quality] ? prefs.quality : 'high';
 let Q = QUALITY[qName];
@@ -1034,7 +1068,7 @@ function los(x0, z0, x1, z1) {
 function computeVisibility() {
   vis = new Uint8Array(W * H);
   if (!MAP.fog || !playing()) { vis.fill(1); return; }
-  const R = MAP.sight || 7;
+  const R = (MAP.sight || 7) + (state.torch > 0 ? 2 : 0);
   for (const m of state.party) {
     const hx = m.pos.x, hz = m.pos.z;
     for (let z = Math.max(0, hz - R); z <= Math.min(H - 1, hz + R); z++)
@@ -1437,13 +1471,14 @@ function buildTile(x, z) {
   // floor loot
   const lt = state.loot[k];
   if (lt && !lt.taken) {
-    const g = lootModel(lt.items[0]); g.position.set(p.x, p.y + 0.25, p.z);
+    const best = lt.items.slice().sort((a, b) => RARITY_RANK[rarityOf(b)] - RARITY_RANK[rarityOf(a)])[0];
+    const g = best ? itemModel(best) : lootModel(null); g.position.set(p.x, p.y + 0.3, p.z);
     addObj(i, g, 'tile', x, z);
-    const y0 = g.position.y;
+    const y0 = g.position.y, rc = best ? RARITY[rarityOf(best)].color : '#ffc04a', n = best ? 0.25 + RARITY_RANK[rarityOf(best)] * 0.35 : 0.25;
     addProp(i, g, (dt, t) => {
       g.rotation.y += dt * 1.2; g.position.y = y0 + Math.sin(t * 2.4 + i) * 0.05;
-      if (g.visible) stream(glow, .25, dt, () => ({ p: [p.x + rnd(-.25, .25), y0 + rnd(-.1, .3), p.z + rnd(-.25, .25)], v: [0, rnd(.1, .3), 0],
-        life: rnd(.4, .8), s: [.0, .08], c0: hdr('#fff3c0', 6), c1: hdr('#ffc04a', 2), a: 1, fi: .5 }));
+      if (g.visible) stream(glow, n, dt, () => ({ p: [p.x + rnd(-.25, .25), y0 + rnd(-.15, .3), p.z + rnd(-.25, .25)], v: [0, rnd(.1, .3), 0],
+        life: rnd(.4, .8), s: [.0, .08], c0: hdr(best && rarityOf(best) !== 'common' ? rc : '#fff3c0', 6), c1: hdr(rc, 2), a: 1, fi: .5 }));
     });
   }
   const tr = state.traps[k];
@@ -1574,7 +1609,8 @@ function lootModel(key) {
     return g;
   }
   if (it.type === 'consumable') {
-    const glass = new THREE.MeshStandardMaterial({ color: key === 'greater' ? '#c02a6a' : '#c0302a', emissive: key === 'greater' ? '#7a1040' : '#6a1010', emissiveIntensity: 1.2, roughness: 0.15, transparent: true, opacity: 0.9 });
+    const [gc, ge] = ({ greater: ['#c02a6a', '#7a1040'], manaPotion: ['#2a5ad0', '#0c2a8a'], goblinStew: ['#7a5a2a', '#3a2410'] })[key] || ['#c0302a', '#6a1010'];
+    const glass = new THREE.MeshStandardMaterial({ color: gc, emissive: ge, emissiveIntensity: 1.2, roughness: 0.15, transparent: true, opacity: 0.9 });
     const body = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 12), glass); body.scale.y = key === 'greater' ? 1.25 : 1;
     const neck = new THREE.Mesh(unitCyl, glass); neck.scale.set(0.035, 0.1, 0.035); neck.position.y = 0.12;
     const cork = new THREE.Mesh(unitCyl, mat('#8a6a42')); cork.scale.set(0.04, 0.04, 0.04); cork.position.y = 0.18;
@@ -1744,6 +1780,13 @@ function swordModel(len, w, bladeMat, gripLen = 0.1, guardW = 0.11) {
 function weaponModel(key) {
   switch (key) {
     case 'longsword': return swordModel(0.4, 0.034, steelM());
+    case 'greatsword': return swordModel(0.56, 0.05, steelM(), 0.15, 0.17);
+    case 'mace': {
+      const g = new THREE.Group(), grip = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.013, 0.3, 8), mat('#3a2618')); grip.position.y = 0.1; g.add(grip);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.045, 12, 10), steelM()); head.position.y = 0.27; g.add(head);
+      for (let n = 0; n < 6; n++) { const f = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.07, 0.03), steelM()); const a = n / 6 * Math.PI * 2; f.position.set(Math.cos(a) * 0.045, 0.27, Math.sin(a) * 0.045); f.rotation.y = -a; g.add(f); }
+      return g;
+    }
     case 'dagger': return swordModel(0.17, 0.026, steelM(), 0.06, 0.06);
     case 'whisper': {
       const g = swordModel(0.42, 0.036, new THREE.MeshStandardMaterial({ color: '#3a2450', emissive: '#8a4fd0', emissiveIntensity: 1.6, metalness: 0.6, roughness: 0.3 }));
@@ -1798,7 +1841,13 @@ function dressHuman() {
   const belt = (parentY = 0.02) => { const b = new THREE.Mesh(new THREE.TorusGeometry(0.098, 0.014, 6, 20), leather); b.rotation.x = Math.PI / 2; b.scale.y = 0.72; b.position.y = parentY; add(H.torso, b);
     const buckle = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.025, 0.01), trim); buckle.position.set(0, parentY, 0.074); add(H.torso, buckle); };
   const skirt = (m) => { const sk = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.13, 0.11, 18, 1, true), m); sk.scale.z = 0.78; sk.position.y = -0.03; add(H.hips, sk); };
-  if (eq.armor === 'chain') {
+  if (eq.armor === 'splint') {
+    const plate = new THREE.MeshStandardMaterial({ color: '#8a9098', metalness: 0.9, roughness: 0.35, envMapIntensity: 1 });
+    const cuir = new THREE.Mesh(new THREE.LatheGeometry(CHEST_PROFILE, 18), plate); cuir.scale.set(1.1, 1.0, 0.82); add(H.torso, cuir);
+    for (let n = 0; n < 4; n++) { const band = new THREE.Mesh(new THREE.TorusGeometry(0.112, 0.007, 4, 22), trim); band.rotation.x = Math.PI / 2; band.scale.y = 0.76; band.position.y = 0.03 + n * 0.055; add(H.torso, band); }
+    for (const sh of [H.shL, H.shR]) { const pd = new THREE.Mesh(new THREE.SphereGeometry(0.058, 12, 8, 0, 6.283, 0, 1.6), plate); add(sh, pd); }
+    skirt(plate); belt();
+  } else if (eq.armor === 'chain') {
     const mail = new THREE.MeshStandardMaterial({ color: '#b8bec6', metalness: 0.85, roughness: 0.45, map: mailTex().map, normalMap: mailTex().normalMap, envMapIntensity: 0.9 });
     const shirt = new THREE.Mesh(new THREE.LatheGeometry(CHEST_PROFILE, 18), mail); shirt.scale.set(1.07, 1.0, 0.78); shirt.position.y = -0.005; add(H.torso, shirt);
     for (const sh of [H.shL, H.shR]) { const sl = capsule(0.039, 0.07, mail); sl.position.y = -0.055; add(sh, sl); }
@@ -1864,6 +1913,7 @@ function dressHuman() {
     const dh = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.05, 6), mat('#3a2618')); dh.position.set(-0.13, 0.03, 0.04); dh.rotation.z = -0.3; add(H.hips, dh);
   }
   if (!H.bow && inv('shortbow')) { const bw = bowModel(); bw.position.set(0, 0.14, -0.12); bw.rotation.set(0, Math.PI / 2, 0.6); bw.scale.setScalar(0.95); add(H.torso, bw); }
+  if (w !== 'greatsword' && inv('greatsword') && !inv('wardenBlade')) { const gs = weaponModel('greatsword'); gs.position.set(0.02, 0.1, -0.13); gs.rotation.set(0, 0, 2.6); add(H.torso, gs); }
   if (w !== 'wardenBlade' && inv('wardenBlade')) { const gs = weaponModel('wardenBlade'); gs.position.set(0.02, 0.1, -0.13); gs.rotation.set(0, 0, 2.6); add(H.torso, gs); }
 
   paintRim(H.root);
@@ -2098,7 +2148,7 @@ const shakeCam = a => { if (!reduceMotion) shake = Math.max(shake, a); };
  * SOUND — everything is synthesised with Web Audio, no files
  * ================================================================== */
 const SFX = (() => {
-  let ac = null, master = null, verb = null, amb = null, nb = null, on = prefs.sound ?? true, ambT = 4, ambWant = 0;
+  let ac = null, master = null, verb = null, amb = null, nb = null, on = prefs.sound ?? true, ambT = 4, ambWant = 0, vf = prefs.volFx ?? 1, vm = prefs.volMusic ?? 1;
   const ok = () => ac && on && ac.state === 'running';
   function impulse(sec, decay) {
     const n = Math.floor(ac.sampleRate * sec), b = ac.createBuffer(2, n, ac.sampleRate);
@@ -2109,7 +2159,7 @@ const SFX = (() => {
     try {
       if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
       const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
-      ac = new AC(); master = ac.createGain(); master.gain.value = on ? 0.8 : 0;
+      ac = new AC(); master = ac.createGain(); master.gain.value = on ? 0.8 * vf : 0;
       const comp = ac.createDynamicsCompressor(); master.connect(comp); comp.connect(ac.destination);
       verb = ac.createConvolver(); verb.buffer = impulse(2.6, 2.4);              // a stone-vault echo
       const vg = ac.createGain(); vg.gain.value = 0.4; verb.connect(vg); vg.connect(master);
@@ -2141,12 +2191,13 @@ const SFX = (() => {
     if (lp) { const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; o.connect(f); n = f; }
     n.connect(g); g.connect(out(wet)); o.start(now); o.stop(now + a + dur + 0.05);
   }
-  function setAmbient(level) { ambWant = level; if (ac && amb) amb.gain.setTargetAtTime(level * 0.5, ac.currentTime, 1.5); }
+  function setAmbient(level) { ambWant = level; if (ac && amb) amb.gain.setTargetAtTime(level * 0.5 * vm, ac.currentTime, 1.5); }
   const R = (a, b) => a + Math.random() * (b - a);
   const S = {
     get on() { return on; },
     init, setAmbient,
-    toggle() { on = !on; init(); if (master) master.gain.setTargetAtTime(on ? 0.8 : 0, ac.currentTime, 0.05); return on; },
+    toggle() { on = !on; init(); if (master) master.gain.setTargetAtTime(on ? 0.8 * vf : 0, ac.currentTime, 0.05); return on; },
+    setVol(f, m) { vf = f; vm = m; if (master) master.gain.setTargetAtTime(on ? 0.8 * vf : 0, ac.currentTime, 0.05); setAmbient(ambWant); },
     step(v = 1) { noise({ dur: 0.07, f0: R(380, 620), f1: 160, vol: 0.11 * v, wet: 0.25 }); },
     swing() { noise({ dur: 0.18, type: 'bandpass', f0: 500, f1: 2600, q: 2, vol: 0.22, a: 0.04, wet: 0.2 }); },
     hit() { tone({ dur: 0.2, f0: 150, f1: 45, vol: 0.5, wet: 0.3 }); noise({ dur: 0.09, f0: 2500, f1: 300, vol: 0.35, wet: 0.3 }); },
@@ -2328,9 +2379,10 @@ const glow = new Particles(9000, true);    // fire, embers, glints, pollen
 const smoke = new Particles(2600, false);  // smoke, mist, dust
 
 function burst(sys, n, fn) { const m = Math.max(1, Math.round(n * Q.mult)); for (let i = 0; i < m; i++) sys.emit(fn(i)); }
+const EMIT = { n: 0 };   // particles started this frame; lower quality settings cap it
 function stream(sys, perFrame, dt, fn) {
   let n = perFrame * dt * 60 * Q.mult;
-  while (n > 0) { if (n < 1 && Math.random() > n) break; sys.emit(fn()); n--; }
+  while (n > 0) { if (n < 1 && Math.random() > n) break; if (++EMIT.n > Q.cap) return; sys.emit(fn()); n--; }
 }
 
 /* --- procedural textures (canvas) --- */
@@ -3366,15 +3418,15 @@ function buildFireProp(i, x, z, ch, p, r) {
 function descend() {
   const next = MAPS[MAP.next];
   showModal(next.floor ? `Floor ${next.floor}: ${next.name}` : next.name, `<p>${esc(MAP.stairsText || 'The stairs wind down into the dark.')}</p>
-    <p class="muted">You keep your hit points, gear and gold. Your mana comes back as you catch your breath on the stairs.</p>`, [
+    <p class="muted">You keep your hit points, mana, wounds, gear and gold. A peddler has set up shop on the landing.</p>`, [
     { label: 'Descend', primary: true, fn: () => {
-      for (const m of state.party) m.char.mp = maxMpOf(m.char);
       const st = freshState(MAP.next, partyChars());
       st.partyMode = state.partyMode; st.party.forEach((m, i) => { m.heroId = state.party[i].heroId; });
       st.stats = { ...state.stats }; st.danger = { steps: 0, noise: 0, waves: 0, rests: state.danger?.rests || 0 };
       enterPlay(st, mode === 'test' ? 'test' : 'play');
       SFX.door(); after(1.5, () => achieve('descend'));
     } },
+    { label: 'Visit the merchant', fn: () => openMerchant(descend) },
     { label: 'Not yet' },
   ]);
 }
@@ -3473,7 +3525,11 @@ function onHeroStep(cell) {
     const [tx, tz] = k.split(',').map(Number);
     if (!tr.found && cheb(state.pos, { x: tx, z: tz }) <= 2) { tr.found = true; buildTile(tx, tz); addLog('', `<b>Danger Sense:</b> ${state.char.name} spots a hidden ${TRAP_TEXT[tr.kind][2]} trap.`); toast('Danger Sense: a hidden trap!'); stop = true; }
   }
-  if (wasExploring && (state.stepCount = (state.stepCount || 0) + 1) % 4 === 0) for (const m of state.party) if (m.char.hp > 0) restoreMp(m.char, 1);
+  if (wasExploring) {   // out of a fight: sharp eyes, a burning torch, and effects that keep counting down
+    if (passiveSpot()) stop = true;
+    torchStep();
+    if ((state.stepCount = (state.stepCount || 0) + 1) % 2 === 0) exploreStatusTick();
+  }
   const rose = riseCheck();
   if ((wakeCreatures() || rose) && wasExploring) { startCombat(); stop = true; }
   if (rose) stop = true;
@@ -3500,7 +3556,7 @@ function wakeCreatures() {
   const woke = [];
   for (const c of state.creatures) {
     if (!c.alive || c.aware || c.dormant || MONSTERS[c.type].ai === 'none') continue;
-    if (state.party.some(m => cheb(c, m.pos) <= 8 && los(c.x, c.z, m.pos.x, m.pos.z))) { c.aware = true; woke.push(c); }
+    if (state.party.some(m => cheb(c, m.pos) <= (state.sneak ? 4 : 8) && los(c.x, c.z, m.pos.x, m.pos.z))) { c.aware = true; woke.push(c); }
   }
   for (const w of [...woke]) for (const c of state.creatures)   // the noise wakes their friends
     if (c.alive && !c.aware && !c.dormant && MONSTERS[c.type].ai !== 'none' && cheb(c, w) <= 4 && los(c.x, c.z, w.x, w.z)) { c.aware = true; woke.push(c); }
@@ -3561,7 +3617,7 @@ function dangerStep() {
   if (D.waves >= 4 || ++D.steps < 10) return false;
   D.steps = 0;
   const r = Math.random(), p = 0.12 + D.noise * 0.07;
-  if (r < p) return !!spawnWanderers(6, 13);
+  if (r < (state.sneak ? p * 0.6 : p)) return !!spawnWanderers(6, 13);
   if (r < p + 0.2) addLog('', `<i>${OMENS[Math.floor(Math.random() * OMENS.length)]}</i>`);
   return false;
 }
@@ -3589,13 +3645,15 @@ function makeCamp() {
   const c = state.char, D = danger(); D.rests++;
   const risk = Math.min(5, 1 + D.rests), r = roll(1, 6)[0];
   if (r <= risk) {
-    for (const m of state.party) m.char.hp = Math.max(1, m.char.hp + Math.floor((maxHpOf(m.char) - m.char.hp) / 2));
+    for (const m of state.party) { m.char.hp = Math.max(1, m.char.hp + Math.floor((maxHpOf(m.char) - m.char.hp) / 2)); if (hasT(m.char, 'manaSpring')) m.char.mp = maxMpOf(m.char); }
+    eatRations(true);
     addLog('hit', `<b>You make camp in the dark.</b> <span class="r">d6 ${r}: interrupted on ${risk} or less</span>`);
     D.waves = Math.min(D.waves, 3);
     if (spawnWanderers(3, 8, 'You jolt awake with only half a rest behind you.')) startCombat();
   } else {
-    for (const m of state.party) { m.char.hp = maxHpOf(m.char); m.char.mp = maxMpOf(m.char); }
-    addLog('heal', `<b>You make camp in the dark</b> and sleep in fits. Nothing finds you: full HP and mana. <span class="r">d6 ${r}</span>`);
+    for (const m of state.party) { m.char.wounds = 0; m.char.hp = maxHpOf(m.char); m.char.mp = maxMpOf(m.char); }
+    addLog('heal', `<b>You make camp in the dark</b> and sleep in fits. Nothing finds you: full HP and mana, and wounds mended. <span class="r">d6 ${r}</span>`);
+    eatRations(false);
     toast('You rest undisturbed. Each camp is riskier than the last.');
   }
   refresh(); save();
@@ -3634,7 +3692,7 @@ const partyAt = (x, z) => state.party.some(m => m.pos.x === x && m.pos.z === z);
 const partyUp = () => state.party.some(m => m.char.hp > 0);
 const partyChars = () => state.party.map(m => m.char);
 const firstUp = () => state.party.findIndex(m => m.char.hp > 0);
-const freshTurn = c => { let mv = Math.floor(c.speed / 5) + (c.status?.some(s => s.id === 'hasted') ? 3 : 0) + (c.talents?.includes('quickstep') ? 2 : 0); if (c.status?.some(s => s.id === 'chilled')) mv = Math.floor(mv / 2); return { move: mv, action: true }; };
+const freshTurn = c => { let mv = Math.floor(c.speed / 5) + (c.status?.some(s => s.id === 'hasted') ? 3 : 0) + (c.talents?.includes('quickstep') ? 2 : 0) - (overloaded(c) ? 2 : 0); if (c.status?.some(s => s.id === 'chilled')) mv = Math.floor(mv / 2); return { move: mv, action: true }; };
 // a painted copy of an adventurer's mini, posed and dressed as they are now
 function snapshotMember(idx) {
   const keep = state.active, saved = [anim, lunge, castT, heroFlash];
@@ -3720,7 +3778,7 @@ function hurtMember(idx, n, what) {
   floatText(`-${n}`, worldOf(m.pos.x, m.pos.z).add(new THREE.Vector3(0, 1.2, 0)), 'dmg');
   addLog('hit', `${what}: ${m.char.name} takes <b>${n}</b> (${m.char.hp}/${maxHpOf(m.char)}).`);
   const v = allyViews.get(m.id); if (v) v.pivot.rotation.z = 0.2;
-  if (m.char.hp === 0) { addLog('hit', `<b>${m.char.name} falls unconscious!</b>`); buildAllies(); if (!partyUp()) after(0.6, defeat); }
+  if (m.char.hp === 0) { woundOf(m.char); addLog('hit', `<b>${m.char.name} falls unconscious!</b>`); buildAllies(); if (!partyUp()) after(0.6, defeat); }
 }
 // the active adventurer has dropped: someone else carries on
 function memberDown() {
@@ -3767,6 +3825,8 @@ function followLeader() {
 function allyTick(dt) {
   for (const [id, v] of allyViews) {
     if (v.pivot.rotation.z) v.pivot.rotation.z *= Math.max(0, 1 - dt * 6);
+    const m0 = state.party.find(q => q.id === id), tt = performance.now() / 1000 + id.charCodeAt(1) * 1.7;
+    if (m0 && m0.char.hp > 0) { v.pivot.scale.y = 1 + Math.sin(tt * 2.2) * 0.014; v.pivot.rotation.y = Math.sin(tt * 0.6) * 0.08; v.pivot.position.y = v.anim ? 0 : Math.max(0, Math.sin(tt * 2.2)) * 0.006; }
     const a = v.anim; if (!a) continue;
     a.t += dt / (reduceMotion ? 0.06 : 0.16);
     while (a.t >= 1 && v.anim) { a.t -= 1; a.i++; if (a.i >= a.path.length - 1) { v.anim = null; const m = state.party.find(q => q.id === id); v.g.position.copy(worldOf(m.pos.x, m.pos.z)); } }
@@ -3802,7 +3862,7 @@ function hireCompanion() {
   c.color = ['#8f3f3f', '#3f8f5a', '#7a5a9a', '#9a7a3a', '#3a6a8a', '#8a5a3a'][Math.floor(Math.random() * 6)];
   c.skin = SKIN_TONES[Math.floor(Math.random() * SKIN_TONES.length)]; c.hair = HAIR_COLORS[Math.floor(Math.random() * HAIR_COLORS.length)];
   for (const [k] of ABILITIES) c.abilities[k] = roll4d6();
-  c.hp = maxHpOf(c);
+  applyKit(c, Object.keys(KITS)[Math.floor(Math.random() * 3)]);
   const h = { id: uid(), char: c, run: null, updated: Date.now() - 1000 };
   heroes.push(h); saveHeroes();
   return h;
@@ -3840,6 +3900,10 @@ const tName = t => isHeroT(t) ? t.name : foeName(MONSTERS[t.type]);
 function addStatus(t, id, rounds) {
   if (!t || (isHeroT(t) ? t.hp <= 0 : !t.alive)) return;
   if (isHeroT(t) && ((id === 'poisoned' && hasT(t, 'ironStomach')) || (id === 'stunned' && hasT(t, 'ironWill')))) { const p = stPos(t); if (p) floatText('Immune', p.add(new THREE.Vector3(0, 1.4, 0)), 'xp'); return; }
+  if (!isHeroT(t) && id === 'stunned' && MONSTERS[t.type].boss) {
+    if ((t.stunGuard || 0) > state.round) { const p = stPos(t); if (p) floatText('Shrugs it off', p.add(new THREE.Vector3(0, 1.6, 0)), 'miss'); addLog('spell', `${tName(t).replace(/^t/, 'T')} shrugs off the stun: a boss can't be held again so soon.`); return; }
+    t.stunGuard = state.round + rounds + 2;
+  }
   if (!isHeroT(t) && id === 'burning' && (state.burned = (state.burned || 0) + 1) >= 5) after(0.5, () => achieve('pyromaniac'));
   const S = STATUS[id], list = stList(t), cur = list.find(s => s.id === id);
   if (cur) cur.rounds = Math.max(cur.rounds, rounds); else list.push({ id, rounds });
@@ -3923,7 +3987,7 @@ function restoreMp(c, n, why) {
 // spells you know grow with your level; free casting (Training Yard) shows them all
 const costOf = (sp, c = state.char) => freeCast() ? 0 : Math.max(1, sp.cost - (hasT(c, 'efficient') ? 1 : 0));
 const rangeOf = (sp, c = state.char) => sp.range + (hasT(c, 'spellSniper') ? 4 : 0);
-const knownSpells = (c = state.char) => Object.keys(SPELLS).filter(k => freeCast() || (SPELLS[k].unlock || 1) <= c.level);
+const knownSpells = (c = state.char) => Object.keys(SPELLS).filter(k => freeCast() || ((SPELLS[k].unlock || 1) <= c.level && (!kitSpells(c) || kitSpells(c).includes(k))));
 
 /* ================================================================== *
  * INITIATIVE — everyone in the fight rolls d20 + Dex; turns go highest first
@@ -3951,7 +4015,7 @@ function syncOrder() {
   }
   for (const m of state.party) if (!cb.order.some(o => o.t === 'h' && o.id === m.id)) { const e = initFor(m.char, m.id, 'h'), at = sortInsert(cb.order, e); if (at <= cb.i) cb.i++; }
 }
-function startCombat() {
+function startCombat(ambush) {
   if (state.combat) return syncOrder();
   for (const v of allyViews.values()) if (v.anim) v.anim.t = 1e3;   // followers snap into place
   const order = [];
@@ -3959,6 +4023,11 @@ function startCombat() {
   for (const c of state.creatures) if (c.alive && c.aware && MONSTERS[c.type].ai !== 'none') order.push(initFor(c, c.id, 'm'));
   order.sort((a, b) => b.init - a.init || (a.t === 'h' ? -1 : 1));
   state.combat = { order, i: -1 };
+  if (ambush) {
+    for (const e of order) if (e.t === 'm') creatureById(e.id).surprised = true;
+    addLog('sys', '<b>Ambush!</b> You struck first: every monster in this fight loses its first turn.');
+    after(1.2, () => toast('Ambush! The monsters lose their first turn.'));
+  }
   for (const m of state.party) m.char.fight = {};
   if (partyHas('inspiring')) after(0.4, () => { for (const m of state.party) if (m.char.hp > 0) addStatus(m.char, 'blessed', 2); });
   const nm = e => e.t === 'h' ? entryChar(e).char.name : MONSTERS[creatureById(e.id).type].name;
@@ -3972,8 +4041,9 @@ function startCombat() {
 function endCombat() {
   if (!state.combat) return;
   state.combat = null; busy = false;
-  clearStatuses();
+  for (const c of state.creatures) c.status = [];   // the party's effects keep counting down as they walk
   for (const m of state.party) { m.turn = freshTurn(m.char); m.done = false; }
+  after(0.8, () => { if (!noticeBusy && noticeQ.length) showNextNotice(); });
   refresh();
 }
 async function nextTurn() {
@@ -4000,9 +4070,8 @@ async function beginTurn(e) {
   const t = entryTarget(e); if (!t) return nextTurn();
   if (e.t === 'h') {
     const idx = state.party.findIndex(m => m.id === e.id), m = state.party[idx];
-    switchTo(idx);
+    CAM.hold = 0; switchTo(idx);
     m.turn = freshTurn(m.char); m.done = false;
-    restoreMp(m.char, hasT(m.char, 'manaSpring') ? 2 : 1);
     const skip = statusTurnStart(m.char);
     if (state.over) return;
     if (m.char.hp <= 0 || skip) {
@@ -4015,9 +4084,10 @@ async function beginTurn(e) {
   }
   const c = t, v = views.get(c.id);
   busy = true; refresh();
-  const skip = statusTurnStart(c);
+  const surprised = c.surprised; c.surprised = false;
+  const skip = statusTurnStart(c) || surprised;
   if (c.alive && !state.over) {
-    if (skip) { addLog('hit', `${foeName(MONSTERS[c.type], true)} is stunned and loses the turn.`); if (v?.g.visible) { camShot(v.g, hero.position, 0.5); await sleep(0.7); } }
+    if (skip) { addLog('hit', `${foeName(MONSTERS[c.type], true)} ${surprised ? 'is caught off guard and loses the turn' : 'is stunned and loses the turn'}.`); if (v?.g.visible) { camShot(v.g, hero.position, 0.5); await sleep(0.7); } }
     else {
       const tgt = targetFor(c);
       if (tgt >= 0) {
@@ -4065,7 +4135,8 @@ async function endTurn() {
   // exploring: let a round go by
   await roundEffects();
   state.round++;
-  for (const m of state.party) { m.turn = freshTurn(m.char); restoreMp(m.char, 1); }
+  for (const m of state.party) m.turn = freshTurn(m.char);
+  exploreStatusTick();
   if (isCursed()) curseDrain();
   refresh(); save();
 }
@@ -4074,8 +4145,8 @@ async function endTurn() {
  * THE NEW SPELLS — single targets, buffs for friends, curses for foes
  * ================================================================== */
 const NEW_SPELLS = {
-  firebolt:  { name: 'Fire Bolt', cost: 1, unlock: 1, shape: 'single', target: 'enemy', range: 24, color: '#ff8a3a', icon: '✺', attack: true, damage: [2, 8], dmgType: 'fire', status: ['burning', 2, 0.35],
-               area: 'one creature', desc: 'Hurl a mote of flame. Spell attack for 2d8 fire. One hit in three sets the target burning for 2 rounds.' },
+  firebolt:  { name: 'Fire Bolt', cost: 2, unlock: 1, shape: 'single', target: 'enemy', range: 12, color: '#ff8a3a', icon: '✺', attack: true, damage: [1, 10], dmgType: 'fire', status: ['burning', 2, 0.35],
+               area: 'one creature', desc: 'Hurl a mote of flame. Spell attack for 1d10 fire. One hit in three sets the target burning for 2 rounds.' },
   frostray:  { name: 'Ray of Frost', cost: 2, unlock: 1, shape: 'single', target: 'enemy', range: 16, color: '#9fe4ff', icon: '❄', attack: true, damage: [2, 6], dmgType: 'cold', status: ['chilled', 2, 1],
                area: 'one creature', desc: 'A beam of blue-white cold. Spell attack for 2d6 cold, and the target is chilled for 2 rounds: half movement, -1 AC.' },
   hex:       { name: 'Hex', cost: 2, unlock: 1, shape: 'single', target: 'enemy', range: 18, color: '#b07cff', icon: '✠', status: ['hexed', 4, 1],
@@ -4130,7 +4201,7 @@ function spellTargetError(sp, x, z) {
 }
 function castMagic(key, x, z, tiles, finish) {
   const sp = SPELLS[key], sr = sp.status ? sp.status[1] + (hasT(state.char, 'lingering') ? 1 : 0) : 0, boost = hasT(state.char, 'mastery') ? 3 : 0, d = derived(), from = above(hero, 0.95), to = worldOf(x, z).add(new THREE.Vector3(0, 0.6, 0));
-  const provoke = c => { if (MONSTERS[c.type].ai !== 'none' && !c.aware) { const was = exploring(); c.aware = true; if (was) startCombat(); } };
+  const provoke = c => { if (MONSTERS[c.type].ai !== 'none' && !c.aware) { const was = exploring(); c.aware = true; if (was) startCombat(true); } };
   if (sp.shape === 'single' && sp.target === 'enemy') {
     const c = creatureAt(x, z);
     return shootBolt(from, creatureTop(c).add(new THREE.Vector3(0, -0.25, 0)), sp.color).then(() => {
@@ -4157,7 +4228,7 @@ function castMagic(key, x, z, tiles, finish) {
     const i = memberAt(x, z), m = state.party[i];
     return moteArc(from, (i === state.active ? hero.position : (allyViews.get(m.id)?.g.position || to)).clone().add(new THREE.Vector3(0, 0.8, 0)), sp.color).then(() => {
       if (sp.heal) {
-        const n = sum(roll(...sp.heal)) + Math.max(0, mod(state.char.abilities.int)) + (hasT(state.char, 'healer') ? 4 : 0);
+        const n = sum(roll(...sp.heal)) + Math.max(0, mod(state.char.abilities[state.char.castAbility || 'int'])) + (hasT(state.char, 'healer') ? 4 : 0);
         if (i === state.active) heal(n, sp.name);
         else { const was = m.char.hp; m.char.hp = Math.min(maxHpOf(m.char), Math.max(0, m.char.hp) + n); floatText(`+${n}`, worldOf(m.pos.x, m.pos.z).add(new THREE.Vector3(0, 1.2, 0)), 'heal'); addLog('heal', `${sp.name}: ${m.char.name} regains <b>${n}</b> HP.`); if (was <= 0) buildAllies(); }
       } else addStatus(m.char, sp.status[0], sr);
@@ -4487,8 +4558,8 @@ function triggerTrap(k, x, z) {
 function disarm(k, x, z) {
   const tr = state.traps[k]; if (!tr) return;
   if (!exploring()) { if (!state.turn.action) return toast('Disarming a trap uses your action, and it is already spent.'); state.turn.action = false; }
-  const d = derived(), r = roll(1, 20)[0], total = r + mod(state.char.abilities.dex) + d.prof;
-  const txt = `<span class="r">Dex (tools) ${r}${fmt(total - r)} = ${total} vs DC ${tr.dc}</span>`;
+  const d = derived(), r = roll(1, 20)[0], rope = invEntry('rope') ? 2 : 0, total = r + mod(state.char.abilities.dex) + d.prof + rope;
+  const txt = `<span class="r">Dex (tools${rope ? ' + rope' : ''}) ${r}${fmt(total - r)} = ${total} vs DC ${tr.dc}</span>`;
   if (total >= tr.dc) {
     delete state.traps[k]; buildTile(x, z); applyFog();
     addLog('heal', `You jam the mechanism. <b>Trap disarmed.</b> ${txt}`); gainXp(25);
@@ -4541,7 +4612,7 @@ function solvePuzzle() {
 function search() {
   if (busy || anim || state.over) return;
   if (!exploring()) { if (!state.turn.action) return toast('Searching uses your action, and it is already spent.'); state.turn.action = false; }
-  const d = derived(), r = roll(1, 20)[0], total = r + d.perception, found = [];
+  const d = derived(), r = roll(1, 20)[0], total = r + d.perception, found = [], keen = hasT(state.char, 'keenSenses');
   const near = (x, z) => cheb(state.pos, { x, z }) <= 3 && state.explored[z * W + x];
   const sparkle = (x, z) => { const p = worldOf(x, z); burst(glow, 40, () => ({ p: [p.x + rnd(-.45, .45), rnd(.25, 1.1), p.z + rnd(-.45, .45)], v: [0, rnd(.2, .6), 0], life: rnd(.6, 1.2),
     s: [.0, .1], c0: hdr('#fff3c0', 7), c1: hdr('#d3aa55', 2), a: 1, fi: .5 })); };
@@ -4565,7 +4636,7 @@ function search() {
   ring.rotation.x = -Math.PI / 2; ring.position.copy(worldOf(state.pos.x, state.pos.z)).add(new THREE.Vector3(0, 0.03, 0)); scene.add(ring);
   let t = 0; fxList.push({ update(dt) { t += dt; ring.scale.setScalar(0.3 + easeOut(clamp01(t / 0.9)) * 3.5); ring.material.opacity = 1 - clamp01(t / 0.9); if (t > 0.9) { killMesh(ring); return false; } return true; } });
   const rollTxt = `<span class="r">Perception ${r}${fmt(d.perception)} = ${total}</span>`;
-  if (found.length) { addLog('sys', `<b>Search:</b> you find ${found.join(', ')}! ${rollTxt}`); toast(`You find ${found.join(', ')}!`); }
+  if (found.length) { addLog('sys', `<b>Search:</b> you find ${found.join(', ')}! ${rollTxt}`); toast(`You find ${found.join(', ')}!`); if (keen) floatText('Keen Senses!', above(hero, 1.55), 'xp'); }
   else { addLog('', `<b>Search:</b> you find nothing unusual nearby. ${rollTxt}`); toast('You find nothing unusual within 15 ft.'); }
   applyFog(); refresh(); save();
 }
@@ -4580,9 +4651,10 @@ const creatureTop = c => { const v = views.get(c.id); return v.g.position.clone(
 function damageCreature(c, dmg, cls) {
   const v = views.get(c.id), m = MONSTERS[c.type];
   c.hp = Math.max(0, c.hp - dmg); v.shake = 1; v.flash = 1;
+  if (m.boss && c.hp > 0 && c.hp <= m.hp / 2 && !c.phased && PHASES[c.type] && playing()) { c.phased = true; after(0.5, () => bossPhase(c)); }
   floatText(`-${dmg}`, creatureTop(c).add(new THREE.Vector3(0, Math.random() * 0.2, 0)), cls);
   if (c.dormant) rise(c, false);
-  if (m.ai !== 'none' && !c.aware) { const was = exploring(); c.aware = true; if (was) startCombat(); }
+  if (m.ai !== 'none' && !c.aware) { const was = exploring(); c.aware = true; if (was) startCombat(true); }
   if (c.hp === 0 && c.alive) killCreature(c);
 }
 function killCreature(c) {
@@ -4593,11 +4665,13 @@ function killCreature(c) {
   addLog('sys', m.object ? `${nm} ${m.breakText}.` : `${nm} ${m.ai === 'none' ? 'is destroyed' : 'falls'}. +${m.xp} XP.`);
   if (m.ai !== 'none') { state.stats.kills++; after(0.8, () => achieve('firstBlood')); }
   if (m.boss) after(1.2, () => achieve('firstBoss'));
+  if (m.boss && MAP.floor && playing()) bossBonus();
   if (m.boss) { toast(`${nm} falls!`); shakeCam(0.3); }
   c.loot = rollLoot(c.type);
   if (m.object) smashProp(c);
   else if (c.loot) addLog('', `Its remains can be searched: click the body when you're next to it.`);
   if (m.xp) gainXp(m.xp);
+  if (!m.object && m.ai !== 'none') siphonOnKill(m);
   views.get(c.id).bar.hidden = true;
   checkFightOver(wasCombat);
   // a dungeon without exit stairs is won by clearing it
@@ -4676,7 +4750,7 @@ function openLoot(c) {
   if (!c || !c.loot) return;
   const L = c.loot, m = MONSTERS[c.type];
   const body = () => `<p class="muted">You search what's left of ${foeName(m)}.</p><ul class="lootlist">
-    ${L.items.map((k, n) => `<li><span><b>${ITEMS[k].name}</b>${ITEMS[k].weird ? '<span class="tag weird">Weird</span>' : ''}<br><span class="muted">${ITEMS[k].note}</span></span><button class="btn small" data-take="${n}">Take</button></li>`).join('')}
+    ${L.items.map((k, n) => `<li><span><b style="color:${RARITY[rarityOf(k)].color}">${ITEMS[k].name}</b>${rarityTag(k)}<br><span class="muted">${ITEMS[k].note}</span></span><button class="btn small" data-take="${n}">Take</button></li>`).join('')}
     ${L.gold ? `<li><span><b>${L.gold} gp</b></span><button class="btn small" data-take="gold">Take</button></li>` : ''}
     ${!L.items.length && !L.gold ? '<li><span class="muted">Nothing left.</span></li>' : ''}</ul>`;
   showModal(`${m.name} remains`, body(), [{ label: 'Take all', primary: true, fn: () => takeLoot(c, 'all') }, { label: 'Leave it' }]);
@@ -4763,6 +4837,11 @@ async function creatureAttack(c) {
   const dist = cheb(c, state.pos), disadv = c.restrained || (m.ai === 'ranged' && dist <= 1);
   const ak = atkOf(c) - (hasT(state.char, 'dread') ? 1 : 0) - (hasT(state.char, 'bulwark') && state.char.equipped.shield ? 1 : 0), r = roll(disadv ? 2 : 1, 20), nat = disadv ? Math.min(...r) : r[0], total = nat + ak;
   const crit = nat === 20, hit = crit || (nat !== 1 && total >= d.ac);
+  const pen = (hasT(state.char, 'dread') ? 1 : 0) + (hasT(state.char, 'bulwark') && state.char.equipped.shield ? 1 : 0);
+  if (!hit && pen && nat !== 1 && total + pen >= d.ac) {
+    const nm = [hasT(state.char, 'bulwark') && state.char.equipped.shield ? 'Bulwark' : null, hasT(state.char, 'dread') ? 'Dread Presence' : null].filter(Boolean).join(' + ');
+    after(0.15, () => floatText(`${nm}: miss!`, above(hero, 1.55), 'xp')); addLog('spell', `<b>${nm}</b> turns the blow aside!`);
+  }
   const rollTxt = `<span class="r">d20${disadv ? ` (disadv. ${r.join(', ')})` : ''} ${nat} ${fmt(ak)} = ${total} vs AC ${d.ac}</span>`;
   if (hit) {
     const dice = roll(m.dmg[0] * (crit ? 2 : 1), m.dmg[1]);
@@ -4840,6 +4919,7 @@ function hurtHero(n, what, cls = 'dmg') {
   const hf = $('hitflash'); hf.classList.remove('go'); void hf.offsetWidth; hf.classList.add('go');
   addLog('hit', `${what}: ${c.name} takes <b>${n}</b> (${c.hp}/${derived().maxHp}).`);
   if (c.hp === 0) {
+    woundOf(c);
     if (state.party.length > 1 && partyUp()) memberDown();
     else if (state.creatures.some(cr => MONSTERS[cr.type].ai !== 'none') || grim()) after(0.6, defeat);
     else toast(`${c.name} is at 0 HP. Heal or take a long rest from the sheet.`);
@@ -4915,7 +4995,7 @@ function spellHit(sp, c, what, dice) {
     addLog('hit', `${what} ${name} for <b>${dmg}</b> ${sp.dmgType}${saved ? ' (half)' : ''}. ${saveTxt}`);
     damageCreature(c, dmg, sp.dmgType === 'cold' ? 'cold' : 'dmg');
   } else {
-    if (MONSTERS[c.type].ai !== 'none' && !c.aware) { const was = exploring(); c.aware = true; if (was) startCombat(); }
+    if (MONSTERS[c.type].ai !== 'none' && !c.aware) { const was = exploring(); c.aware = true; if (was) startCombat(true); }
     if (!saved) { c.restrained = true; addLog('spell', `Vines seize ${name}. It is <b>restrained</b>. ${saveTxt}`); floatText('Restrained', creatureTop(c), 'vine'); }
     else addLog('spell', `${name.replace(/^t/, 'T')} tears free of the vines. ${saveTxt}`);
   }
@@ -5050,7 +5130,7 @@ function useItem(key) {
     if (!exploring() && !state.turn.action) return toast('Drinking a potion takes your action, and it is already spent.');
     if (state.char.mp >= maxMpOf(state.char)) return toast('Your mana is already full.');
     if (!exploring()) state.turn.action = false;
-    const dice = roll(item.mana[0], item.mana[1]), got = restoreMp(state.char, sum(dice) + item.mana[2]);
+    const dice = roll(item.mana[0], item.mana[1]), got = restoreMp(state.char, (sum(dice) + item.mana[2]) * (hasT(state.char, 'manaSpring') ? 2 : 1));
     floatText(`+${got} MP`, above(hero, 1.2), 'cold'); addLog('spell', `${item.name} [${dice.join(', ')}] +${item.mana[2]}: regain <b>${got}</b> mana.`);
     return removeOne(key);
   }
@@ -5072,11 +5152,16 @@ function addItem(key, silent) {
  * UI
  * ================================================================== */
 const $ = id => document.getElementById(id);
-let toastTimer;
+// one message stack: newest at the bottom, four at most, each fading on its own
 function toast(msg) {
-  const t = $('toast'); t.textContent = msg; t.classList.remove('off');
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.add('off'), 2800);
+  const box = $('toast'), last = box.lastElementChild;
+  if (last && last.textContent === msg && !last.classList.contains('off')) { clearTimeout(last._t); last._t = setTimeout(() => fadeToast(last), 3200); return; }
+  const el = document.createElement('div'); el.className = 'tmsg'; el.textContent = msg;
+  box.appendChild(el); box.classList.remove('off');
+  while (box.children.length > 4) box.firstElementChild.remove();
+  el._t = setTimeout(() => fadeToast(el), 3200);
 }
+function fadeToast(el) { el.classList.add('off'); setTimeout(() => el.remove(), 350); }
 const floats = [];
 function floatText(text, pos, cls) {
   const el = document.createElement('div'); el.className = 'float ' + cls; el.textContent = text;
@@ -5101,19 +5186,20 @@ function renderHud() {
   $('hudChips').innerHTML = '';
   if (hc && !hc.alive && hc.loot && !hc.looted) $('hudChips').innerHTML += `<span class="chip">${MONSTERS[hc.type].name} remains · click to search</span>`;
   if (hc && hc.alive) { const m = MONSTERS[hc.type];
-    $('hudChips').innerHTML += `<span class="chip target">${m.name} <b>${hc.hp}/${m.hp}</b> HP · AC ${acOf(hc)}${hc.restrained ? ' · <b style="color:#a6e07a">Restrained</b>' : ''}</span>`; }
+    $('hudChips').innerHTML += `<span class="chip target">${m.name} <b>${hc.hp}/${m.hp}</b> HP · AC ${acOf(hc)}${hc.restrained ? ' · <b style="color:#a6e07a">Restrained</b>' : ''}</span>`;
+    const odds = oddsText(hc); if (odds) $('hudChips').innerHTML += `<span class="chip odds">${odds}</span>`; }
   // the vitals card: portrait, HP and spell slots
   const c = state.char, d = derived(), f = c.hp / d.maxHp;
   $('vitals').innerHTML = `<span class="por" style="--c:${esc(c.color)}">${esc((c.name || '?')[0])}</span>
     <span class="vt"><span class="nm"><b>${esc(c.name)}</b><span class="muted">Lv ${c.level} · AC ${d.ac}</span></span>
-    <span class="hpbar2 ${f <= 0.35 ? 'low' : ''}"><i style="width:${Math.max(0, f * 100)}%"></i><span>${c.hp} / ${d.maxHp}</span></span>
+    <span class="hpbar2 ${f <= 0.35 ? 'low' : ''}"><i style="width:${Math.max(0, f * 100)}%"></i><span>${c.hp} / ${d.maxHp}${c.hp > 0 && f <= 0.35 ? ' · badly hurt' : c.wounds ? ` · ${c.wounds} wound${c.wounds > 1 ? 's' : ''}` : ''}</span></span>
     <span class="mpbar"><i style="width:${Math.max(0, (c.mp ?? 0) / maxMpOf(c) * 100)}%"></i><span>${c.mp ?? 0} / ${maxMpOf(c)} MP</span></span>
-    <span class="slots-mini">${(c.statPoints > 0 || c.pendingTalents?.length) ? `<span class="lvlup">★ ${c.pendingTalents?.length ? 'Choose a talent' : `${c.statPoints} stat points`}</span>` : ''}${stIcons(c) || (c.statPoints > 0 || c.pendingTalents?.length ? '' : '<span class="muted">No effects</span>')}
+    <span class="slots-mini">${(c.statPoints > 0 || c.pendingTalents?.length) ? `<span class="lvlup">★ ${c.pendingTalents?.length ? 'Choose a talent' : `${c.statPoints} stat points`}</span>` : ''}${state.sneak ? '<span class="sneaky">Sneaking</span>' : ''}${stWords(c) || (c.statPoints > 0 || c.pendingTalents?.length ? '' : '<span class="muted">No effects</span>')}
       <span style="margin-left:auto">${c.gold} gp</span></span></span>`;
   // the hotbar: spells, then a potion, search and dash
   const potion = ['potion', 'greater', 'goblinStew'].map(k => invEntry(k)).find(Boolean);
   const actOk = ex || t.action;
-  const known = knownSpells(c), cur = entryOf(), heroTurn = ex || (cur?.t === 'h' && !busy);
+  const known = preparedSpells(c), cur = entryOf(), heroTurn = ex || (cur?.t === 'h' && !busy);
   $('spellbar').innerHTML = known.map((k, n) => {
     const sp = SPELLS[k], off = busy || !heroTurn || (!freeCast() && ((!ex && !t.action) || (c.mp ?? 0) < costOf(sp, c)));
     return `<button class="slot sp" style="--c:${sp.color}" data-spell="${k}" aria-pressed="${ui.spell === k}" ${off ? 'disabled' : ''}
@@ -5141,11 +5227,12 @@ function renderHud() {
   $('bossBar').hidden = !boss || !playing();
   if (boss) { const bm = MONSTERS[boss.type]; $('bossBar').innerHTML = `<b>${esc(bm.name)}</b><small>${esc(bm.epithet || '')}</small><span class="bb"><i style="width:${boss.hp / bm.hp * 100}%"></i></span>${stIcons(boss)}`; }
   $('endBtn').disabled = busy || !heroTurn;
-  $('endBtn').textContent = ex ? 'Wait' : 'End turn';
+  $('endBtn').textContent = ex ? 'Pass a round' : 'End turn';
+  $('endBtn').title = ex ? 'Let a round go by: walls of fire and ice run down, and effects tick (Space). It does not restore mana.' : 'End your turn (Space)';
   const who = state.party.length > 1 ? `<b style="color:var(--ink)">${esc(c.name)}</b><br>` : '';
   $('partyFrames').hidden = state.party.length < 2;
   $('partyFrames').innerHTML = state.party.length < 2 ? '' : `<span class="pf-mode">${ex ? 'Party · Tab to switch leader' : 'Party · initiative order'}</span>` + state.party.map((m, i) => {
-    const mf = m.char.hp / maxHpOf(m.char), st = m.char.hp <= 0 ? 'Down' : i === state.active ? (ex ? 'Leading' : 'Acting') : '';
+    const mf = m.char.hp / maxHpOf(m.char), st = m.char.hp <= 0 ? 'Down' : [i === state.active ? (ex ? 'Leading' : 'Acting') : '', mf <= 0.35 ? 'badly hurt' : '', m.char.wounds ? `${m.char.wounds}× wounded` : ''].filter(Boolean).join(' · ');
     return `<button class="pf ${i === state.active ? 'on' : ''} ${m.char.hp <= 0 ? 'down' : ''}" data-member="${i}" title="${esc(m.char.name)}">
       <span class="por" style="--c:${esc(m.char.color)}">${esc((m.char.name || '?')[0])}</span>
       <span class="vt"><span class="nm"><b>${esc(m.char.name)}${(m.char.statPoints > 0 || m.char.pendingTalents?.length) ? ' <span class="lvlstar">★</span>' : ''}</b><span class="muted">${st}</span></span>
@@ -5155,6 +5242,7 @@ function renderHud() {
   $('turnInfo').innerHTML = ex ? `${who}Exploring` : busy || !heroTurn ? (cur?.t === 'm' ? `${esc(MONSTERS[creatureById(cur.id)?.type]?.name || 'Enemy')}'s turn` : 'Waiting…') : `${who}Move <b>${t.move * 5} ft</b> · ${t.action ? 'action ready' : 'action used'}`;
   for (const b of document.querySelectorAll('[data-panel]')) b.setAttribute('aria-pressed', ui.panelOpen && ui.tab === b.dataset.panel);
   $('camLbl').textContent = CAM.auto ? 'Follow cam' : 'Free cam';
+  $('sneakLbl').textContent = state.sneak ? 'Sneaking' : 'Sneak'; $('sneakBtn').setAttribute('aria-pressed', !!state.sneak);
   $('modeBtn').hidden = true;   // initiative decides turn order now
   $('modeLbl').textContent = state.partyMode === 'turns' ? 'Take turns' : 'Command all';
 }
@@ -5168,13 +5256,13 @@ function renderSheet() {
   $('tab-sheet').innerHTML = `
     <div class="section">
       <div class="hp">
-        <div class="hp-top"><span class="label">Hit points${isCursed() ? ' · <span style="color:#c98bff">cursed</span>' : ''}</span><span><span class="v">${c.hp}</span> <span class="muted">/ ${d.maxHp}</span></span></div>
+        <div class="hp-top"><span class="label">Hit points${isCursed() ? ' · <span style="color:#c98bff">cursed</span>' : ''}${c.wounds ? ` · <span style="color:#ff8a7a" title="Each wound costs ${woundStep(c)} max HP until you make camp">wounded ×${c.wounds}</span>` : ''}</span><span><span class="v">${c.hp}</span> <span class="muted">/ ${d.maxHp}</span></span></div>
         <div class="bar"><i style="width:${hpPct}%;background:${hpPct <= 25 ? 'var(--blood)' : 'var(--moss)'}"></i></div>
         <div class="hp-row">
           ${grim() ? '' : `<input id="hpAmt" type="number" min="1" value="5" aria-label="Amount">
           <button class="btn small" data-act="dmg">Damage</button>
           <button class="btn small" data-act="heal">Heal</button>`}
-          <button class="btn small" data-act="rest" title="${grim() ? 'Camp in the dark. It restores you, unless something finds you first.' : 'Restore hit points and spell slots'}">${grim() ? 'Make camp' : 'Long rest'}</button>
+          <button class="btn small" data-act="rest" title="${grim() ? 'Camp in the dark. It restores you, unless something finds you first.' : 'Restore hit points and mana, and mend wounds'}">${grim() ? 'Make camp' : 'Long rest'}</button>
         </div>
       </div>
       <div class="vitals">
@@ -5236,18 +5324,19 @@ function renderSpells() {
       <div class="castline">
         <div class="vital"><div class="v">${d.spellDc}</div><div class="label">Save DC</div></div>
         <div class="vital"><div class="v">${fmt(d.spellAtk)}</div><div class="label">Spell atk</div></div>
-        <div class="vital"><div class="v">INT</div><div class="label">Ability</div></div>
+        <div class="vital"><div class="v">${(c.castAbility || 'int').toUpperCase()}</div><div class="label">Ability</div></div>
       </div>
       <div class="mpline"><span class="label">Mana</span><span class="mpbar"><i style="width:${(c.mp ?? 0) / maxMpOf(c) * 100}%"></i><span>${c.mp ?? 0} / ${maxMpOf(c)} MP</span></span></div>
-      <p class="muted">Mana grows with your level and Intelligence. You regain 1 at the start of each of your turns in a fight and 1 for every few squares you walk; rests and Potions of Mana restore more.</p>
+      <p class="muted">Mana grows with your level and Intelligence. It doesn't come back on its own: make camp, drink a Potion of Mana, or wear a Siphoning Charm, which feeds on the foes you slay. Let your weapons do the everyday work.</p>
       <label class="toggle"><input type="checkbox" id="sandbox" ${ui.sandbox ? 'checked' : ''} ${grim() ? 'disabled' : ''}>
         <span><b>Free casting</b><br><span class="muted">${grim() ? 'Off in the dungeon. Every spell costs mana and your action, so spend them carefully.' : "Spells don't use your action or mana, and every spell is unlocked. Handy for watching effects. It only works in the Training Yard."}</span></span></label>
     </div>
     <div class="section">
       <h3>Spellbook</h3>
+      <p class="muted">Prepare up to ${PREP_MAX} spells to keep them on your hotbar (keys 1–${PREP_MAX}). ${preparedSpells(c).length} prepared.</p>
       ${Object.entries(SPELLS).map(([k, sp]) => { const ok = knownSpells(c).includes(k); return `
         <div class="spellcard ${ok ? '' : 'locked'}" style="--c:${sp.color}">
-          <div class="t"><b>${sp.icon || ''} ${sp.name}</b>${ok ? `<button class="btn small" data-act="cast" data-k="${k}">Cast</button>` : `<span class="muted">Learned at level ${sp.unlock}</span>`}</div>
+          <div class="t"><b>${sp.icon || ''} ${sp.name}</b>${ok ? `<span class="row"><button class="btn small ${isPrepared(c, k) ? 'on' : ''}" data-act="prep" data-k="${k}" title="Prepared spells sit on your hotbar (up to ${PREP_MAX})">${isPrepared(c, k) ? '✓ On hotbar' : 'Prepare'}</button><button class="btn small" data-act="cast" data-k="${k}">Cast</button></span>` : `<span class="muted">${kitSpells(c) && !kitSpells(c).includes(k) ? `Not a ${esc(c.cls)} spell` : `Learned at level ${sp.unlock}`}</span>`}</div>
           <span class="facts">${sp.cost} MP · ${sp.range * 5} ft · ${sp.area}${sp.duration ? ` · ${sp.duration} rounds` : ''}${sp.damage ? ` · ${sp.damage[0]}d${sp.damage[1]} ${sp.dmgType}` : ''}${sp.status ? ` · <span style="color:${STATUS[sp.status[0]].color}">${STATUS[sp.status[0]].name}</span>` : ''}</span>
           <p>${sp.desc}</p>
         </div>`; }).join('')}
@@ -5282,15 +5371,17 @@ function renderInv() {
       <div class="slots">${slot('weapon', 'Weapon')}${slot('armor', 'Armor')}${slot('shield', 'Off-hand')}${slot('head', 'Head')}${slot('neck', 'Neck')}${slot('ammo', 'Arrows')}</div>
     </div>
     <div class="section">
-      <div class="row between"><h3>Pack</h3><span class="muted">${d.weight} / ${d.cap} lb · ${c.gold} gp</span></div>
+      <div class="row between"><h3>Pack</h3><span class="muted" ${d.heavy ? 'style="color:#ff8a7a" title="Overloaded: -10 ft of movement"' : ''}>${d.weight} / ${d.cap} lb${d.heavy ? ' · overloaded' : ''} · ${c.gold} gp</span></div>
       <ul class="items">
         ${c.inventory.map(({ key, qty }) => { const it = ITEMS[key]; const locked = isEq(key) && it.cursed && isCursed(); return `
           <li class="item">
-            <span class="nm">${it.name}${qty > 1 ? ` <span class="q">×${qty}</span>` : ''}${isEq(key) ? '<span class="tag">Equipped</span>' : ''}${it.weird ? '<span class="tag weird">Weird</span>' : ''}</span>
+            <span class="nm" style="color:${RARITY[rarityOf(key)].color}">${it.name}${qty > 1 ? ` <span class="q">×${qty}</span>` : ''}${isEq(key) ? '<span class="tag">Equipped</span>' : ''}${rarityTag(key)}</span>
             <span class="meta">${noteOf(key, it)}${it.dice ? ` · ${it.dice[0]}d${it.dice[1]} ${it.dmgType}` : ''} · ${it.weight} lb</span>
             <span class="ctl">
               ${['weapon', 'armor', 'shield', 'head', 'neck', 'ammo'].includes(it.type) && !isEq(key) ? `<button class="btn small" data-act="equip" data-k="${key}">Equip</button>` : ''}
               ${it.type === 'consumable' ? `<button class="btn small" data-act="use" data-k="${key}">Drink</button>` : ''}
+              ${it.use === 'torch' ? `<button class="btn small" data-act="light">Light</button>` : ''}
+              ${state.party.length > 1 && !locked ? `<button class="btn small" data-act="give" data-k="${key}">Give</button>` : ''}
               <button class="btn small" data-act="drop" data-k="${key}" aria-label="Drop one ${it.name}" ${locked ? 'disabled' : ''}>Drop</button>
             </span>
           </li>`; }).join('') || '<li class="muted">Your pack is empty.</li>'}
@@ -5363,6 +5454,7 @@ $('panel').addEventListener('click', e => {
     case 'check': rollCheck(k); return;
     case 'die': rollDie(+b.dataset.s); return;
     case 'cast': selectSpell(k); return;
+    case 'prep': togglePrepared(k); break;
     case 'editScores': ui.editScores = !ui.editScores; break;
     case 'spend': spendPoint(k); break;
     case 'talent': pickTalent(k); break;
@@ -5383,12 +5475,15 @@ $('panel').addEventListener('click', e => {
     case 'rest':
       if (!exploring()) { toast('You can\'t rest with enemies hunting you.'); return; }
       if (grim()) { makeCamp(); return; }
-      for (const m of state.party) { m.char.hp = maxHpOf(m.char); m.char.mp = maxMpOf(m.char); }
+      for (const m of state.party) { m.char.wounds = 0; m.char.hp = maxHpOf(m.char); m.char.mp = maxMpOf(m.char); }
       buildAllies();
       addLog('heal', `${state.party.length > 1 ? 'The party takes' : `${c.name} takes`} a long rest: full HP and mana.`); break;
     case 'equip': equip(k); dressHero(); break;
     case 'unequip': unequip(k); dressHero(); break;
     case 'use': useItem(k); break;
+    case 'light': lightTorch(); return;
+    case 'give': openGive(k); return;
+    case 'undoGrow': undoGrowth(); break;
     case 'drop':
       if (ITEMS[k].cursed && Object.values(c.equipped).includes(k) && isCursed()) return toast('It won\'t come off.');
       addLog('', `Dropped one <b>${ITEMS[k].name}</b>.`); removeOne(k); dressHero(); break;
@@ -5414,13 +5509,15 @@ $('initBar').addEventListener('click', () => setPanel('log'));
 function setPanel(tab) {
   if (tab && ui.panelOpen && ui.tab === tab) tab = null;
   ui.panelOpen = !!tab; if (tab) ui.tab = tab;
+  if (!tab && state.party) for (const m of state.party) m.char.undo = [];   // choices lock in when the sheet closes
   $('panel').classList.toggle('open', ui.panelOpen);
   refresh();
 }
 $('sideBtns').addEventListener('click', e => { const b = e.target.closest('[data-panel]'); if (b) setPanel(b.dataset.panel); });
-$('vitals').addEventListener('click', () => setPanel('sheet'));
+$('vitals').addEventListener('click', () => { if (ui.spell && SPELLS[ui.spell].target === 'ally') return cast(ui.spell, state.pos.x, state.pos.z); setPanel('sheet'); });
 $('partyFrames').addEventListener('click', e => {
   const b = e.target.closest('[data-member]'); if (!b) return;
+  if (ui.spell && SPELLS[ui.spell].target === 'ally') { const t = state.party[+b.dataset.member]; return cast(ui.spell, t.pos.x, t.pos.z); }
   const i = +b.dataset.member, m = state.party[i];
   if (i === state.active) return setPanel('sheet');
   clickAlly(m.id);
@@ -5435,10 +5532,11 @@ $('panelClose').addEventListener('click', () => setPanel(null));
 $('camBtn').addEventListener('click', () => { CAM.auto = !CAM.auto; savePrefs(); toast(CAM.auto ? 'Follow cam: the camera swings to whoever is acting.' : 'Free cam: the camera follows, but you choose the angle.'); refresh(); });
 $('viewBtn').addEventListener('click', resetView);
 $('soundBtn').addEventListener('click', () => { SFX.toggle(); savePrefs(); updateDread(); });
+$('setBtn').addEventListener('click', () => openSettings());
 $('narr').addEventListener('click', () => { narrT = Math.min(narrT, 0.01); });
 window.addEventListener('keydown', e => {
   if (!playing() || e.target.closest('input, select, textarea') || !$('modal').hidden) return;
-  const key = e.key.toLowerCase(), digit = /^[0-9]$/.test(e.key) ? (+e.key + 9) % 10 : -1, k = digit >= 0 ? knownSpells()[digit] : null;
+  const key = remapKey(e.key.toLowerCase()), digit = /^[0-9]$/.test(e.key) ? (+e.key + 9) % 10 : -1, k = digit >= 0 ? preparedSpells()[digit] : null;
   if (k) { selectSpell(k); e.preventDefault(); }
   else if (e.key === 'Escape') { if (ui.spell) cancelSpell(); else if (ui.panelOpen) setPanel(null); }
   else if (key === 'q') useHot('potion');
@@ -5558,7 +5656,7 @@ const focusPos = o => o.position.clone().setY(o.position.y + CHEST);
 // swing to look past `who` toward `at` (or keep the current heading)
 function camShot(who, at, dur = 0.8) {
   CAM.focus = who;
-  const to = focusPos(who), yaw = at && CAM.auto ? Math.atan2(at.x - who.position.x, at.z - who.position.z) : camYaw();
+  const to = focusPos(who), yaw = at && CAM.auto && !(performance.now() < (CAM.hold || 0)) ? Math.atan2(at.x - who.position.x, at.z - who.position.z) : camYaw();
   CAM.anim = { t: 0, dur: reduceMotion ? 0.01 : dur, fromT: controls.target.clone(), toT: to, fromYaw: camYaw(), toYaw: yaw,
                fromEl: camElev(), toEl: CAM.elev, fromD: camera.position.distanceTo(controls.target), toD: CAM.dist };
 }
@@ -5568,8 +5666,15 @@ function nearestFoe() {
   return best;
 }
 function camToHero(dur) { const f = nearestFoe(); camShot(hero, f ? worldOf(f.x, f.z) : null, dur); }
-controls.addEventListener('end', () => { if (!playing()) return; CAM.dist = Math.min(14, camera.position.distanceTo(controls.target)); CAM.elev = Math.max(0.12, camElev()); });
+controls.addEventListener('start', () => { if (playing() && !ui.tac) CAM.hold = performance.now() + 5000; });
+controls.addEventListener('end', () => { if (!playing() || ui.tac) return; CAM.dist = Math.min(14, camera.position.distanceTo(controls.target)); CAM.elev = Math.max(0.12, camElev()); });
 function camTick(dt) {
+  if (ui.tac) {   // tactical view: lift overhead while held, look straight down at the action
+    const k = Math.min(1, dt * 5), t = focusPos(CAM.focus || hero), d0 = camera.position.distanceTo(controls.target);
+    CAM.anim = null;
+    camPlace(controls.target.clone().lerp(t, k), camYaw(), camElev() + (1.25 - camElev()) * k, d0 + (14 - d0) * k);
+    return;
+  }
   const a = CAM.anim;
   if (a) {
     a.t += dt; const k = clamp01(a.t / a.dur), e = k * k * (3 - 2 * k);
@@ -5581,7 +5686,7 @@ function camTick(dt) {
   const f = focusPos(who), dlt = f.sub(controls.target).multiplyScalar(Math.min(1, dt * 6));
   controls.target.add(dlt); camera.position.add(dlt);
   // while the hero walks, drift around behind them, like a third-person game
-  if (CAM.auto && who === hero && anim) camPlace(controls.target.clone(), lerpAngle(camYaw(), hero.rotation.y, Math.min(1, dt * 1.6)), camElev(), camera.position.distanceTo(controls.target));
+  if (CAM.auto && who === hero && anim && !(performance.now() < (CAM.hold || 0))) camPlace(controls.target.clone(), lerpAngle(camYaw(), hero.rotation.y, Math.min(1, dt * 1.6)), camElev(), camera.position.distanceTo(controls.target));
 }
 function resetView() {
   if (!playing()) {
@@ -5614,13 +5719,14 @@ function bootBoard(keepView) {
 
 const clock = new THREE.Clock(), tmp = new THREE.Vector3(), shakeOff = new THREE.Vector3(), follow = new THREE.Vector3();
 const RED = new THREE.Color('#ff2a10');
-let moteT = 0, torchT = 0, heartT = 0, menuT = 0.6;
+let moteT = 0, torchT = 0, heartT = 0, menuT = 0.6, PACE = 1;
 function tick() {
   const dt = Math.min(clock.getDelta(), 0.05), time = clock.elapsedTime;
   fxTime.value = time;
+  PACE = paceMult(); const pdt = dt * PACE; EMIT.n = 0; perfSample(dt);
 
-  for (let i = timers.length - 1; i >= 0; i--) { timers[i].t -= dt; if (timers[i].t <= 0) { const f = timers[i].fn; timers.splice(i, 1); f(); } }
-  for (let i = fxList.length - 1; i >= 0; i--) if (fxList[i].update(dt) === false) fxList.splice(i, 1);
+  for (let i = timers.length - 1; i >= 0; i--) { timers[i].t -= pdt; if (timers[i].t <= 0) { const f = timers[i].fn; timers.splice(i, 1); f(); } }
+  for (let i = fxList.length - 1; i >= 0; i--) if (fxList[i].update(pdt) === false) fxList.splice(i, 1);
   for (const p of props) p.update(dt, time);
 
   // the six torch lights sit on whichever explored torches are closest to the hero
@@ -5682,7 +5788,7 @@ function tick() {
   for (const c of state.creatures) {
     const v = views.get(c.id); if (!v) continue;
     if (v.anim) {
-      const a = v.anim; a.t += dt / (reduceMotion ? 0.06 : 0.16);
+      const a = v.anim; a.t += dt * (v.g.visible ? PACE : 12) / (reduceMotion ? 0.06 : 0.16);   // unseen monsters don't make you wait
       while (v.anim && a.t >= 1) {
         a.t -= 1; a.i++;
         const cell = a.path[a.i]; c.x = cell.x; c.z = cell.z;
@@ -5744,7 +5850,7 @@ function tick() {
     controls.target.set(0, 0, 0); camera.position.set(Math.sin(menuT) * s * 0.6, s * 0.42 + 4, Math.cos(menuT) * s * 0.6);
   }
   if (mode === 'edit') edPan(dt);
-  if (playing()) camTick(dt);
+  if (playing()) camTick(dt * Math.min(PACE, 3));
   if (false) {
     follow.copy(hero.position).setY(0).sub(controls.target); follow.y = 0;
     const d = follow.length();
@@ -5767,12 +5873,15 @@ function tick() {
 const HERO_KEY = 'battleboard.heroes.v1', DUNGEON_KEY = 'battleboard.dungeons.v1';
 const store = {
   get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } },
-  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); storageCheck(); return true; } catch (e) { return false; } },
 };
 const uid = () => Math.random().toString(36).slice(2, 10);
 const clone = o => JSON.parse(JSON.stringify(o));
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const maxHpOf = c => Math.max(1, 10 + mod(c.abilities.con) + (c.level - 1) * (6 + mod(c.abilities.con)) + (c.talents?.includes('tough') ? 2 * c.level : 0));
+const baseHpOf = c => Math.max(1, 10 + mod(c.abilities.con) + (c.level - 1) * (6 + mod(c.abilities.con)) + (c.talents?.includes('tough') ? 2 * c.level : 0));
+const woundStep = c => Math.max(2, Math.round(baseHpOf(c) / 10));
+// every knockout in a real dungeon leaves a wound (-10% max HP each, up to 3) until the party makes camp
+const maxHpOf = c => Math.max(1, baseHpOf(c) - (c.wounds || 0) * woundStep(c));
 
 let heroes = store.get(HERO_KEY, null);
 if (!heroes) {   // first launch with the roster: the old single save becomes the first hero
@@ -5898,7 +6007,7 @@ const SCREENS = {
         ${heroes.slice().sort((a, b) => b.updated - a.updated).map(h => `
           <div class="card2">
             <div class="who"><span class="dotc" style="--c:${esc(h.char.color)}"></span>
-              <div><div class="nm">${esc(h.char.name)}</div><div class="st">Level ${h.char.level} ${esc(h.char.species)} ${esc(h.char.cls)}</div></div></div>
+              <div><div class="nm">${esc(h.char.name)}</div><div class="st">Level ${h.char.level} ${esc(h.char.species)} ${esc(h.char.cls)}${h.char.wounds ? ` · ${h.char.wounds} wound${h.char.wounds > 1 ? 's' : ''}` : ''}</div></div></div>
             <div class="st">${heroStatus(h)}</div>
             <div class="row">
               ${canContinue(h) ? `<button class="btn primary small" data-act="continue" data-id="${h.id}">Continue</button>` : ''}
@@ -5909,6 +6018,9 @@ const SCREENS = {
           </div>`).join('')}
         <button class="card2 new" data-act="newHero">+ Create a new hero</button>
       </div>
+      <div class="row"><button class="btn small" data-act="exportAll">Export a backup</button>
+        <label class="btn small">Import a backup<input type="file" id="impAll" accept=".json,application/json" hidden></label></div>
+      <p class="muted">Heroes, expeditions and dungeons live in this browser. A backup file keeps them safe and moves them to another device.</p>
     </div>`;
   },
   newHero() {
@@ -5925,6 +6037,8 @@ const SCREENS = {
           <div class="row"><span class="label" style="width:36px">Skin</span>${swatches(SKIN_TONES, d.skin, 'hSkin')}</div>
           <div class="row"><span class="label" style="width:36px">Hair</span>${swatches(HAIR_COLORS, d.hair, 'hHair')}</div>
         </div>
+        <div class="field"><span>Kit</span>${seg('hKit', d.kit || 'spellblade', Object.entries(KITS).map(([k, K]) => [k, K.cls]))}
+          <p class="muted fnote">${esc(KITS[d.kit || 'spellblade'].blurb)}</p></div>
         <div class="field"><span>Ability scores</span>
           <div class="row between"><span class="muted">${buy ? `Point buy: <b style="color:var(--ink)">${left}</b> of 27 points left. Humans get +1 to every score.` : 'Rolled 4d6, dropping the lowest die.'}</span>
             <span class="row">${buy ? '' : '<button class="btn small" data-act="pointBuy">Use point buy</button>'}<button class="btn small" data-act="rollScores">${buy ? 'Roll 4d6 instead' : 'Roll again'}</button></span></div>
@@ -5934,7 +6048,7 @@ const SCREENS = {
             <span class="v">${final(k)}</span>
             ${buy ? `<button class="btn small" data-act="pb" data-k="${k}" data-d="1" ${d.base[k] >= 15 || POINT_COST[d.base[k] + 1] - POINT_COST[d.base[k]] > left ? 'disabled' : ''} aria-label="Raise ${label}">+</button>` : ''}
             <span class="m">${fmt(mod(final(k)))}</span></div>`).join('')}</div>
-          <p class="muted">A Spellblade fights with steel and casts with Intelligence. Constitution sets hit points (${10 + mod(final('con'))} at level 1), Dexterity helps dodge, Wisdom spots traps.</p>
+          <p class="muted">Constitution sets hit points (${10 + mod(final('con'))} at level 1), Dexterity helps dodge, Wisdom spots traps.</p>
         </div>
         <div class="row"><button class="btn primary" data-act="createHero">Create hero</button></div>
       </div>
@@ -5954,7 +6068,7 @@ const SCREENS = {
       <div class="field"><span>Party (up to ${PARTY_MAX})</span>
         <div class="cards">${heroes.filter(o => o.id !== h.id).map(o => `
           <button class="card2 pick ${(scr.companions || []).includes(o.id) ? 'on' : ''}" data-act="togComp" data-id="${o.id}">
-            <span class="who"><span class="dotc" style="--c:${esc(o.char.color)}"></span><span><span class="nm">${esc(o.char.name)}</span><br><span class="st">Level ${o.char.level} · ${(scr.companions || []).includes(o.id) ? 'coming along' : 'stays behind'}</span></span></span>
+            <span class="who"><span class="dotc" style="--c:${esc(o.char.color)}"></span><span><span class="nm">${esc(o.char.name)}</span><br><span class="st">Level ${o.char.level} ${esc(o.char.cls)} · ${(scr.companions || []).includes(o.id) ? 'coming along' : 'stays behind'}</span></span></span>
           </button>`).join('')}
           <button class="card2 new small" data-act="hire">+ Hire a companion</button></div>
         ${(scr.companions || []).length ? `<div class="field"><span>How the party plays</span>${seg('pmode', scr.pmode || 'all', [['all', 'Command the party: you move everyone'], ['turns', 'Take turns: each adventurer in order']])}</div>` : '<p class="muted">Go alone, bring other heroes from your roster, or hire a companion.</p>'}
@@ -5996,14 +6110,14 @@ const SCREENS = {
 };
 
 function draftHero() {
-  return { name: '', color: '#3f6f8f', skin: SKIN_TONES[1], hair: HAIR_COLORS[1], model: 'adventurer',
-           base: { str: 13, dex: 13, con: 13, int: 15, wis: 9, cha: 8 }, rolled: null };
+  return { name: '', color: '#3f6f8f', skin: SKIN_TONES[1], hair: HAIR_COLORS[1], model: 'adventurer', kit: 'spellblade',
+           base: { ...KITS.spellblade.scores }, rolled: null };
 }
 function charFromDraft(d) {
   const c = newCharacter();
   Object.assign(c, { name: d.name.trim() || 'Nameless wanderer', color: d.color, skin: d.skin, hair: d.hair, model: d.model });
   for (const [k] of ABILITIES) c.abilities[k] = d.rolled ? d.rolled[k] : d.base[k] + 1;
-  c.hp = maxHpOf(c);
+  applyKit(c, d.kit);
   return c;
 }
 const roll4d6 = () => { const r = roll(4, 6).sort((a, b) => a - b); return r[1] + r[2] + r[3]; };
@@ -6025,6 +6139,7 @@ $('screen').addEventListener('change', e => {
   if (e.target.name === 'dmap') scr.map = e.target.value;
   if (e.target.id === 'freshStart') scr.fresh = e.target.checked;
   if (e.target.id === 'impFile' && e.target.files[0]) importDungeon(e.target.files[0]);
+  if (e.target.id === 'impAll' && e.target.files[0]) importAll(e.target.files[0]);
   if (e.target.id === 'ndFromSel') { scr.nd.from = e.target.value; renderScreen(); }
 });
 $('screen').addEventListener('click', e => {
@@ -6050,6 +6165,8 @@ $('screen').addEventListener('click', e => {
     case 'delHero': heroes = heroes.filter(x => x !== h); saveHeroes(); scr.confirmDel = null; break;
     case 'newHero': return showScreen('newHero', { draft: draftHero() });
     case 'hModel': scr.draft.model = k; break;
+    case 'hKit': scr.draft.kit = k; if (!scr.draft.rolled) scr.draft.base = { ...KITS[k].scores }; break;
+    case 'exportAll': exportAll(); return;
     case 'hSkin': scr.draft.skin = k; break;
     case 'hHair': scr.draft.hair = k; break;
     case 'pb': { const d = scr.draft; d.base[k] = Math.max(8, Math.min(15, d.base[k] + +b.dataset.d)); break; }
@@ -6064,7 +6181,7 @@ $('screen').addEventListener('click', e => {
       const hero = heroById(scr.hero), key = scr.map, members = [hero, ...(scr.companions || []).map(heroById).filter(Boolean)].slice(0, PARTY_MAX);
       const chars = members.map(m => {
         let c = m.char;
-        if (scr.fresh) { const fresh = newCharacter(); for (const f of ['name', 'color', 'skin', 'hair', 'model', 'abilities', 'species', 'cls']) fresh[f] = clone(c[f]); c = fresh; }
+        if (scr.fresh) { const fresh = newCharacter(); for (const f of ['name', 'color', 'skin', 'hair', 'model', 'abilities', 'species', 'cls', 'kit']) fresh[f] = clone(c[f]); c = applyKit(fresh, fresh.kit); }
         c = clone(c); c.hp = maxHpOf(c); c.curseSteps = 0; return c;
       });
       hero.run = freshState(key, chars); hero.run.partyMode = scr.pmode || 'all';
@@ -6139,6 +6256,7 @@ const TOOLS = [
   { g: 'Build', id: 'room', label: 'Carve room', icon: '▭', bg: '#8a7a64', hint: 'Drag a rectangle to dig a room out of the rock.' },
   { g: 'Build', id: 'select', label: 'Inspect', icon: '?', bg: '#3e3429', hint: 'Click a square to see it and change what\'s inside: chest contents, gold, search DCs.' },
   { g: 'Build', id: 'area', label: 'Read-aloud', icon: '❝', bg: '#5b3f7a', hint: 'Drag over a room, then write what players hear the first time they walk in.' },
+  { g: 'Build', id: 'arena', label: 'Boss arena', icon: '☠', bg: '#7a2a2a', hint: 'Drag over a boss\'s lair. When the party walks in, the versus card plays. Put a boss inside it.' },
   { g: 'Build', id: 'torch', label: 'Torch', icon: '♨', bg: '#a8541c', hint: 'Click a wall next to floor to hang a torch on that face. Click again to take it down.' },
   { g: 'Terrain', id: 'floor', ch: '.', label: 'Floor', icon: '', bg: '#b3a796', hint: 'Open floor. Also clears anything placed on a square.' },
   { g: 'Terrain', id: 'wall', ch: '#', label: 'Wall', icon: '', bg: '#2c2622', hint: 'Solid rock. Walls appear wherever rock meets floor.' },
@@ -6315,13 +6433,13 @@ canvas.addEventListener('pointerdown', e => {
   const tool = toolById(ed.tool);
   if (tool.id === 'torch') return edTorch(t);
   if (tool.id === 'select') { ed.sel = { x: t.x, z: t.z }; ed.area = null; edHighlight(); renderEdPanel(); return; }
-  if (tool.id === 'area') {
+  if (tool.id === 'area' || tool.id === 'arena') {
     const hit = ed.map.rooms.findIndex(a => t.x >= a.x0 && t.x <= a.x1 && t.z >= a.z0 && t.z <= a.z1);
     stroke = { rect: true, start: t, cur: t, hit };
     boxAt(t.x, t.z); return;
   }
   pushUndo();
-  stroke = { rect: tool.id === 'room', start: t, cur: t, last: t, changed: [] };
+  stroke = { rect: tool.id === 'room' || (ed.fill && !!tool.ch && tool.ch !== '@'), start: t, cur: t, last: t, changed: [] };
   if (stroke.rect) boxAt(t.x, t.z);
   else { edPaint(t.x, t.z, stroke.changed); edRefresh(stroke.changed.splice(0), false); }
 });
@@ -6342,14 +6460,15 @@ function endStroke() {
   if (mode !== 'edit' || !stroke) return;
   const s = stroke; stroke = null;
   const x0 = Math.min(s.start.x, s.cur.x), x1 = Math.max(s.start.x, s.cur.x), z0 = Math.min(s.start.z, s.cur.z), z1 = Math.max(s.start.z, s.cur.z);
-  if (ed.tool === 'area') {
+  if (ed.tool === 'area' || ed.tool === 'arena') {
     if (x0 === x1 && z0 === z1 && s.hit >= 0) ed.area = s.hit;
-    else { pushUndo(); ed.map.rooms.push({ x0, z0, x1, z1, name: 'New area', text: '' }); ed.area = ed.map.rooms.length - 1; edSave(); }
+    else { pushUndo(); ed.map.rooms.push(ed.tool === 'arena' ? { x0, z0, x1, z1, name: 'Boss lair', text: 'Something huge stirs in the dark ahead.', boss: true } : { x0, z0, x1, z1, name: 'New area', text: '' }); ed.area = ed.map.rooms.length - 1; edSave(); }
     ed.sel = null; edHighlight(); renderEdPanel(); return;
   }
   if (s.rect) {
     const changed = [];
-    for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++) if (isWall(edGet(x, z)) && edSet(x, z, '.')) changed.push([x, z]);
+    if (ed.tool === 'room') { for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++) if (isWall(edGet(x, z)) && edSet(x, z, '.')) changed.push([x, z]); }
+    else for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++) edPaint(x, z, changed);
     if (changed.length) edRefresh(changed, changed.length > 60);
   }
   edSave(); renderEdPanel();
@@ -6395,6 +6514,7 @@ function edProblems() {
   const monsters = [...all].some(isFoe);
   if (!has('X') && !monsters) out.push({ text: 'There\'s no way to win yet: add Exit stairs or some monsters.' });
   else if (!has('X')) out.push({ info: true, text: 'No exit stairs, so the hero wins by defeating every monster.' });
+  out.push(...reachProblems(ed.map));
   if (has('I') && ed.map.tablet.startsWith('The letters are worn')) out.push({ info: true, text: 'Your inscription has no text yet. Write it under Dungeon.' });
   return out;
 }
@@ -6447,6 +6567,8 @@ function renderEdPanel() {
       <div class="muted">Saved as you build · ${W}×${H} squares</div>
     </div>
     ${insp}
+    <div class="section"><h3>Brush</h3>${seg('edFill', ed.fill ? 'rect' : 'paint', [['paint', 'Paint squares'], ['rect', 'Fill a rectangle']])}
+      <p class="muted fnote">Fill: drag a box and every square in it gets the chosen tile, wall, trap or object.</p></div>
     ${groups.map(g => `<div class="section"><h3>${g}</h3><div class="pal">${TOOLS.filter(q => q.g === g).map(q =>
       `<button data-tool="${q.id}" aria-pressed="${ed.tool === q.id}" title="${esc(q.hint || '')}"><i style="--bg:${q.bg};--fg:${q.fg || '#f3ead8'}">${q.icon}</i>${q.label}</button>`).join('')}</div></div>`).join('')}
     <div class="section">
@@ -6469,7 +6591,7 @@ function renderEdPanel() {
 }
 $('edPanel').addEventListener('click', e => {
   const tb = e.target.closest('[data-tool]');
-  if (tb) { ed.tool = tb.dataset.tool; if (ed.tool !== 'select') ed.sel = null; if (ed.tool !== 'area') ed.area = null; edHighlight(); return renderEdPanel(); }
+  if (tb) { ed.tool = tb.dataset.tool; if (ed.tool !== 'select') ed.sel = null; if (ed.tool !== 'area' && ed.tool !== 'arena') ed.area = null; edHighlight(); return renderEdPanel(); }
   const b = e.target.closest('[data-ed], [data-act]'); if (!b) return;
   const m = ed.map, act = b.dataset.ed || b.dataset.act;
   const box = () => { const { x, z } = ed.sel, k = keyOf(x, z), ch = edGet(x, z); return ch === 'C' ? m.chests[k] : ch === '$' ? m.loot[k] : m.stash[k]; };
@@ -6480,6 +6602,7 @@ $('edPanel').addEventListener('click', e => {
     case 'rmItem': pushUndo(); box().items.splice(+b.dataset.n, 1); edRefresh([[ed.sel.x, ed.sel.z]], false); edSave(); break;
     case 'addItem': pushUndo(); box().items.push($('addItemSel').value); edRefresh([[ed.sel.x, ed.sel.z]], false); edSave(); break;
     case 'resize': return edResize(+$('edW').value, +$('edH').value);
+    case 'edFill': ed.fill = b.dataset.k === 'rect'; break;
     case 'edDark': pushUndo(); m.dark = b.dataset.k === 'dark'; m.fog = m.dark; edRefresh(null, true); edSave(); break;
   }
   renderEdPanel();
@@ -6553,7 +6676,7 @@ const TALENTS = {
     keenSenses:  { name: 'Keen Senses', desc: '+3 to Perception and searches.' },
     dangerSense: { name: 'Danger Sense', desc: 'Hidden traps within 10 ft of you reveal themselves.' },
     healer:      { name: 'Healer', desc: 'Your potions and healing spells restore 4 more HP.' },
-    manaSpring:  { name: 'Mana Spring', desc: 'Regain 2 mana at the start of each of your turns in a fight, instead of 1.' },
+    manaSpring:  { name: 'Mana Spring', desc: 'Potions of Mana restore twice as much for you, and even an interrupted camp refills your mana.' },
     ironWill:    { name: 'Iron Will', desc: 'You can\'t be stunned.' },
   },
   cha: {
@@ -6573,6 +6696,7 @@ const ABIL_NAME = Object.fromEntries(ABILITIES);
 function growthInit(c) {
   c.talents ||= []; c.statPoints ??= 0; c.pendingTalents ||= [];
   c.claimed ||= Object.fromEntries(ABILITIES.map(([k]) => [k, c.abilities[k]]));
+  c.base ||= { ...c.abilities };   // scores before any stat points: what a respec returns to
   c.fight ||= {};
   return c;
 }
@@ -6605,8 +6729,15 @@ const ACHIEVEMENTS = {
   partyOfFour:  { title: 'Four-Way Split', text: 'A full party of four. Remember: the loot is shared, the blame is not.', reward: { gold: 10 } },
 };
 const noticeQ = []; let noticeBusy = false;
-function announce(n) { noticeQ.push(n); if (!noticeBusy) showNextNotice(); }
+const holdNotices = () => playing() && !!state.combat && !exploring();
+function announce(n) {
+  noticeQ.push(n);
+  if (holdNotices()) { if (!announce.told) { announce.told = true; toast(`${n.title}! The details wait until the fight is over.`); } return; }
+  if (!noticeBusy) showNextNotice();
+}
 function showNextNotice() {
+  if (holdNotices()) { noticeBusy = false; return; }
+  announce.told = false;
   const n = noticeQ.shift(); if (!n) { noticeBusy = false; return; }
   noticeBusy = true;
   const el = $('notice');
@@ -6648,7 +6779,7 @@ function talentAnnounce(c, stat) {
 function spendPoint(k) {
   const c = state.char; growthInit(c);
   if (c.statPoints <= 0 || c.abilities[k] >= 20) return;
-  const before = maxHpOf(c), mpBefore = maxMpOf(c);
+  const before = maxHpOf(c), mpBefore = maxMpOf(c), prevClaim = c.claimed[k], pendLen = c.pendingTalents.length;
   c.statPoints--; c.abilities[k]++;
   c.hp = Math.max(1, Math.min(maxHpOf(c), c.hp + maxHpOf(c) - before)); c.mp = Math.min(maxMpOf(c), (c.mp ?? 0) + Math.max(0, maxMpOf(c) - mpBefore));
   addLog('sys', `${c.name} raises ${ABIL_NAME[k]} to <b>${c.abilities[k]}</b>.`);
@@ -6656,6 +6787,7 @@ function spendPoint(k) {
     c.claimed[k] = c.abilities[k]; c.pendingTalents.push(k);
     talentAnnounce(c, k);
   }
+  (c.undo ||= []).push({ t: 'pt', k, prevClaim, pend: c.pendingTalents.length > pendLen });
 }
 const talentChoices = (c, k) => Object.keys(TALENTS[k]).filter(id => !hasT(c, id));
 function pickTalent(id) {
@@ -6666,6 +6798,7 @@ function pickTalent(id) {
   addLog('sys', `<b>${c.name} learns ${talentDef(id).name}.</b> ${talentDef(id).desc}`);
   announce({ kind: 'talent', kicker: 'Talent unlocked', title: talentDef(id).name, text: talentDef(id).desc, rewards: [] });
   achieve('talented');
+  (c.undo ||= []).push({ t: 'tal', id, k });
   dressHero();
 }
 // the growth section of the character sheet
@@ -6673,12 +6806,511 @@ function growthHtml(c) {
   growthInit(c);
   const pend = [...new Set(c.pendingTalents)];
   return `
+    ${c.undo?.length ? `<div class="row"><button class="btn small" data-act="undoGrow">Undo last choice</button><span class="muted">You can take choices back until you close the sheet.</span></div>` : ''}
     ${c.statPoints > 0 ? `<div class="growth-banner"><b>${c.statPoints}</b> stat point${c.statPoints > 1 ? 's' : ''} to spend. Raise an ability to an even score (12, 14, 16, 18, 20) to unlock a talent.</div>` : ''}
     ${pend.map(k => `<div class="talent-pick"><h3>Choose ${/^[AEIOU]/.test(ABIL_NAME[k]) ? 'an' : 'a'} ${ABIL_NAME[k]} talent</h3>
       <div class="tchoices">${talentChoices(c, k).map(id => `<button class="tchoice" data-act="talent" data-k="${id}"><b>${talentDef(id).name}</b><span>${talentDef(id).desc}</span></button>`).join('')}</div></div>`).join('')}
     ${c.talents.length ? `<div class="section"><h3>Talents</h3><div class="tlist">${c.talents.map(id => `<div class="tl"><b>${talentDef(id)?.name}</b> <span class="muted">${ABIL_NAME[TALENT_STAT[id]]} · ${talentDef(id)?.desc}</span></div>`).join('')}</div></div>` : ''}`;
 }
 
+
+/* ================================================================== *
+ * THE DESIGN REVIEW'S FIXES: economy, junk, camping, wounds, the Stair Merchant
+ * ================================================================== */
+function packWeight(c) { return c.inventory.reduce((s, i) => s + (ITEMS[i.key]?.weight || 0) * i.qty, 0); }
+function overloaded(c) { return packWeight(c) > c.abilities.str * 15; }
+function takeFrom(c, key) {
+  const it = c.inventory.find(i => i.key === key); if (!it) return false;
+  if (--it.qty <= 0) { c.inventory = c.inventory.filter(i => i !== it); for (const s of Object.keys(c.equipped)) if (c.equipped[s] === key) c.equipped[s] = null; }
+  return true;
+}
+function giveTo(c, key, n = 1) { const it = c.inventory.find(i => i.key === key); if (it) it.qty += n; else c.inventory.push({ key, qty: n }); }
+function woundOf(c) {
+  if (!grim() || !playing()) return;
+  c.wounds = Math.min(3, (c.wounds || 0) + 1);
+  addLog('hit', `<b>${c.name} is wounded</b>: -${woundStep(c)} maximum HP until the party makes camp${c.wounds > 1 ? ` (${c.wounds} wounds)` : ''}.`);
+}
+function siphonOnKill(m) {
+  const k = state.char, nk = k?.equipped?.neck && ITEMS[k.equipped.neck];
+  if (!nk?.siphon || k.hp <= 0) return;
+  const got = restoreMp(k, nk.siphon);
+  if (got) { floatText(`+${got} MP`, above(hero, 1.5), 'cold'); addLog('spell', `The ${nk.name} drinks ${foeName(m)}'s last breath: ${k.name} regains <b>${got}</b> mana.`); }
+}
+// sharp eyes: anything hidden within 10 ft whose DC is at or below the party's best passive Perception is spotted as you walk past
+function passiveOf(c) { return 10 + mod(c.abilities.wis) + 2 + Math.floor((c.level - 1) / 4) + (c.equipped.neck ? ITEMS[c.equipped.neck].perception || 0 : 0) + (hasT(c, 'keenSenses') ? 3 : 0); }
+function passiveSpot() {
+  const ups = state.party.filter(m => m.char.hp > 0); if (!ups.length) return false;
+  const best = ups.reduce((a, m) => passiveOf(m.char) > passiveOf(a.char) ? m : a), pp = passiveOf(best.char), near = (x, z) => cheb(state.pos, { x, z }) <= 2;
+  const found = []; let trap = false;
+  for (const [k, tr] of Object.entries(state.traps)) { const [x, z] = k.split(',').map(Number); if (!tr.found && near(x, z) && tr.dc <= pp) { tr.found = true; trap = true; buildTile(x, z); found.push(`a hidden ${TRAP_TEXT[tr.kind][2]} trap`); } }
+  for (const [k, s] of Object.entries(MAP.secrets || {})) { const [x, z] = k.split(',').map(Number); if (tileAt(x, z) === 'S' && near(x, z) && s.dc <= pp) { setTile(x, z, 'D', true); state.explored[z * W + x] = 1; state.stats.secrets++; found.push('a secret door'); } }
+  for (const [k, st] of Object.entries(state.stash)) { const [x, z] = k.split(',').map(Number); if (!st.found && near(x, z) && st.dc <= pp) { st.found = true; state.loot[k] = { items: st.items, gold: st.gold }; buildTile(x, z); state.stats.secrets++; found.push('a loose flagstone hiding a cache'); } }
+  if (!found.length) return false;
+  addLog('sys', `<b>${best.char.name} notices</b> ${found.join(', ')}. <span class="r">passive Perception ${pp}</span>`);
+  toast(`${best.char.name} notices ${found[0]}!`);
+  floatText('◉ Noticed', above(hero, 1.5), 'xp');
+  applyFog();
+  return trap;
+}
+// buffs and debuffs keep counting down out of a fight: one round for every 2 squares walked
+function exploreStatusTick() {
+  for (const m of state.party) { if (m.char.hp <= 0 || !m.char.status?.length) continue; statusTurnStart(m.char); if (m.char.hp > 0) statusTurnEnd(m.char); }
+}
+function lightTorch() {
+  if (!MAP.dark) return toast('There is light enough here already.');
+  if (state.torch > 0) return toast('Your torch is still burning.');
+  if (!takeFrom(state.char, 'torch')) return toast('You have no torches.');
+  state.torch = 80; computeVisibility(); applyFog(); SFX.cast?.('torch');
+  addLog('', `${state.char.name} lights a torch. You can see 10 ft further for a while.`);
+  toast('You light a torch. The dark pulls back a little.');
+  refresh(); save();
+}
+function torchStep() {
+  if (state.torch > 0 && --state.torch === 0) { addLog('', 'Your torch gutters and dies.'); toast('Your torch burns out.'); computeVisibility(); applyFog(); }
+}
+function eatRations(interrupted) {
+  let fed = 0;
+  for (const m of state.party) {
+    const src = [m.char, ...state.party.map(o => o.char)].find(c => c.inventory.some(i => i.key === 'rations'));
+    if (!src) break;
+    takeFrom(src, 'rations'); fed++;
+    if (interrupted) m.char.hp = Math.min(maxHpOf(m.char), Math.max(1, m.char.hp) + sum(roll(2, 4)));
+  }
+  if (fed) addLog('heal', `${fed === 1 ? 'One ration is' : `${fed} rations are`} eaten around the fire${interrupted ? ': a hot meal before the trouble starts (+2d4 HP each).' : '.'}`);
+  else addLog('', 'Nobody has any rations left. It is a hungry night.');
+}
+// hand an item to a friend standing next to you
+function openGive(key) {
+  const it = ITEMS[key];
+  if (state.party.length < 2) return toast('There is nobody to give it to.');
+  const near = state.party.map((m, i) => ({ m, i })).filter(({ m, i }) => i !== state.active && cheb(m.pos, state.pos) <= 1);
+  if (!near.length) return toast('Stand next to a friend to hand them something.');
+  if (!exploring() && !state.turn.action) return toast('Handing something over takes your action, and it is already spent.');
+  showModal(`Give: ${esc(it.name)}`, `<p class="muted">Hand ${it.bundle ? `${it.bundle} of them` : 'it'} to a friend standing next to you${exploring() ? '' : '. In a fight this uses your action'}.</p>`,
+    [...near.map(({ m, i }) => ({ label: m.char.name, primary: true, fn: () => giveItem(key, i) })), { label: 'Keep it' }]);
+}
+function giveItem(key, idx) {
+  const it = ITEMS[key], m = state.party[idx], n = Math.min(it.bundle || 1, invEntry(key)?.qty || 0); if (!n || !m) return;
+  if (it.cursed && isCursed() && state.char.equipped.head === key) return toast('It won\'t come off.');
+  for (let k = 0; k < n; k++) takeFrom(state.char, key);
+  giveTo(m.char, key, n);
+  if (!exploring()) state.turn.action = false;
+  addLog('', `${state.char.name} hands ${n > 1 ? n + ' × ' : ''}<b>${it.name}</b> to ${m.char.name}.`);
+  toast(`${m.char.name} takes the ${it.name.replace(/\s*\(.*\)$/, '').toLowerCase()}.`);
+  dressHero(); buildAllies(); refresh(); save();
+}
+// the Stair Merchant: potions, arrows, one special item per floor, a buyer for junk, and a shrine that respecs
+const MERCHANT_STOCK = ['potion', 'greater', 'manaPotion', 'arrows', 'rations', 'torch', 'goblinStew'];
+const MERCHANT_SPECIALS = ['arrowFire', 'siphon', 'arrowFrost', 'flametongue', 'arrowVenom', 'frostbrand', 'arrowStorm', 'venomFang', 'stormblade', 'boneCharm', 'splint', 'greatsword'];
+const priceOf = k => VALUES[k] ?? 10;
+const TROPHIES = new Set(['teeth', 'ratTail']);
+const sellPrice = k => TROPHIES.has(k) ? priceOf(k) : Math.max(1, Math.floor(priceOf(k) / 2));
+function merchantSpecial() { let h = 7; for (const ch of state.mapKey) h = (h * 31 + ch.charCodeAt(0)) | 0; return MERCHANT_SPECIALS[Math.abs(h) % MERCHANT_SPECIALS.length]; }
+function openMerchant(back) {
+  const sp = merchantSpecial(), bought = (state.bought ||= []);
+  const row = (k, price, act, label, off) => { const it = ITEMS[k]; return `<li><span><b style="color:${RARITY[rarityOf(k)].color}">${it.bundle && act === 'buy' ? it.bundle + ' × ' : ''}${it.name}</b>${rarityTag(k)}<br><span class="muted">${it.note}</span></span>
+    <button class="btn small" data-shop="${act}" data-k="${k}" ${off ? 'disabled' : ''}>${label} · ${price} gp</button></li>`; };
+  const body = () => {
+    const c = state.char, respecCost = 25 * c.level, spent = ABILITIES.some(([a]) => c.abilities[a] !== (c.base?.[a] ?? c.abilities[a])) || c.talents?.length;
+    const sellable = c.inventory.filter(i => !Object.values(c.equipped).includes(i.key) && !ITEMS[i.key].cursed);
+    return `<p>A hunched peddler has set up shop on the landing, lantern swinging. <i>"Coin for courage, friend. Everything's fair, nothing's refundable."</i></p>
+    <p class="muted">${esc(c.name)} has <b style="color:var(--ink)">${c.gold} gp</b>.${state.party.length > 1 ? ' Each adventurer trades from their own purse: switch leader with Tab to shop for someone else.' : ''}</p>
+    <h3>For sale</h3><ul class="lootlist">${MERCHANT_STOCK.map(k => row(k, priceOf(k), 'buy', 'Buy', c.gold < priceOf(k))).join('')}
+      ${bought.includes(sp) ? '' : row(sp, priceOf(sp), 'buy', 'Buy · one only', c.gold < priceOf(sp))}</ul>
+    <h3>Sell</h3><ul class="lootlist">${sellable.map(i => row(i.key, sellPrice(i.key), 'sell', 'Sell', false)).join('') || '<li><span class="muted">Nothing to sell. Equipped gear stays on you.</span></li>'}</ul>
+    <h3>The shrine on the landing</h3><ul class="lootlist"><li><span><b>Unlearn</b><br><span class="muted">Take back every stat point and talent ${esc(c.name)} has spent, and choose again.</span></span>
+      <button class="btn small" data-shop="respec" ${c.gold < respecCost || !spent ? 'disabled' : ''}>Respec · ${respecCost} gp</button></li></ul>`;
+  };
+  showModal('The Stair Merchant', body(), [{ label: 'Done trading', primary: true, fn: back }]);
+  $('mBody').onclick = e => {
+    const b = e.target.closest('[data-shop]'); if (!b) return;
+    const c = state.char, k = b.dataset.k, act = b.dataset.shop;
+    if (act === 'buy') {
+      const p = priceOf(k); if (c.gold < p) return;
+      c.gold -= p; addItem(k, true); if (k === sp && !MERCHANT_STOCK.includes(k)) bought.push(k);
+      addLog('', `${c.name} buys <b>${ITEMS[k].name}</b> for ${p} gp.`); SFX.coins();
+    } else if (act === 'sell') {
+      const it = ITEMS[k], have = invEntry(k)?.qty || 0, n = Math.min(it.bundle || 1, have); if (!n) return;
+      const p = Math.max(1, Math.round(sellPrice(k) * n / (it.bundle || 1)));
+      for (let q = 0; q < n; q++) takeFrom(c, k);
+      c.gold += p; addLog('', `${c.name} sells ${n > 1 ? n + ' × ' : ''}<b>${it.name}</b> for ${p} gp.`); SFX.coins();
+    } else if (act === 'respec') { const cost = 25 * c.level; if (c.gold < cost) return; c.gold -= cost; respec(c); }
+    $('mBody').innerHTML = body(); dressHero(); refresh(); save();
+  };
+}
+function respec(c) {
+  growthInit(c);
+  const before = maxHpOf(c), mb = maxMpOf(c);
+  const refund = ABILITIES.reduce((s, [a]) => s + Math.max(0, c.abilities[a] - (c.base[a] ?? c.abilities[a])), 0);
+  c.abilities = { ...c.abilities, ...c.base }; c.claimed = { ...c.base }; c.talents = []; c.pendingTalents = []; c.undo = [];
+  c.statPoints += refund;
+  c.hp = Math.max(1, Math.min(maxHpOf(c), c.hp + maxHpOf(c) - before)); c.mp = Math.max(0, Math.min(maxMpOf(c), (c.mp ?? 0) + maxMpOf(c) - mb));
+  addLog('sys', `<b>${c.name} kneels at the shrine and forgets.</b> ${c.statPoints} stat points to spend again; every talent is gone.`);
+  toast('Stat points and talents returned. Spend them on the character sheet.');
+}
+function undoGrowth() {
+  const c = state.char, u = c.undo?.pop(); if (!u) return;
+  const before = maxHpOf(c), mb = maxMpOf(c);
+  if (u.t === 'tal') { c.talents = c.talents.filter(t => t !== u.id); c.pendingTalents.push(u.k); }
+  else {
+    c.abilities[u.k]--; c.statPoints++; c.claimed[u.k] = u.prevClaim;
+    if (u.pend) { const i = c.pendingTalents.lastIndexOf(u.k); if (i >= 0) c.pendingTalents.splice(i, 1); }
+  }
+  c.hp = Math.max(1, Math.min(maxHpOf(c), c.hp + maxHpOf(c) - before)); c.mp = Math.max(0, Math.min(maxMpOf(c), (c.mp ?? 0) + maxMpOf(c) - mb));
+  addLog('', `${c.name} takes back the last choice.`);
+}
+
+/* ================================================================== *
+ * THE DESIGN REVIEW'S FIXES: pace, ambushes, odds, prepared spells, tactical view
+ * ================================================================== */
+// how fast monster turns play: the setting, or flat out while any key is held
+function paceMult() {
+  if (!playing() || !state.combat || entryOf()?.t !== 'm') return 1;
+  if (ui.ffHeld) return 8;
+  return { normal: 1, fast: 2.5, instant: 8 }[prefs.pace || 'normal'] || 1;
+}
+window.addEventListener('keydown', e => { if (playing() && entryOf()?.t === 'm' && !e.target.closest?.('input, select, textarea')) ui.ffHeld = true; });
+window.addEventListener('keyup', () => { ui.ffHeld = false; });
+window.addEventListener('blur', () => { ui.ffHeld = false; if (ui.tac === 'held') setTac(false); });
+// chance to hit or resist, shown on the target chip
+function hitChance(bonus, target, mode = 0) {
+  let n = 1; for (let r = 2; r <= 19; r++) if (r + bonus >= target) n++;
+  const p = n / 20; return mode > 0 ? 1 - (1 - p) ** 2 : mode < 0 ? p * p : p;
+}
+function saveChance(bonus, dc) { let n = 0; for (let r = 1; r <= 20; r++) if (r + bonus >= dc) n++; return n / 20; }
+const pct = p => `${Math.round(p * 100)}%`;
+function oddsText(c) {
+  if (!playing() || MONSTERS[c.type].object && !ui.spell) return '';
+  const d = derived();
+  if (ui.spell) {
+    const sp = SPELLS[ui.spell];
+    if (sp.target === 'ally') return '';
+    if (sp.attack) return `${sp.icon || '✦'} ${pct(hitChance(d.spellAtk, acOf(c), c.restrained ? 1 : 0))} to hit · ${sp.damage[0]}d${sp.damage[1]}${hasT(state.char, 'mastery') ? '+3' : ''} ${sp.dmgType}`;
+    if (sp.save) return `${sp.icon || '✦'} ${sp.save.toUpperCase()} save: ${pct(saveChance(saveOf(c, sp.save), d.spellDc))} to resist`;
+    return `${sp.icon || '✦'} Always lands`;
+  }
+  const w = d.weapon, dist = cheb(state.pos, c), mode = (c.restrained ? 1 : 0) - (w.ranged && dist <= 1 ? 1 : 0);
+  const dmg = w === UNARMED ? `${1 + d.dmgMod}` : `${w.dice[0]}d${w.dice[1]}${d.dmgMod ? fmt(d.dmgMod) : ''}${w.extra ? ` +${w.extra[0]}d${w.extra[1]}` : ''}`;
+  return `⚔ ${pct(hitChance(d.atk, acOf(c), mode))} to hit · ${dmg}${dist > w.range ? ` · ${w.ranged ? 'out of range' : 'walks up first'}` : ''}`;
+}
+// prepared spells: up to eight live on the hotbar
+const PREP_MAX = 8;
+const isPrepared = (c, k) => preparedSpells(c).includes(k);
+function preparedSpells(c = state.char) {
+  const known = knownSpells(c);
+  if (!Array.isArray(c.prepared)) return known.slice(0, PREP_MAX);
+  return c.prepared.filter(k => known.includes(k)).slice(0, PREP_MAX);
+}
+function togglePrepared(k) {
+  const c = state.char, cur = preparedSpells(c);
+  if (cur.includes(k)) c.prepared = cur.filter(x => x !== k);
+  else if (cur.length >= PREP_MAX) return toast(`Your hotbar holds ${PREP_MAX} spells. Unprepare one first.`);
+  else c.prepared = [...cur, k].sort((a, b) => SPELL_ORDER.indexOf(a) - SPELL_ORDER.indexOf(b));
+}
+// sneaking and the tactical view
+function setSneak(on) {
+  if (!playing()) return;
+  if (on && !exploring()) return toast('Too late to sneak: they have seen you.');
+  state.sneak = on;
+  toast(on ? 'Sneaking: monsters only notice you within 20 ft. Strike first and they lose their first turn.' : 'You stop sneaking.');
+  refresh(); save();
+}
+function setTac(on) {
+  if (!playing()) return;
+  const was = !!ui.tac; ui.tac = on;
+  $('tacBtn').setAttribute('aria-pressed', !!on);
+  if (was && !on) camToHero(0.6);
+}
+$('sneakBtn').addEventListener('click', () => setSneak(!state.sneak));
+$('tacBtn').addEventListener('click', () => setTac(ui.tac ? false : 'toggle'));
+window.addEventListener('keydown', e => {
+  if (!playing() || e.target.closest?.('input, select, textarea') || !$('modal').hidden) return;
+  if (e.key === 'Shift' && !ui.tac) setTac('held');
+  else if (remapKey(e.key.toLowerCase()) === 'g' && !e.repeat) setSneak(!state.sneak);
+});
+window.addEventListener('keyup', e => { if (e.key === 'Shift' && ui.tac === 'held') setTac(false); });
+
+/* ================================================================== *
+ * THE DESIGN REVIEW'S FIXES: kits, bosses with phases, loot you can recognise, settings
+ * ================================================================== */
+const KITS = {
+  spellblade: { cls: 'Spellblade', cast: 'int', scores: { str: 13, dex: 13, con: 13, int: 15, wis: 9, cha: 8 },
+    blurb: 'A Spellblade fights with longsword and shield, carries a bow, and knows every school of magic, cast with Intelligence.',
+    inventory: [['longsword', 1], ['shortbow', 1], ['dagger', 2], ['chain', 1], ['shield', 1], ['potion', 2], ['rope', 1], ['torch', 3], ['rations', 5]],
+    equipped: { weapon: 'longsword', armor: 'chain', shield: 'shield' }, spells: null },
+  warden: { cls: 'Warden', cast: 'wis', scores: { str: 15, dex: 10, con: 14, int: 8, wis: 13, cha: 10 },
+    blurb: 'A Warden holds the line in splint mail with mace and shield (and a greatsword for when the shield comes off). Only support magic: blessings, wards, haste and healing, cast with Wisdom.',
+    inventory: [['mace', 1], ['greatsword', 1], ['splint', 1], ['shield', 1], ['potion', 3], ['rope', 1], ['torch', 3], ['rations', 5]],
+    equipped: { weapon: 'mace', armor: 'splint', shield: 'shield' }, spells: ['bless', 'healword', 'ward', 'empower', 'haste', 'regen', 'hold'] },
+  ranger: { cls: 'Ranger', cast: 'wis', scores: { str: 10, dex: 15, con: 13, int: 8, wis: 14, cha: 10 },
+    blurb: 'A Ranger fights from range with a shortbow and venom arrows, wears leather, and casts frost and nature magic with Wisdom.',
+    inventory: [['shortbow', 1], ['arrowVenom', 20], ['dagger', 2], ['leather', 1], ['potion', 2], ['rope', 1], ['torch', 3], ['rations', 5]],
+    equipped: { weapon: 'shortbow', armor: 'leather', ammo: 'arrowVenom' }, spells: ['frostray', 'vines', 'healword', 'enfeeble', 'poison', 'regen', 'icewall'] },
+};
+const kitSpells = c => KITS[c?.kit]?.spells || null;
+function applyKit(c, kit = 'spellblade') {
+  const K = KITS[kit] || KITS.spellblade;
+  c.kit = KITS[kit] ? kit : 'spellblade'; c.cls = K.cls; c.castAbility = K.cast;
+  c.inventory = K.inventory.map(([key, qty]) => ({ key, qty }));
+  c.equipped = { weapon: null, armor: null, shield: null, head: null, neck: null, ammo: null, ...K.equipped };
+  c.prepared = null; c.hp = maxHpOf(c); c.mp = maxMpOf(c);
+  return c;
+}
+// a bigger party meets more monsters: about one extra for every four, per extra adventurer
+function scaleEncounters(st, n) {
+  const regular = st.creatures.filter(c => !MONSTERS[c.type].boss && MONSTERS[c.type].ai !== 'none' && !c.dormant);
+  const extra = Math.round(regular.length * 0.25 * (n - 1)), taken = [st.pos];
+  let id = Math.max(0, ...st.creatures.map(c => c.id)) + 1;
+  for (let k = 0; k < extra && regular.length; k++) {
+    const src = regular[(k * 7) % regular.length], spot = freeSpotNear(st, src, taken);
+    if ((spot.x === src.x && spot.z === src.z) || cheb(spot, st.pos) < 6) continue;
+    taken.push(spot);
+    st.creatures.push({ id: id++, type: src.type, x: spot.x, z: spot.z, hp: MONSTERS[src.type].hp, alive: true, aware: false, restrained: false, extra: true });
+  }
+}
+// a floor's boss is worth enough that every floor cleared is about one level
+function bossBonus() {
+  const ups = state.party.filter(p => p.char.hp > 0); if (!ups.length) return;
+  const target = XP_TABLE[Math.min(XP_TABLE.length - 1, MAP.floor)], need = Math.max(...ups.map(p => target - p.char.xp));
+  if (need <= 0) return;
+  addLog('sys', `<b>Floor ${MAP.floor} conquered!</b> The party shares a bonus of ${need} XP.`);
+  after(0.9, () => { gainXp(need, true); refresh(); });
+}
+/* --- boss phases: at half health every boss changes the fight --- */
+function phaseSummon(b, type, n) {
+  let id = Math.max(0, ...state.creatures.map(c => c.id)) + 1, made = 0;
+  for (let r = 1; r <= 3 && made < n; r++) for (let dz = -r; dz <= r && made < n; dz++) for (let dx = -r; dx <= r && made < n; dx++) {
+    if (Math.max(Math.abs(dx), Math.abs(dz)) !== r) continue;
+    const x = b.x + dx, z = b.z + dz;
+    if (!WALKABLE.has(tileAt(x, z)) || state.creatures.some(c => c.alive && c.x === x && c.z === z) || partyAt(x, z) || state.traps[keyOf(x, z)]) continue;
+    const c = { id: id++, type, x, z, hp: MONSTERS[type].hp, alive: true, aware: true, restrained: false, summoned: true };
+    state.creatures.push(c); buildCreature(c); made++;
+    const p = worldOf(x, z);
+    burst(glow, 40, () => ({ p: [p.x + rnd(-.3, .3), p.y + .05, p.z + rnd(-.3, .3)], v: [0, rnd(.8, 2), 0], life: rnd(.5, 1), s: [.08, .01], c0: hdr('#ffb080', 5), c1: hdr('#a03020', 1), a: 1 }));
+  }
+  syncOrder(); applyFog();
+}
+function flood(b, r) {
+  for (let dz = -r; dz <= r; dz++) for (let dx = -r; dx <= r; dx++) {
+    const x = b.x + dx, z = b.z + dz, ch = tileAt(x, z);
+    if (ch === '.' || ch === 'e' || ch === '~') setTile(x, z, 'v', true);
+  }
+  rebuildFxGrid();
+}
+function blinkAway(b) {
+  const spots = [];
+  for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) {
+    const d = Math.min(...state.party.filter(m => m.char.hp > 0).map(m => cheb(m.pos, { x, z })));
+    if (d >= 4 && d <= 7 && cheb(b, { x, z }) <= 8 && tileAt(x, z) === '.' && vis[z * W + x] && !state.creatures.some(c => c.alive && c.x === x && c.z === z) && !partyAt(x, z)) spots.push({ x, z });
+  }
+  if (!spots.length) return;
+  const from = worldOf(b.x, b.z), s = spots[Math.floor(Math.random() * spots.length)];
+  for (const p of [from, worldOf(s.x, s.z)]) burst(smoke, 40, () => ({ p: [p.x + rnd(-.3, .3), p.y + rnd(.1, 1.2), p.z + rnd(-.3, .3)], v: [rnd(-.4, .4), rnd(.1, .6), rnd(-.4, .4)], life: rnd(1, 1.8), s: [.4, 1.1], c0: hdr('#3a2a4a'), c1: hdr('#10081a'), a: .7, drag: 1 }));
+  b.x = s.x; b.z = s.z;
+}
+const PHASES = {
+  wolfRider: ['Grak sounds his horn', 'A long, ragged note. Answering howls rise from the dark: the pack is coming.', c => phaseSummon(c, 'wolf', 2)],
+  goblinBoss: ['Grizzlegut loses his temper', 'The chief roars, foams at the mouth, and charges faster than anything that fat should move.', c => { addStatus(c, 'hasted', 3); addStatus(c, 'blessed', 3); }],
+  spiderQueen: ['The brood answers', 'The Mother of Webs shrieks, and her children pour down from the ceiling.', c => phaseSummon(c, 'spider', 2)],
+  abbot: ['The waters rise', 'Black water bubbles up through the flagstones. The Abbot drinks it in, and the floor around him turns to a wading pool.', c => { flood(c, 2); stHeal(c, 15, 'The flood'); }],
+  highPriest: ['A prayer to the Pale Crown', 'Ossian raises his staff, and sick green light pours over him and his faithful.', c => { stHeal(c, 20, 'The prayer'); blessAllies(c); }],
+  warden: ['The honour guard', 'Iron strikes stone three times. The dead of the crypt answer the Warden\'s call.', c => { phaseSummon(c, 'skeleton', 2); addStatus(c, 'shielded', 2); }],
+  lich: ['Vael Morrow steps through shadow', 'The lich dissolves into smoke, reforms across the hall, and the bones of the fallen rise to meet you.', c => { blinkAway(c); phaseSummon(c, 'skeleton', 2); addStatus(c, 'shielded', 2); }],
+};
+function bossPhase(c) {
+  const P = PHASES[c.type]; if (!P || !c.alive || state.over || !playing()) return;
+  narrate(`${MONSTERS[c.type].name}: ${P[0]}`, P[1]);
+  SFX.boom(); shakeCam(0.3);
+  const v = views.get(c.id); if (v?.g.visible) camShot(v.g, hero.position, 0.6);
+  P[2](c);
+  refresh(); save();
+}
+/* --- the real model of an item, for loot on the floor and the catalogue --- */
+const RARITY_RANK = { common: 0, magic: 1, weird: 2, boss: 3 };
+function ammoBundle(color) {
+  const g = new THREE.Group(), glowM = new THREE.MeshBasicMaterial({ color: new THREE.Color(color).multiplyScalar(color === '#c9ccd1' ? 1 : 3) });
+  for (let n = 0; n < 5; n++) {
+    const a = new THREE.Group(), shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.5, 6), mat('#7a5a3a'));
+    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.06, 6), glowM); tip.position.y = 0.28;
+    const fl = new THREE.Mesh(unitBox, mat(color)); fl.scale.set(0.005, 0.07, 0.04); fl.position.y = -0.2;
+    a.add(shaft, tip, fl); a.position.set((n - 2) * 0.03, 0, Math.sin(n) * 0.02); a.rotation.z = (n - 2) * 0.06; g.add(a);
+  }
+  const band = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.012, 6, 16), mat('#4a3020')); band.rotation.x = Math.PI / 2; g.add(band);
+  return g;
+}
+function itemModel(k) {
+  const it = ITEMS[k]; if (!it) return lootModel(k);
+  const g = new THREE.Group();
+  if (it.type === 'weapon') {
+    const w = k === 'shortbow' ? bowModel() : weaponModel(k); if (!w) return lootModel(k);
+    w.scale.setScalar(1.25); w.rotation.z = 1.15; w.position.y = -0.1; g.add(w);
+  } else if (it.type === 'ammo') { const b = ammoBundle(it.color); b.scale.setScalar(0.75); b.rotation.z = 0.4; g.add(b); }
+  else if (it.type === 'shield') { const s = shieldModel('#7a2a2a'); s.scale.setScalar(1.5); g.add(s); }
+  else if (it.type === 'armor') {
+    const m = k === 'leather' ? mat('#6a4428', { roughness: 0.7 }) : new THREE.MeshStandardMaterial({ color: k === 'splint' ? '#8a9098' : '#b8bec6', metalness: 0.85, roughness: 0.4 });
+    const body = new THREE.Mesh(new THREE.LatheGeometry(CHEST_PROFILE, 16), m); body.scale.set(1.15, 1.05, 0.85); body.position.y = -0.12; g.add(body);
+    if (k === 'splint') for (let n = 0; n < 3; n++) { const band = new THREE.Mesh(new THREE.TorusGeometry(0.118, 0.007, 4, 20), brassM()); band.rotation.x = Math.PI / 2; band.scale.y = 0.8; band.position.y = -0.08 + n * 0.06; g.add(band); }
+  } else if (it.type === 'head') {
+    if (k === 'crown') g.add(crownMesh(0, 0.1));
+    else {
+      const m = new THREE.MeshStandardMaterial({ color: '#5a6066', metalness: 0.85, roughness: 0.35 });
+      const dome = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 10, 0, 6.283, 0, 1.7), m); g.add(dome);
+      for (const s of [-1, 1]) { const horn = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.14, 8), mat('#d8d0b8')); horn.position.set(s * 0.1, 0.05, 0); horn.rotation.z = -s * 0.9; g.add(horn); }
+    }
+  } else if (it.type === 'neck') {
+    const cord = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.005, 4, 24), mat('#3a2618')); cord.rotation.x = 0.4; g.add(cord);
+    const gem = k === 'siphon' ? new THREE.Mesh(new THREE.OctahedronGeometry(0.035), new THREE.MeshStandardMaterial({ color: '#5a2a8a', emissive: '#a050ff', emissiveIntensity: 1.6, roughness: 0.2 }))
+      : new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 6), mat('#e6dcc2'));
+    if (k !== 'siphon') gem.scale.set(1, 1.5, 0.7);
+    gem.position.set(0, -0.09, 0.03); g.add(gem);
+  } else if (k === 'torch') {
+    const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.012, 0.3, 8), mat('#5a3a20')); g.add(stick);
+    const head = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.022, 0.07, 8), mat('#2a1a10')); head.position.y = 0.17; g.add(head); g.rotation.z = 0.8;
+  } else if (k === 'rope') {
+    for (let n = 0; n < 3; n++) { const coil = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.016, 6, 20), mat('#b08a52', { roughness: 0.9 })); coil.rotation.x = Math.PI / 2; coil.position.y = n * 0.028 - 0.05; g.add(coil); }
+  } else if (k === 'rations') {
+    const pack = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.08, 0.11), mat('#c8b48a', { roughness: 0.95 })); g.add(pack);
+    const tie = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.085, 0.015), mat('#6a4a2a')); g.add(tie);
+  } else if (k === 'arrows') { const b = ammoBundle('#c9ccd1'); b.scale.setScalar(0.75); b.rotation.z = 0.4; g.add(b); }
+  else if (k === 'ratTail') { const t = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.008, 5, 20, 4), mat('#c89a8a')); g.add(t); }
+  else return lootModel(k);
+  return g;
+}
+/* --- settings: combat speed, text size, volume, keys, effects quality --- */
+const KEY_ACTIONS = [['potion', 'q', 'Drink a healing potion'], ['mana', 'e', 'Drink a mana potion'], ['search', 'f', 'Search'], ['dash', 'x', 'Dash'], ['sneak', 'g', 'Sneak'],
+  ['sheet', 'c', 'Character sheet'], ['inv', 'i', 'Inventory'], ['spells', 'k', 'Spellbook'], ['log', 'l', 'Log'], ['cam', 'v', 'Camera: follow or free'], ['recenter', 'r', 'Recenter the camera'], ['party', 'p', 'Party mode']];
+const boundKey = a => prefs.keys?.[a] || KEY_ACTIONS.find(k => k[0] === a)[1];
+// the key pressed → the built-in key of whatever action it is bound to (a default key that was moved away does nothing)
+function remapKey(k) {
+  for (const [a, def] of KEY_ACTIONS) if (boundKey(a) === k) return def;
+  if (KEY_ACTIONS.some(([, def]) => def === k)) return '';
+  return k;
+}
+function applyPrefs() {
+  document.documentElement.style.setProperty('--ui', prefs.text || 1);
+  SFX.setVol(prefs.volFx ?? 1, prefs.volMusic ?? 1);
+}
+function openSettings() {
+  ui.rebind = null;
+  const body = () => `
+    <div class="field"><span>Combat speed</span>${seg('setPace', prefs.pace || 'normal', [['normal', 'Normal'], ['fast', 'Fast'], ['instant', 'Instant']])}
+      <p class="muted fnote">How fast monster turns play. Hold any key during a monster's turn to fast-forward it.</p></div>
+    <div class="field"><span>Text size</span>${seg('setText', String(prefs.text || 1), [['1', 'Normal'], ['1.15', 'Large'], ['1.3', 'Largest']])}</div>
+    <label class="field"><span>Effects volume</span><input type="range" id="volFx" min="0" max="1" step="0.05" value="${prefs.volFx ?? 1}"></label>
+    <label class="field"><span>Ambience volume</span><input type="range" id="volMusic" min="0" max="1" step="0.05" value="${prefs.volMusic ?? 1}"></label>
+    <label class="field"><span>Effects quality</span><select id="setQuality">${Object.entries(QUALITY).map(([k, q]) => `<option value="${k}" ${k === qName ? 'selected' : ''}>${q.label}</option>`).join('')}</select>
+      <p class="muted fnote">Running at about <b id="fpsOut">${Math.round(1 / Math.max(1e-3, perfSample.avg || 1 / 60))}</b> frames a second.</p></label>
+    <div class="field"><span>Keys</span><div class="keys">${KEY_ACTIONS.map(([a, , label]) => `<span>${label}</span><button class="btn small ${ui.rebind === a ? 'on' : ''}" data-set="bind" data-k="${a}">${ui.rebind === a ? 'Press a key…' : boundKey(a).toUpperCase()}</button>`).join('')}</div>
+      <div class="row"><button class="btn small" data-set="resetKeys">Reset keys</button><span class="muted">Number keys cast prepared spells; Space ends the turn; Shift lifts the camera.</span></div></div>`;
+  showModal('Settings', body(), [{ label: 'Done', primary: true, fn: () => { ui.rebind = null; } }]);
+  const mb = $('mBody'), redraw = () => { mb.innerHTML = body(); };
+  mb.onclick = e => {
+    const b = e.target.closest('[data-act], [data-set]'); if (!b) return;
+    const act = b.dataset.act || b.dataset.set, k = b.dataset.k;
+    if (act === 'setPace') prefs.pace = k;
+    if (act === 'setText') prefs.text = +k;
+    if (act === 'bind') ui.rebind = ui.rebind === k ? null : k;
+    if (act === 'resetKeys') { prefs.keys = {}; ui.rebind = null; }
+    applyPrefs(); savePrefs(); redraw();
+  };
+  mb.oninput = e => {
+    if (e.target.id === 'volFx') prefs.volFx = +e.target.value;
+    if (e.target.id === 'volMusic') prefs.volMusic = +e.target.value;
+    applyPrefs(); savePrefs();
+  };
+  mb.onchange = e => { if (e.target.id === 'setQuality') setQuality(e.target.value); };
+  openSettings.redraw = redraw;
+}
+window.addEventListener('keydown', e => {
+  if (!ui.rebind || $('modal').hidden) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  const k = e.key.toLowerCase();
+  if (k === 'escape') { ui.rebind = null; return openSettings.redraw?.(); }
+  if (k.length !== 1 || /[0-9 ]/.test(k)) return toast('Pick a letter or symbol key. Numbers and Space are taken.');
+  prefs.keys ||= {};
+  const clash = KEY_ACTIONS.find(([a]) => a !== ui.rebind && boundKey(a) === k);
+  if (clash) prefs.keys[clash[0]] = boundKey(ui.rebind);   // swap
+  prefs.keys[ui.rebind] = k; ui.rebind = null;
+  savePrefs(); openSettings.redraw?.();
+}, true);
+// frame rate: suggest a lower quality once if the board struggles
+function perfSample(dt) {
+  perfSample.avg = (perfSample.avg ?? 1 / 60) * 0.97 + dt * 0.03;
+  if ((perfSample.t = (perfSample.t || 0) + dt) < 1) return;
+  perfSample.t = 0;
+  const fps = Math.round(1 / perfSample.avg), out = document.getElementById('fpsOut'); if (out) out.textContent = fps;
+  if (playing() && qName !== 'low' && fps < 28 && (perfSample.slow = (perfSample.slow || 0) + 1) >= 6 && !perfSample.told) {
+    perfSample.told = true; toast(`The board is running slowly (${fps} fps). A lower Effects quality in Settings will help.`);
+  } else if (fps >= 28) perfSample.slow = 0;
+}
+// effects shown as icon and word, so colour isn't the only cue
+const stWords = t => (t.status || []).map(s => `<i class="sti w" style="--c:${STATUS[s.id].color}" title="${STATUS[s.id].desc}">${STATUS[s.id].icon} ${STATUS[s.id].name} ${s.rounds}</i>`).join('');
+/* --- creator: can every important square be reached from the start? --- */
+function reachProblems(m) {
+  const rows = m.rows, h = rows.length, w = rows[0].length, out = [];
+  let sx = -1, sz = -1; rows.forEach((r, z) => { const x = r.indexOf('@'); if (x >= 0) { sx = x; sz = z; } });
+  if (sx < 0) return out;
+  const pass = ch => WALKABLE.has(ch) || 'DSG@$HTYZcoKu'.includes(ch) || !!CREATURE_CHARS[ch];
+  const seen = new Uint8Array(w * h), q = [[sx, sz]]; seen[sz * w + sx] = 1;
+  while (q.length) {
+    const [x, z] = q.pop();
+    for (const [dx, dz] of DIRS) {
+      const nx = x + dx, nz = z + dz; if (nx < 0 || nz < 0 || nx >= w || nz >= h || seen[nz * w + nx] || !pass(rows[nz][nx])) continue;
+      if (dx && dz && (!pass(rows[z][nx]) || !pass(rows[nz][x]))) continue;   // no squeezing between two walls
+      seen[nz * w + nx] = 1; q.push([nx, nz]);
+    }
+  }
+  const near = (x, z) => { for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) if (seen[(z + dz) * w + x + dx] && x + dx >= 0 && x + dx < w) return true; return false; };
+  const lost = { exit: 0, foes: [], chests: 0 };
+  rows.forEach((r, z) => [...r].forEach((ch, x) => {
+    if (ch === 'X' && !seen[z * w + x]) lost.exit++;
+    if (isFoe(ch) && !near(x, z)) lost.foes.push(MONSTERS[CREATURE_CHARS[ch]].name);
+    if (ch === 'C' && !near(x, z)) lost.chests++;
+  }));
+  if (lost.exit) out.push({ text: 'The exit stairs can\'t be reached from the hero start. Carve a path or add a door.' });
+  if (lost.foes.length) out.push({ text: `${lost.foes.length} monster${lost.foes.length > 1 ? 's are' : ' is'} walled off and can't be reached: ${[...new Set(lost.foes)].join(', ')}.${!rows.join('').includes('X') ? ' With no exit, the dungeon can\'t be won.' : ''}` });
+  if (lost.chests) out.push({ info: true, text: `${lost.chests} chest${lost.chests > 1 ? 's' : ''} can't be reached.` });
+  for (const a of m.rooms || []) if (a.boss && !rows.slice(a.z0, a.z1 + 1).some(r => [...r.slice(a.x0, a.x1 + 1)].some(ch => CREATURE_CHARS[ch] && MONSTERS[CREATURE_CHARS[ch]].boss)))
+    out.push({ text: `The boss arena "${a.name}" has no boss in it.` });
+  return out;
+}
+/* --- backups: every hero, expedition and dungeon in one file --- */
+async function saveTextFile(filename, text, okMsg) {
+  const dl = await downloadsCap;
+  if (dl) {
+    try { await dl.save({ filename, data: text }); toast(okMsg); }
+    catch (e) { if (e?.code === 'rate_limited') toast('A save prompt is already open.'); else if (e?.code !== 'declined') toast('Saving files isn\'t available here.'); }
+    return;
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' })); a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  toast(okMsg);
+}
+function exportAll() {
+  saveTextFile('battle-board-backup.json', JSON.stringify({ battleBoardBackup: 1, saved: new Date().toISOString(), heroes, dungeons }),
+    'Backup saved. Import it from the Adventure menu on any device.');
+}
+function importAll(file) {
+  file.text().then(t => {
+    const j = JSON.parse(t); if (!j.battleBoardBackup || !Array.isArray(j.heroes)) throw new Error('bad');
+    const legal = new Set('#.~DSGXCFI123$HTYZPp@rkbaWmdgevwlhjqcoKunBfszNQLRMAO'.split(''));
+    let nh = 0, nd = 0;
+    for (const h of j.heroes) { if (!h?.id || !h.char?.abilities || heroes.some(x => x.id === h.id)) continue; migrateChar(h.char); heroes.push(h); nh++; }
+    for (const [id, m] of Object.entries(j.dungeons || {})) {
+      if (dungeons[id] || !Array.isArray(m?.rows) || !m.rows.length) continue;
+      m.rows = m.rows.map(r => [...String(r)].map(ch => legal.has(ch) ? ch : '#').join('')); m.custom = true;
+      dungeons[id] = finalizeMap(m); nd++;
+    }
+    saveHeroes(); store.set(DUNGEON_KEY, dungeons); registerDungeons();
+    toast(`Imported ${nh} hero${nh === 1 ? '' : 'es'} and ${nd} dungeon${nd === 1 ? '' : 's'}.`); renderScreen();
+  }).catch(() => toast('That file isn\'t a Battle Board backup.'));
+}
+function storageCheck() {
+  if (storageCheck.told) return;
+  let n = 0; try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); n += k.length + (localStorage.getItem(k) || '').length; } } catch (e) { return; }
+  if (n > 4.2e6) { storageCheck.told = true; setTimeout(() => toast('Browser storage is nearly full. Export a backup from the Adventure menu, then delete old heroes or dungeons.'), 500); }
+}
+applyPrefs();
 
 // a catalogue for tools/tests: every data table, plus a rendered picture of every item and monster
 function renderCatalog(size = 224) {
@@ -6729,7 +7361,7 @@ function renderCatalog(size = 224) {
     if (it.type === 'weapon') obj = k === 'shortbow' ? bowModel() : weaponModel(k);
     else if (['armor', 'shield', 'head', 'neck'].includes(it.type)) obj = worn(k);
     else if (it.type === 'ammo') obj = ammoModel(it);
-    if (!obj) obj = lootModel(k);
+    if (!obj) obj = itemModel(k);
     items[k] = shot(obj, it.type === 'weapon' || it.type === 'ammo' ? 0.2 : 0.45);
   }
   for (const type of Object.keys(MONSTERS)) {
@@ -6741,7 +7373,8 @@ function renderCatalog(size = 224) {
 function catalogData() {
   const tools = TOOLS.map(t => ({ id: t.id, g: t.g, ch: t.ch, label: t.label, hint: t.hint }));
   const maps = Object.fromEntries(Object.entries(MAPS).filter(([k]) => k !== '_test').map(([k, m]) => [k, { name: m.name, floor: m.floor, rows: m.rows, chests: m.chests, loot: m.loot, stash: m.stash, rooms: (m.rooms || []).map(r => ({ name: r.name, boss: !!r.boss })) }]));
-  return { ITEMS, MONSTERS, LOOT_TABLES, SPELLS, STATUS, TALENTS, XP_TABLE, CREATURE_CHARS, ABILITIES, tools, maps, UNDEAD: [...UNDEAD] };
+  return { ITEMS, MONSTERS, LOOT_TABLES, SPELLS, STATUS, TALENTS, XP_TABLE, CREATURE_CHARS, ABILITIES, tools, maps, UNDEAD: [...UNDEAD],
+           VALUES, RARITY, rarity: Object.fromEntries(Object.keys(ITEMS).map(k => [k, rarityOf(k)])), KITS, PHASES: Object.fromEntries(Object.entries(PHASES).map(([k, p]) => [k, { title: p[0], text: p[1] }])), MERCHANT_STOCK, MERCHANT_SPECIALS };
 }
 // handy for debugging from the browser console
 window.battleBoard = {
@@ -6759,7 +7392,12 @@ window.battleBoard = {
   xp(n) { gainXp(n); refresh(); },
   holdNotice() { clearTimeout(showNextNotice.t); },
   catalog(size) { return { data: JSON.parse(JSON.stringify(catalogData())), images: renderCatalog(size) }; },
-  dev: { get state() { return state; }, addStatus: (...a) => addStatus(...a), endTurn: () => endTurn(), costOf: (...a) => costOf(...a), maxMpOf: c => maxMpOf(c), maxHpOf: c => maxHpOf(c), restartMap: (...a) => restartMap(...a), useHot: h => useHot(h), knownSpells: () => knownSpells(), entryOf: () => entryOf(), mode: () => mode },
+  dev: { get state() { return state; }, addStatus: (...a) => addStatus(...a), endTurn: () => endTurn(), costOf: (...a) => costOf(...a), maxMpOf: c => maxMpOf(c), maxHpOf: c => maxHpOf(c), restartMap: (...a) => restartMap(...a), useHot: h => useHot(h), knownSpells: () => knownSpells(), entryOf: () => entryOf(), mode: () => mode,
+    applyKit: (c, k) => applyKit(c, k), newCharacter: () => newCharacter(), preparedSpells: () => preparedSpells(), togglePrepared: k => togglePrepared(k), openMerchant: () => openMerchant(() => {}),
+    openSettings: () => openSettings(), reachProblems: m => reachProblems(m), oddsText: id => oddsText(creatureById(id)), bossPhase: id => bossPhase(creatureById(id)), damage: (id, n) => damageCreature(creatureById(id), n, 'dmg'),
+    passiveOf: c => passiveOf(c), respec: () => respec(state.char), undoGrowth: () => undoGrowth(), spendPoint: k => spendPoint(k), lightTorch: () => lightTorch(), giveItem: (k, i) => giveItem(k, i),
+    exploreStatusTick: () => exploreStatusTick(), setSneak: on => setSneak(on), remapKey: k => remapKey(k), prefs: () => prefs, toastCount: () => document.getElementById('toast').children.length,
+    freshState: (k, chars) => freshState(k, chars), enterPlay: st => enterPlay(st, 'play', true), refresh: () => refresh(), heroes: () => heroes, toast: m => toast(m), itemModelOk: () => Object.keys(ITEMS).every(k => !!itemModel(k)) },
   wanderers() { const m = spawnWanderers(6, 13); if (m && exploring() === false) startCombat(); refresh(); return m && m.map(c => c.type); },
 };
 showBackdrop('crypt');

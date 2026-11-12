@@ -1,5 +1,6 @@
 // Battle Board test run: serves the game, drives it in headless Chromium and checks data integrity,
 // every map, combat and initiative, every spell, statuses, levelling and talents, the creator, and saves.
+// The fixes from the design review have their own, faster run: tests/review-fixes.mjs.
 //
 //   node tests/run-tests.mjs [--catalog out.json] [--report out.json]
 //
@@ -193,9 +194,10 @@ await check('mana: casting costs mana outside the Training Yard', async () => {
   return `${r.before} → ${r.after} MP`;
 });
 
-await check('design probe: does "Wait" outside a fight refill mana for free?', async () => {
+await check('mana: passing rounds outside a fight restores none (only camping, potions and charms do)', async () => {
   const r = await ev(async () => { const st = battleBoard.state, before = st.char.mp; for (let i = 0; i < 6; i++) await battleBoard.dev.endTurn(); return { before, after: st.char.mp }; });
-  return r.after > r.before ? `yes: ${r.before} → ${r.after} MP after 6 waits (see design review)` : 'no';
+  assert(r.after === r.before, `${r.before} → ${r.after} MP after 6 rounds`);
+  return `${r.before} → ${r.after} MP after 6 rounds`;
 });
 
 await check('levelling: XP gives a level, stat points, and a talent at an even score', async () => {
