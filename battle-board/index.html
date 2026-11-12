@@ -6679,6 +6679,70 @@ function growthHtml(c) {
     ${c.talents.length ? `<div class="section"><h3>Talents</h3><div class="tlist">${c.talents.map(id => `<div class="tl"><b>${talentDef(id)?.name}</b> <span class="muted">${ABIL_NAME[TALENT_STAT[id]]} · ${talentDef(id)?.desc}</span></div>`).join('')}</div></div>` : ''}`;
 }
 
+
+// a catalogue for tools/tests: every data table, plus a rendered picture of every item and monster
+function renderCatalog(size = 224) {
+  const sc = new THREE.Scene(); sc.background = new THREE.Color('#2b241d'); sc.environment = scene.environment;
+  sc.add(new THREE.HemisphereLight('#fff2dc', '#3a2c20', 1.4));
+  const key = new THREE.DirectionalLight('#fff0d8', 2.6); key.position.set(2, 4, 3); sc.add(key);
+  const rim = new THREE.DirectionalLight('#9ec4ff', 1.2); rim.position.set(-3, 2, -3); sc.add(rim);
+  const cam = new THREE.PerspectiveCamera(30, 1, 0.01, 60), out = document.createElement('canvas'); out.width = out.height = size;
+  const ctx = out.getContext('2d'), pr = renderer.getPixelRatio(), dpx = Math.round(size / pr);
+  const shot = (obj, tilt = 0.45) => {
+    sc.add(obj); obj.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(obj), c = box.getCenter(new THREE.Vector3()), dim = box.getSize(new THREE.Vector3()).length();
+    const dist = dim / (2 * Math.tan(THREE.MathUtils.degToRad(15))) * 0.95;
+    cam.position.copy(c).add(new THREE.Vector3(0.55, tilt, 1).normalize().multiplyScalar(dist)); cam.lookAt(c); cam.near = dist / 50; cam.far = dist * 4; cam.updateProjectionMatrix();
+    renderer.setRenderTarget(null); renderer.setScissorTest(true); renderer.setViewport(0, 0, dpx, dpx); renderer.setScissor(0, 0, dpx, dpx);
+    renderer.render(sc, cam);
+    ctx.clearRect(0, 0, size, size);
+    ctx.drawImage(renderer.domElement, 0, renderer.domElement.height - dpx * pr, dpx * pr, dpx * pr, 0, 0, size, size);
+    renderer.setScissorTest(false); const r = stage.getBoundingClientRect(); renderer.setViewport(0, 0, r.width, r.height);
+    sc.remove(obj);
+    return out.toDataURL('image/png');
+  };
+  // a hero wearing just the one item, posed and dressed by the real rig
+  const worn = (k) => {
+    const keep = state.party[state.active].char, c = newCharacter();
+    c.equipped = { weapon: null, armor: null, shield: null, head: null, neck: null, ammo: null };
+    const it = ITEMS[k]; c.equipped[{ armor: 'armor', shield: 'shield', head: 'head', neck: 'neck' }[it.type]] = k;
+    c.inventory = [{ key: k, qty: 1 }]; c.curseLifted = true;
+    state.party[state.active].char = c; dressHero(); animateHuman(1, 0);
+    const g = new THREE.Group(); for (const ch of hero.children) if (ch !== heroRing && ch.visible) g.add(ch.clone(true));
+    state.party[state.active].char = keep; dressHero();
+    return g;
+  };
+  const ammoModel = it => {
+    const g = new THREE.Group(), glowM = new THREE.MeshBasicMaterial({ color: new THREE.Color(it.color).multiplyScalar(3) });
+    for (let n = 0; n < 5; n++) {
+      const a = new THREE.Group(), shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.5, 6), mat('#7a5a3a'));
+      const tip = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.06, 6), glowM); tip.position.y = 0.28;
+      const fl = new THREE.Mesh(unitBox, mat(it.color)); fl.scale.set(0.005, 0.07, 0.04); fl.position.y = -0.2;
+      a.add(shaft, tip, fl); a.position.set((n - 2) * 0.03, 0, Math.sin(n) * 0.02); a.rotation.z = (n - 2) * 0.06; g.add(a);
+    }
+    const band = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.012, 6, 16), mat('#4a3020')); band.rotation.x = Math.PI / 2; g.add(band);
+    return g;
+  };
+  const items = {}, monsters = {};
+  for (const [k, it] of Object.entries(ITEMS)) {
+    let obj = null;
+    if (it.type === 'weapon') obj = k === 'shortbow' ? bowModel() : weaponModel(k);
+    else if (['armor', 'shield', 'head', 'neck'].includes(it.type)) obj = worn(k);
+    else if (it.type === 'ammo') obj = ammoModel(it);
+    if (!obj) obj = lootModel(k);
+    items[k] = shot(obj, it.type === 'weapon' || it.type === 'ammo' ? 0.2 : 0.45);
+  }
+  for (const type of Object.keys(MONSTERS)) {
+    const g = new THREE.Group(), pivot = new THREE.Group(); g.add(pivot); MODELS[type](pivot); g.add(miniBase(MONSTERS[type].boss ? 0.95 : 0.82)); paintRim(g);
+    monsters[type] = shot(g);
+  }
+  return { items, monsters };
+}
+function catalogData() {
+  const tools = TOOLS.map(t => ({ id: t.id, g: t.g, ch: t.ch, label: t.label, hint: t.hint }));
+  const maps = Object.fromEntries(Object.entries(MAPS).filter(([k]) => k !== '_test').map(([k, m]) => [k, { name: m.name, floor: m.floor, rows: m.rows, chests: m.chests, loot: m.loot, stash: m.stash, rooms: (m.rooms || []).map(r => ({ name: r.name, boss: !!r.boss })) }]));
+  return { ITEMS, MONSTERS, LOOT_TABLES, SPELLS, STATUS, TALENTS, XP_TABLE, CREATURE_CHARS, ABILITIES, tools, maps, UNDEAD: [...UNDEAD] };
+}
 // handy for debugging from the browser console
 window.battleBoard = {
   camera, controls, get state() { return state; },
@@ -6694,6 +6758,8 @@ window.battleBoard = {
   combat() { const cb = state.combat; return cb && { i: cb.i, order: cb.order.map(e => `${e.t}:${e.t === 'h' ? state.party.find(m => m.id === e.id)?.char.name : creatureById(e.id)?.type}:${e.init}`) }; },
   xp(n) { gainXp(n); refresh(); },
   holdNotice() { clearTimeout(showNextNotice.t); },
+  catalog(size) { return { data: JSON.parse(JSON.stringify(catalogData())), images: renderCatalog(size) }; },
+  dev: { get state() { return state; }, addStatus: (...a) => addStatus(...a), endTurn: () => endTurn(), costOf: (...a) => costOf(...a), maxMpOf: c => maxMpOf(c), maxHpOf: c => maxHpOf(c), restartMap: (...a) => restartMap(...a), useHot: h => useHot(h), knownSpells: () => knownSpells(), entryOf: () => entryOf(), mode: () => mode },
   wanderers() { const m = spawnWanderers(6, 13); if (m && exploring() === false) startCombat(); refresh(); return m && m.map(c => c.type); },
 };
 showBackdrop('crypt');
