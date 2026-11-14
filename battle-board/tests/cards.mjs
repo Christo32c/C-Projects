@@ -99,16 +99,19 @@ await check('desktop: drag the Attack card up onto the training dummy to strike 
   const on = await D(id => { const p = battleBoard.dev.screenOf(id); return p.x > 0 && p.x < 1280 && p.y > 0 && p.y < 680; }, id);
   assert(on, 'the dummy is not on screen');
   await wait(0.5);
-  const a = await cardBox('atk'), t = await D(id => battleBoard.dev.screenOf(id), id);
+  const log0 = await D(() => battleBoard.dev.state.log.length);
+  const a = await cardBox('atk');
   await page.mouse.move(a.x, a.y + 10); await page.mouse.down(); await page.mouse.move(a.x, a.y - 30); await page.mouse.move(a.x, a.y - 60);
+  await wait(1.5);   // the camera pulls back to frame the target
+  const t = await D(id => battleBoard.dev.screenOf(id), id);
   for (let k = 1; k <= 12; k++) { await page.mouse.move(a.x + (t.x - a.x) * k / 12, a.y - 60 + (t.y - a.y + 60) * k / 12); }
   await wait(0.3);
   const mid = await D(() => ({ ghost: !!document.querySelector('.card.ghost.over'), armed: document.body.classList.contains('hand-armed') }));
   await shot('cards-desktop-drag');
   await page.mouse.up(); await wait(2.5);
-  const r = await D(id => { const s = battleBoard.dev.state; return { action: s.turn.action, hp: s.creatures.find(c => c.id === id).hp, ghost: !!document.querySelector('.card.ghost') }; }, id);
+  const r = await D(id => { const s = battleBoard.dev.state; return { hp: s.creatures.find(c => c.id === id).hp, ghost: !!document.querySelector('.card.ghost'), log: s.log.slice(-4).map(l => l.html).join(' ') }; }, id);
   assert(mid.ghost && mid.armed, 'no ghost over the board while dragging: ' + JSON.stringify(mid));
-  assert(!r.action && !r.ghost, 'the drop did not attack: ' + JSON.stringify(r));
+  assert(!r.ghost && (r.hp < 200 || /miss|Blocked|Dodged/i.test(r.log)), 'the drop did not attack: ' + JSON.stringify(r));
   noNewErrors(e0);
   return r.hp < 200 ? `hit for ${200 - r.hp}` : 'swung and missed';
 });
