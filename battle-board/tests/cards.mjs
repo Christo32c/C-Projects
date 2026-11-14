@@ -91,14 +91,11 @@ await check('desktop: hovering lifts a card to full size; neighbours make room',
   return `lifted to ${r.h} px tall`;
 });
 
-await check('desktop: drag the Attack card up onto a skeleton to strike it', async () => {
+await check('desktop: drag the Attack card up onto the training dummy to strike it', async () => {
   const e0 = errCount();
-  const id = await D(() => {
-    const B = battleBoard.dev, s = B.state, c = s.creatures.filter(c => c.alive && c.type === 'skeleton').sort((a, b) => Math.hypot(a.x - s.pos.x, a.z - s.pos.z) - Math.hypot(b.x - s.pos.x, b.z - s.pos.z))[0];
-    s.pos.x = c.x - 1; s.pos.z = c.z; c.hp = 200; c.aware = true; s.turn.action = true; B.bootBoard?.(true); B.refresh(); return c.id;
-  });
-  await wait(2);
-  await D(() => battleBoard.dev.state.turn.action = true); await D(() => battleBoard.dev.refresh());
+  await enter('trainingYard', ['warden']); await settle(); await wait(1.5);
+  const id = await D(() => { const B = battleBoard.dev, s = B.state, c = s.creatures.find(c => c.alive); c.hp = 200; s.turn.action = true; B.refresh(); return c.id; });
+  await wait(0.5);
   const a = await cardBox('atk'), t = await D(id => battleBoard.dev.screenOf(id), id);
   await page.mouse.move(a.x, a.y + 10); await page.mouse.down();
   for (let k = 1; k <= 12; k++) { await page.mouse.move(a.x + (t.x - a.x) * k / 12, a.y + (t.y - a.y) * k / 12); }
@@ -151,7 +148,7 @@ await phone.addInitScript(() => {
 });
 if (process.env.THREE_LOCAL) await phone.route(/cdn\.jsdelivr\.net\/npm\/three@[^/]+\/(.*)/, r => r.fulfill({ path: path.join(process.env.THREE_LOCAL, r.request().url().match(/three@[^/]+\/(.*)$/)[1]), contentType: 'application/javascript' }));
 await phone.route(/fonts\.g/, r => r.abort());
-await phone.goto(url, { waitUntil: 'load' });
+await phone.goto(url, { waitUntil: 'load', timeout: 0 });
 await phone.waitForFunction(() => window.battleBoard?.dev, null, { timeout: 60000 });
 
 await check('phone upright: a top-down camera, a small hand that fits the screen', async () => {
