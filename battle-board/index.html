@@ -5468,6 +5468,7 @@ function renderHud() {
     <span class="vx">${lvl ? '<span class="lvlstar">★</span>' : ''}${state.sneak ? '<span title="Sneaking">☾</span>' : ''}${c.wounds ? `<span title="Wounds: −10% maximum HP each until you camp" style="color:#ff8a7a">✚${c.wounds}</span>` : ''}${stIcons(c)}</span>`;
   $('vitals').title = `${c.name} · Level ${c.level} · AC ${d.ac}\nHP ${c.hp} / ${d.maxHp}${c.wounds ? ` (${c.wounds} wound${c.wounds > 1 ? 's' : ''})` : ''} · Mana ${c.mp ?? 0} / ${mmp} · ${c.gold} gp${lvl ? '\n★ ' + (c.pendingTalents?.length ? 'Choose a talent' : `${c.statPoints} stat points to spend`) : ''}\nClick for the character sheet`;
   $('vitals').setAttribute('aria-label', `Health ${c.hp} of ${d.maxHp}, mana ${c.mp ?? 0} of ${mmp}. Open the character sheet`);
+  const cur = entryOf(), heroTurn = ex || (cur?.t === 'h' && !busy);
   // the hand: an Attack card, then whatever you hold, in your order
   renderHand();
   // initiative tracker and boss health
