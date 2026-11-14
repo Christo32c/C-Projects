@@ -526,6 +526,108 @@
     #menuBtn { max-width: 34vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .partyframes { top: 44px; width: 132px; } .pf-mode { display: none; } .pf { padding: 4px 6px 4px 4px; } .pf .por { width: 24px; height: 24px; font-size: 11px; } .pf .nm span { display: none; }
   }
+
+  /* ---- THE HAND: attacks, spells, techniques and actions as a fan of cards ---- */
+  body { --cw: 112px; --ch: 158px; --peek: 96px; --tuck: 30px; --af: .82; --lz: 1.14; }
+  body.hand-tuck { --peek: var(--tuck); }
+  #playBar.handbar { position: absolute; left: 0; right: 0; bottom: 0; top: auto; transform: none; width: auto; max-width: none; height: var(--peek);
+                     display: block; padding: 0; margin: 0; background: none; border: 0; box-shadow: none; pointer-events: none; z-index: 4; transition: height .25s ease; }
+  .handbar .hand { position: absolute; left: 62px; right: 112px; top: 0; height: var(--ch); pointer-events: none; touch-action: none; }
+  .card { position: absolute; left: 0; top: 0; width: var(--cw); height: var(--ch); padding: 0; margin: 0; border: 0; background: none; color: var(--ink); font: inherit; text-align: left;
+          cursor: grab; pointer-events: auto; touch-action: none; -webkit-tap-highlight-color: transparent; z-index: var(--z, 1); transform-origin: 50% 100%;
+          transform: translate(calc(var(--x, 0) * 1px), calc(var(--y, 0) * 1px)) rotate(calc(var(--r, 0) * 1deg));
+          transition: transform .24s cubic-bezier(.2, .9, .3, 1.15), filter .2s, opacity .2s; }
+  .card.lift { transform: translate(calc(var(--x, 0) * 1px), calc(var(--peek) - var(--ch) - 12px)) scale(var(--lz)); z-index: 60; }
+  .card[aria-pressed="true"] { transform: translate(calc(var(--x, 0) * 1px), calc(var(--peek) - var(--ch) * var(--af))) scale(1.04); z-index: 55; }
+  .card[aria-pressed="true"].lift { transform: translate(calc(var(--x, 0) * 1px), calc(var(--peek) - var(--ch) - 12px)) scale(var(--lz)); z-index: 60; }
+  .card.held { opacity: .22; }
+  .card:focus-visible { outline: none; } .card:focus-visible .cf { box-shadow: 0 0 0 3px var(--brass), 0 10px 22px #000a; }
+  .card .cf { position: absolute; inset: 0; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column;
+              background: linear-gradient(180deg, color-mix(in srgb, var(--c) 12%, #241c15), #120d0a 70%);
+              border: 2px solid color-mix(in srgb, var(--c) 50%, #6b5a40);
+              box-shadow: 0 10px 22px #000b, inset 0 0 0 1px #000a, inset 0 0 22px color-mix(in srgb, var(--c) 16%, transparent); }
+  .card .cf::after { content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: 8px;
+                     background: linear-gradient(115deg, transparent 35%, #ffffff1c 45%, transparent 55%); background-size: 260% 100%; background-position: 120% 0; transition: background-position .6s; }
+  .card.lift .cf::after { background-position: -20% 0; }
+  .card .cn { position: relative; padding: 6px 7px 2px 27px; min-height: 31px; font: 600 12.5px/1.12 var(--display); letter-spacing: .02em; color: #f5e9cf; text-shadow: 0 1px 2px #000; }
+  .card .art { position: relative; flex: none; margin: 1px 6px 0; height: 54px; border-radius: 6px; display: grid; place-items: center; overflow: hidden;
+               background: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--c) 85%, #fff) 0%, color-mix(in srgb, var(--c) 45%, #000) 38%, #0b0806 100%);
+               box-shadow: inset 0 0 0 1px #000a, inset 0 -12px 18px #000a; }
+  .card .art::before { content: ''; position: absolute; inset: -50%; opacity: .45; mix-blend-mode: screen; animation: cardSwirl 10s linear infinite;
+                       background: conic-gradient(from 0deg, transparent 0 15%, color-mix(in srgb, var(--c) 55%, transparent) 25%, transparent 35% 60%, color-mix(in srgb, var(--c) 45%, transparent) 72%, transparent 82%); }
+  .card .art i { position: relative; font-style: normal; font-size: 30px; line-height: 1; color: #fff; text-shadow: 0 0 14px var(--c), 0 0 4px var(--c), 0 1px 2px #000; }
+  .card .art .cool { position: absolute; inset: 0; background: conic-gradient(#000c calc(var(--f, 0) * 360deg), transparent 0); }
+  .card .ct { flex: none; margin: 4px 7px 0; padding-bottom: 2px; font: 700 9px/1.2 var(--body); text-transform: uppercase; letter-spacing: .07em;
+              color: color-mix(in srgb, var(--c) 55%, #d8c9a8); border-bottom: 1px solid #ffffff17; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card .cx { margin: 3px 7px 0; font-size: 10.5px; line-height: 1.26; color: #d9cdb5; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; }
+  .card .cx b { color: #fff; }
+  .card .gem { position: absolute; top: 4px; left: 4px; z-index: 2; width: 22px; height: 22px; display: grid; place-items: center; font: 800 11.5px/1 var(--body); color: #fff; text-shadow: 0 1px 1px #000;
+               background: radial-gradient(circle at 35% 30%, #b4ccff, #2f4fc0 70%); clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+  .card .gem.short { background: radial-gradient(circle at 35% 30%, #ffb0a0, #a0301c 70%); }
+  .card .gem.cd { background: radial-gradient(circle at 35% 30%, #ffe6a8, #9a6a1c 70%); clip-path: circle(50%); }
+  .card .gem.qty { background: radial-gradient(circle at 35% 30%, #fff1d4, #8a6c46 70%); clip-path: circle(50%); color: #1c130c; text-shadow: none; }
+  .card .gem.atk { background: radial-gradient(circle at 35% 30%, #f3dfb2, #8c6a32 70%); clip-path: polygon(50% 0, 100% 30%, 82% 100%, 18% 100%, 0 30%); color: #1c130c; text-shadow: none; font-size: 10px; }
+  .card .ck { position: absolute; right: 6px; bottom: 4px; font: 700 10px/1 var(--body); color: #8f826c; }
+  .card .rib { position: absolute; top: 34px; right: -26px; z-index: 3; transform: rotate(40deg); padding: 1px 26px; font: 800 8px/1.4 var(--body); letter-spacing: .12em; color: #1a120b; background: var(--c); box-shadow: 0 1px 3px #000a; }
+  .card.k-atk .cf { background: linear-gradient(180deg, #2e2a25, #121010 70%); border-color: #bda57a; }
+  .card.k-tech .cf { border-color: color-mix(in srgb, var(--c) 40%, #c9a45a); }
+  .card.k-act .cf { background: linear-gradient(180deg, #2c2519, #15100a 70%); }
+  .card.off { filter: grayscale(.8) brightness(.6); cursor: not-allowed; }
+  .card.off.lift { filter: grayscale(.55) brightness(.8); }
+  .card.on .cf { border-color: var(--c); box-shadow: 0 0 0 1px var(--c), 0 0 18px color-mix(in srgb, var(--c) 70%, transparent), 0 10px 22px #000b; }
+  .card[aria-pressed="true"] .cf { border-color: #fff1c8; box-shadow: 0 0 0 2px var(--c), 0 0 30px var(--c), 0 14px 26px #000c; }
+  .card[aria-pressed="true"] .art::before { animation-duration: 2.5s; opacity: .8; }
+  .card.shake { animation: cardNo .3s; }
+  @keyframes cardSwirl { to { transform: rotate(360deg); } }
+  @keyframes cardNo { 25% { margin-left: -5px; } 75% { margin-left: 5px; } }
+  .card.ghost { position: fixed; left: 0; top: 0; z-index: 120; pointer-events: none; transition: transform .14s ease-out, filter .2s;
+                transform: translate(calc(var(--gx) * 1px - 50%), calc(var(--gy) * 1px - 88%)) rotate(-5deg) scale(1.05); }
+  .card.ghost.over { transform: translate(calc(var(--gx) * 1px - 50%), calc(var(--gy) * 1px - 112%)) rotate(0) scale(.58); filter: drop-shadow(0 0 14px var(--c)); }
+  .card.ghost.over.hit .cf { border-color: #fff; }
+  .card.fly { position: fixed; z-index: 120; pointer-events: none; transform: none; animation: cardFly .62s cubic-bezier(.4, 0, .7, .2) forwards; }
+  @keyframes cardFly { 0% { transform: scale(1.1); } 30% { transform: translateY(-50px) scale(1.18); filter: brightness(1.3); } 100% { transform: translateY(-190px) scale(.55) rotate(-8deg); opacity: 0; filter: brightness(2.4) blur(2px); } }
+  .handbar .turninfo { position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%); white-space: nowrap; pointer-events: none; z-index: 0; }
+  .handbar .handside { position: absolute; left: 12px; bottom: 12px; display: flex; flex-direction: column; gap: 6px; pointer-events: auto; }
+  .hbtn { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; padding: 0; font-size: 15px; color: var(--muted); cursor: pointer;
+          border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 90%, transparent); box-shadow: 0 4px 10px #0008; }
+  .hbtn:hover, .hbtn[aria-pressed="true"] { color: var(--brass); border-color: var(--brass); }
+  .handbar .seal { position: absolute; right: 14px; bottom: 12px; width: 84px; height: 84px; border-radius: 50%; padding: 6px; pointer-events: auto; cursor: pointer;
+                   display: grid; place-items: center; text-align: center; font: 700 12.5px/1.05 var(--display); letter-spacing: .04em; color: #fbe9c8; text-shadow: 0 1px 2px #000;
+                   border: 2px solid #d9b56a; background: radial-gradient(circle at 38% 32%, #c8492f, #7e1d12 62%, #4a0e08);
+                   box-shadow: 0 8px 18px #000b, inset 0 0 0 5px #0003, inset 0 2px 6px #ffffff40; transition: transform .2s, filter .2s; }
+  .handbar .seal:not(:disabled):hover { transform: scale(1.06) rotate(-5deg); }
+  .handbar .seal:disabled { filter: grayscale(.85) brightness(.55); cursor: default; }
+  .cardzoom { position: absolute; inset: 0; z-index: 130; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+              background: #000b; backdrop-filter: blur(3px); }
+  .cardzoom .card.big { position: relative; --cw: min(240px, 62vw); --ch: min(340px, 88vw); transform: none; cursor: default; }
+  .cardzoom .card.big .cn { font-size: 19px; padding: 10px 12px 4px 44px; min-height: 48px; }
+  .cardzoom .card.big .gem { width: 36px; height: 36px; font-size: 17px; top: 7px; left: 7px; }
+  .cardzoom .card.big .art { height: 34%; margin: 2px 10px 0; } .cardzoom .card.big .art i { font-size: 64px; }
+  .cardzoom .card.big .ct { font-size: 11.5px; margin: 8px 12px 0; }
+  .cardzoom .card.big .cx { font-size: 14px; margin: 6px 12px; -webkit-line-clamp: 9; display: -webkit-box; }
+  .cardzoom .card.big .ck { font-size: 13px; }
+  .cardzoom .zrow { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; max-width: 90%; }
+  .cardzoom .zrow p { width: 100%; text-align: center; margin: 0; }
+  body[data-mode="play"] .aim { bottom: calc(var(--peek) + 44px); }
+  body[data-mode="play"] .toast { bottom: calc(var(--peek) + 44px); }
+  @media (prefers-reduced-motion: reduce) { .card, .card .art::before { transition: none; animation: none; } }
+  @media (max-width: 700px), (max-height: 520px) {
+    body { --cw: 72px; --ch: 102px; --peek: 66px; --tuck: 22px; --af: .78; --lz: 1.5; }
+    body.hand-armed { --peek: var(--tuck); }
+    .handbar .hand { left: 44px; right: 66px; }
+    .card .cf { border-radius: 7px; border-width: 1.5px; }
+    .card .cn { font-size: 9.5px; padding: 3px 4px 1px 19px; min-height: 24px; }
+    .card .gem { width: 17px; height: 17px; font-size: 9.5px; top: 3px; left: 2px; }
+    .card .art { height: 34px; margin: 0 4px; } .card .art i { font-size: 20px; }
+    .card .ct { font-size: 6.5px; margin: 2px 4px 0; }
+    .card .cx { display: none; }
+    .card.lift .cx { display: -webkit-box; font-size: 6.6px; margin: 2px 4px 0; -webkit-line-clamp: 4; }
+    .card .ck { font-size: 8px; right: 4px; bottom: 2px; }
+    .card .rib { top: 24px; font-size: 6px; }
+    .handbar .handside { left: 6px; bottom: 6px; gap: 4px; } .hbtn { width: 32px; height: 32px; font-size: 13px; }
+    .handbar .seal { right: 6px; bottom: 6px; width: 56px; height: 56px; font-size: 10px; padding: 4px; }
+    .handbar .turninfo { font-size: 10px; }
+  }
 </style>
 <script type="importmap">
 { "imports": {
@@ -581,14 +683,16 @@
     </div>
     <button class="vit" id="vitals" title="Open the character sheet"></button>
     <button class="sbtn sbtoggle" id="sbToggle" aria-expanded="false" aria-controls="sideBtns" title="Show or hide the side buttons">☰</button>
-    <div class="hotbar-wrap" id="playBar">
+    <div class="handbar" id="playBar">
       <span class="turninfo" id="turnInfo"></span>
-      <div class="hotrow">
-        <div class="hotbar" id="spellbar" role="toolbar" aria-label="Hotbar"></div>
-        <button class="slot edit" id="hotEdit" title="Customise the hotbar: choose what is on it and in what order">✎</button>
-        <button class="btn primary" id="endBtn" title="End your turn (Space)">End turn</button>
+      <div class="hand" id="spellbar" role="toolbar" aria-label="Your hand of cards: tap or click to play, drag onto the board to aim, hold to read"></div>
+      <div class="handside">
+        <button class="hbtn" id="hotEdit" title="Arrange your hand: choose which cards you hold and in what order">✎</button>
+        <button class="hbtn" id="handTuck" aria-pressed="false" title="Lower the hand to see more of the board">▾</button>
       </div>
+      <button class="seal" id="endBtn" title="End your turn (Space)">End turn</button>
     </div>
+    <div class="cardzoom" id="cardZoom" hidden></div>
   </main>
 
   <aside class="panel" id="edPanel" aria-label="Dungeon creator"></aside>
@@ -1060,6 +1164,8 @@ const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
 const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+// the lens: which part of the screen the board may use (the hand covers the bottom) and the camera profile for this screen shape
+const LENS = { top: 0, bot: 0, cur: 0, base: 45, safeH: 1, key: '', prof: '' };
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.maxPolarAngle = Math.PI * 0.45;
@@ -2357,6 +2463,7 @@ const SFX = (() => {
     drip() { tone({ dur: 0.07, f0: R(1100, 1700), f1: R(380, 520), vol: 0.09, wet: 1 }); },
     bump() { tone({ dur: 0.09, f0: 120, f1: 60, vol: 0.2, wet: 0.2 }); },
     step(v = 1) { noise({ dur: 0.07, f0: R(380, 620), f1: 160, vol: 0.11 * v, wet: 0.25 }); },
+    card(up) { noise({ dur: up ? 0.16 : 0.07, type: 'bandpass', f0: up ? 1400 : 3200, f1: up ? 4200 : 2400, q: 1.2, vol: up ? 0.1 : 0.06, a: 0.005, wet: 0.08 }); },
     swing() { noise({ dur: 0.18, type: 'bandpass', f0: 500, f1: 2600, q: 2, vol: 0.22, a: 0.04, wet: 0.2 }); },
     hit() { tone({ dur: 0.2, f0: 150, f1: 45, vol: 0.5, wet: 0.3 }); noise({ dur: 0.09, f0: 2500, f1: 300, vol: 0.35, wet: 0.3 }); },
     clank() { tone({ dur: 0.35, wave: 'triangle', f0: 1650, f1: 1500, vol: 0.06, wet: 0.5 }); tone({ dur: 0.3, wave: 'triangle', f0: 2370, f1: 2200, vol: 0.04, wet: 0.5 }); },
@@ -4201,7 +4308,7 @@ function endCombat() {
   state.combat = null; busy = false;
   for (const c of state.creatures) c.status = [];   // the party's effects keep counting down as they walk
   for (const m of state.party) { m.turn = freshTurn(m.char); m.done = false; m.char.cd = {}; }
-  ui.tech = null;
+  ui.tech = null; ui.atk = false;
   after(0.8, () => { if (!noticeBusy && noticeQ.length) showNextNotice(); });
   refresh();
 }
@@ -4842,6 +4949,7 @@ const mapHasExit = () => MAP.rows.some(r => r.includes('X'));
 
 function attack(c) {
   if (state.over) return;
+  if (ui.atk) { ui.atk = false; $('aim').hidden = true; }
   const d = derived(), w = d.weapon, m = MONSTERS[c.type];
   if (!c.alive) return;
   if (!state.turn.action) return toast('You have already used your action. End your turn to act again.');
@@ -5175,7 +5283,7 @@ function selectSpell(key) {
     if (!state.turn.action) return toast('Casting a spell uses your action, and it is already spent.');
     if ((state.char.mp ?? 0) < costOf(sp)) return toast(`${sp.name} costs ${costOf(sp)} mana. You have ${state.char.mp}.`);
   }
-  ui.spell = key; ui.aim = null; clearPath();
+  ui.spell = key; ui.aim = null; ui.atk = false; ui.tech = null; clearPath();
   const aim = $('aim'); aim.hidden = false; aim.style.setProperty('--c', sp.color);
   aim.textContent = `${sp.name} (${sp.cost} MP): ${window.matchMedia('(pointer: coarse)').matches ? 'tap' : 'click'} ${sp.target === 'enemy' && sp.shape === 'single' ? 'a creature' : sp.target === 'ally' && sp.shape === 'single' ? 'a party member (or yourself)' : 'a square'} within ${sp.range * 5} ft. Esc cancels.`;
   refresh();
@@ -5360,25 +5468,8 @@ function renderHud() {
     <span class="vx">${lvl ? '<span class="lvlstar">★</span>' : ''}${state.sneak ? '<span title="Sneaking">☾</span>' : ''}${c.wounds ? `<span title="Wounds: −10% maximum HP each until you camp" style="color:#ff8a7a">✚${c.wounds}</span>` : ''}${stIcons(c)}</span>`;
   $('vitals').title = `${c.name} · Level ${c.level} · AC ${d.ac}\nHP ${c.hp} / ${d.maxHp}${c.wounds ? ` (${c.wounds} wound${c.wounds > 1 ? 's' : ''})` : ''} · Mana ${c.mp ?? 0} / ${mmp} · ${c.gold} gp${lvl ? '\n★ ' + (c.pendingTalents?.length ? 'Choose a talent' : `${c.statPoints} stat points to spend`) : ''}\nClick for the character sheet`;
   $('vitals').setAttribute('aria-label', `Health ${c.hp} of ${d.maxHp}, mana ${c.mp ?? 0} of ${mmp}. Open the character sheet`);
-  // the hotbar: whatever you put on it, in your order
-  const actOk = ex || t.action;
-  const cur = entryOf(), heroTurn = ex || (cur?.t === 'h' && !busy);
-  $('spellbar').innerHTML = hotbarOf(c).map((id, n) => {
-    const key = n < 10 ? `<span class="k">${(n + 1) % 10}</span>` : '';
-    if (id.startsWith('s:')) {
-      const k = id.slice(2), sp = SPELLS[k], off = busy || !heroTurn || (!freeCast() && ((!ex && !t.action) || (c.mp ?? 0) < costOf(sp, c)));
-      return `<button class="slot sp" style="--c:${sp.color}" data-spell="${k}" aria-pressed="${ui.spell === k}" ${off ? 'disabled' : ''} aria-label="${sp.name}"
-        title="${sp.name}${n < 10 ? ` (${(n + 1) % 10})` : ''}: ${costOf(sp, c)} MP · ${sp.area} · ${sp.range * 5} ft. ${esc(sp.desc)}">${key}<span class="q">${costOf(sp, c)}</span><span class="ic">${sp.icon || '✦'}</span></button>`;
-    }
-    if (id.startsWith('t:')) {
-      const k = id.slice(2), T = TECHS[k], cd = c.cd?.[k] || 0, why = techBlock(k, c), off = busy || !heroTurn || !!why;
-      return `<button class="slot tech" style="--c:${T.color}" data-tech="${k}" aria-pressed="${ui.tech === k}" ${off ? 'disabled' : ''} aria-label="${T.name}"
-        title="${T.name}${n < 10 ? ` (${(n + 1) % 10})` : ''}: ${esc(T.desc)} Ready again after ${T.cd ? T.cd + ' turns' : 'the fight'}.${why ? ' — ' + esc(why) : ''}">${key}${cd ? `<span class="q">${cd}⏳</span>` : ''}<span class="ic">${T.icon}</span></button>`;
-    }
-    const A = HOT_ACTIONS[id], s = A.state(c, { ex, t, actOk });
-    return `<button class="slot" style="--c:${A.color}" data-hot="${id}" ${s.off || busy ? 'disabled' : ''} aria-pressed="${!!s.on}" aria-label="${A.name}" title="${A.name}${n < 10 ? ` (${(n + 1) % 10}, or ${A.key})` : ` (${A.key})`}: ${A.desc}">
-      ${key}${s.qty ? `<span class="q">×${s.qty}</span>` : ''}<span class="ic">${A.icon}</span></button>`;
-  }).join('');
+  // the hand: an Attack card, then whatever you hold, in your order
+  renderHand();
   // initiative tracker and boss health
   const cb = state.combat;
   $('initBar').hidden = !cb || ex;
@@ -5606,7 +5697,6 @@ document.querySelector('.tabs').addEventListener('click', e => {
 $('charName').addEventListener('input', e => { state.char.name = e.target.value || 'Unnamed hero'; save(); });
 $('charName').addEventListener('change', () => renderPanel());
 $('charColor').addEventListener('input', e => { state.char.color = e.target.value; dressHero(); save(); });
-$('spellbar').addEventListener('click', e => { const b = e.target.closest('[data-spell]'); if (b) selectSpell(b.dataset.spell); });
 
 $('panel').addEventListener('change', e => {
   if (e.target.id === 'sandbox') { ui.sandbox = e.target.checked; savePrefs(); refresh(); }
@@ -5673,7 +5763,6 @@ function useHot(h) {
   if (h === 'potion') { const p = ['potion', 'greater', 'goblinStew'].find(k => invEntry(k)); if (!p) return toast('You have no healing left.'); useItem(p); refresh(); save(); }
   if (h === 'mana') { if (!invEntry('manaPotion')) return toast('You have no mana potions.'); useItem('manaPotion'); refresh(); save(); }
 }
-$('spellbar').addEventListener('click', e => { const h = e.target.closest('[data-hot]'); if (h) useHot(h.dataset.hot); });
 $('initBar').addEventListener('click', () => setPanel('log'));
 // the drawer: character sheet, inventory, spells and log open and close over the board
 function setPanel(tab) {
@@ -5708,7 +5797,7 @@ window.addEventListener('keydown', e => {
   if (!playing() || e.target.closest('input, select, textarea') || !$('modal').hidden) return;
   const key = remapKey(e.key.toLowerCase()), digit = /^[0-9]$/.test(e.key) ? (+e.key + 9) % 10 : -1, k = digit >= 0 ? hotbarOf()[digit] : null;
   if (k) { if (k.startsWith('s:')) selectSpell(k.slice(2)); else if (k.startsWith('t:')) useTech(k.slice(2)); else useHot(k); e.preventDefault(); }
-  else if (e.key === 'Escape') { if (ui.tech) { ui.tech = null; $('aim').hidden = true; refresh(); } else if (ui.spell) cancelSpell(); else if (ui.panelOpen) setPanel(null); }
+  else if (e.key === 'Escape') { if ($('cardZoom') && !$('cardZoom').hidden) $('cardZoom').hidden = true; else if (ui.atk) armAttack(false); else if (ui.tech) { ui.tech = null; $('aim').hidden = true; refresh(); } else if (ui.spell) cancelSpell(); else if (ui.panelOpen) setPanel(null); }
   else if (key === 'q') useHot('potion');
   else if (key === 'e') useHot('mana');
   else if (key === 'f') useHot('search');
@@ -5867,7 +5956,7 @@ function resetView() {
   if (!playing()) {
     controls.target.set(0, 0, 0); camera.position.set(0, 13, 12); controls.update(); return;
   }
-  CAM.focus = hero; CAM.anim = null; CAM.dist = 3.6; CAM.elev = 0.42;
+  const P = camProfile(); CAM.focus = hero; CAM.anim = null; CAM.dist = P.dist; CAM.elev = P.elev; CAM.framed = false;
   const f = nearestFoe(), yaw = f ? Math.atan2(f.x - state.pos.x, f.z - state.pos.z) : (hero.rotation.y || Math.PI);
   FP.yaw = yaw; FP.want = null; FP.pitch = -0.05;
   if (!anim) { hero.rotation.y = yaw; faceAt = null; }   // the hero looks where the camera looks
@@ -5880,6 +5969,7 @@ function resize() {
   composer.setSize(r.width, r.height);
   camera.aspect = r.width / Math.max(1, r.height); camera.updateProjectionMatrix();
   pScale.value = r.height * renderer.getPixelRatio() / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)));
+  LENS.key = '';
 }
 new ResizeObserver(resize).observe(stage);
 
@@ -7661,11 +7751,7 @@ const drops = [];
 function immersionTick(dt, time) {
   const fp = fpOn(), dark = !!MAP.dark, play = playing();
   // lens
-  const cw = canvas.clientWidth, chh = canvas.clientHeight, wantFov = fp ? 76 : 45, wantAspect = cw / Math.max(1, chh * (fp ? 1.2 : 1));
-  if (camera.fov !== wantFov || Math.abs(camera.aspect - wantAspect) > 1e-4 || !!camera.view !== fp || (fp && camera.view.fullWidth !== cw)) {
-    if (!fp) { camera.clearViewOffset(); camera.fov = 45; resize(); }
-    else { camera.fov = 76; resize(); camera.aspect = wantAspect; camera.setViewOffset(cw, chh * 1.2, 0, chh * 0.2, cw, chh); }
-  }
+  lensTick(dt);
   if (play) hero.visible = !fp;
   FP.rig.visible = fp && state.char.hp > 0;
   if (ceiling) ceiling.visible = fp && dark;
@@ -7750,12 +7836,12 @@ function openHotbar() {
   };
   const body = () => {
     const bar = hotbarOf(c), rest = [...knownTechs(c).map(k => 't:' + k), ...knownSpells(c).map(k => 's:' + k), ...Object.keys(HOT_ACTIONS)].filter(id => !bar.includes(id));
-    return `<p class="muted">Up to ${HOT_MAX} slots. Keys 1 to 0 fire the first ten, left to right. Each hero has their own hotbar.</p>
-      <h3>On the hotbar (${bar.length})</h3>${bar.map((id, n) => row(id, n, true)).join('') || '<p class="muted">Nothing yet.</p>'}
-      <h3 style="margin-top:14px">Available</h3>${rest.map(id => row(id, 0, false)).join('') || '<p class="muted">Everything is on the hotbar.</p>'}
+    return `<p class="muted">Your Attack card is always in your hand. Hold up to ${HOT_MAX} more. Keys 1 to 0 play the first ten after it, left to right. Each hero has their own hand.</p>
+      <h3>In your hand (${bar.length})</h3>${bar.map((id, n) => row(id, n, true)).join('') || '<p class="muted">Nothing yet.</p>'}
+      <h3 style="margin-top:14px">Available</h3>${rest.map(id => row(id, 0, false)).join('') || '<p class="muted">Everything is in your hand.</p>'}
       <div class="row" style="margin-top:12px"><button class="btn small" data-hb="reset">Reset to the default</button></div>`;
   };
-  showModal('Customise the hotbar', body(), [{ label: 'Done', primary: true }]);
+  showModal('Arrange your hand', body(), [{ label: 'Done', primary: true }]);
   const mb = $('mBody');
   mb.onclick = e => {
     const b = e.target.closest('[data-hb]'); if (!b) return;
@@ -7763,7 +7849,7 @@ function openHotbar() {
     if (act === 'reset') { delete c.hotbar; }
     else {
       const i = bar.indexOf(id);
-      if (act === 'on') { if (bar.length >= HOT_MAX) return toast(`The hotbar holds ${HOT_MAX}. Remove something first.`); bar.push(id); }
+      if (act === 'on') { if (bar.length >= HOT_MAX) return toast(`Your hand holds ${HOT_MAX} besides the Attack card. Remove one first.`); bar.push(id); }
       if (act === 'off') bar.splice(i, 1);
       if (act === 'up' && i > 0) [bar[i - 1], bar[i]] = [bar[i], bar[i - 1]];
       if (act === 'down' && i < bar.length - 1) [bar[i + 1], bar[i]] = [bar[i], bar[i + 1]];
@@ -7819,7 +7905,7 @@ function useTech(k) {
   if (!techReady(k)) return;
   if (ui.spell) cancelSpell();
   if (!T.self) {   // armed: it rides on your next attack
-    ui.tech = k;
+    ui.tech = k; ui.atk = false;
     $('aim').hidden = false; $('aim').style.setProperty('--c', T.color); $('aim').textContent = `${T.name}: choose a target (Esc to cancel)`;
     return refresh();
   }
@@ -7830,7 +7916,6 @@ function useTech(k) {
   floatText(T.name + '!', above(hero, 1.5), 'xp'); SFX.swing();
   refresh(); save();
 }
-$('spellbar').addEventListener('click', e => { const b = e.target.closest('[data-tech]'); if (b) useTech(b.dataset.tech); });
 function techHtml(c) {
   const all = KIT_TECHS[c.kit] || []; if (!all.length) return '';
   const mt = MARTIAL[c.kit];
@@ -7840,6 +7925,271 @@ function techHtml(c) {
   </div>`;
 }
 
+
+/* ================================================================== *
+ * THE HAND: your attack, spells, techniques and actions as a fan of cards.
+ * Tap or click a card to play it. Drag it up onto the board to aim it. Slide along the hand to look through it; hold (or right-click) to read one.
+ * Aimed cards lift and the camera pulls back to frame what they can reach; on a phone the rest of the hand drops out of the way.
+ * ================================================================== */
+const HAND = { els: new Map(), hover: -1, press: null, armed: null };
+const handSmall = () => window.matchMedia('(max-width: 700px), (max-height: 520px)').matches;
+const handIds = (c = state.char) => ['atk', ...hotbarOf(c)];
+const CARD_TYPE = { sneak: 'Stance', torch: 'Light', fp: 'View', tac: 'View' };
+function cardInfo(id, c, s) {
+  const key = s.n >= 0 && s.n < 10 ? (s.n + 1) % 10 : '';
+  if (id === 'atk') {
+    const d = derived(), w = d.weapon, why = !s.heroTurn ? 'Not your turn.' : !s.t.action ? 'Your action is spent this turn.' : '';
+    const dice = w === UNARMED ? `${Math.max(1, 1 + d.dmgMod)}` : `${w.dice[0]}d${w.dice[1]}${d.dmgMod ? ' ' + fmt(d.dmgMod) : ''}${w.extra ? ` + ${w.extra[0]}d${w.extra[1]}` : ''}`;
+    const tech = ui.tech ? TECHS[ui.tech] : null;
+    return { kind: 'atk', name: w === UNARMED ? 'Unarmed Strike' : w.name, icon: w.ranged ? '➶' : w === UNARMED ? '✊' : '⚔', color: tech ? tech.color : '#e6cf9c',
+      type: `Attack · ${w.ranged ? w.range * 5 + ' ft' : 'melee'}`, gem: fmt(d.atk), gemCls: 'atk',
+      text: `<b>${fmt(d.atk)}</b> to hit, <b>${dice}</b> ${w.dmgType || ''} damage.${tech ? ` Carries <b>${tech.name}</b>.` : ''} Drag it onto an enemy, or tap it, then tap one.`,
+      off: busy || !!why, why, armed: !!ui.atk || !!ui.tech, key: '' };
+  }
+  if (id.startsWith('s:')) {
+    const k = id.slice(2), sp = SPELLS[k], cost = costOf(sp, c), short = !freeCast() && (c.mp ?? 0) < cost;
+    const why = !s.heroTurn ? 'Not your turn.' : !freeCast() && !s.ex && !s.t.action ? 'Casting uses your action, and it is spent.' : short ? `${sp.name} costs ${cost} mana. You have ${c.mp ?? 0}.` : '';
+    return { kind: 'spell', name: sp.name, icon: sp.icon || '✦', color: sp.color, type: `Spell · ${rangeOf(sp, c) * 5} ft · ${sp.area}`, gem: cost, gemCls: short ? 'short' : '',
+      text: esc(sp.desc), off: busy || !!why, why, armed: ui.spell === k, key };
+  }
+  if (id.startsWith('t:')) {
+    const k = id.slice(2), T = TECHS[k], cd = c.cd?.[k] || 0, why = !s.heroTurn ? 'Not your turn.' : techBlock(k, c);
+    return { kind: 'tech', name: T.name, icon: T.icon, color: T.color, type: `Technique · ${T.cd ? T.cd + '-turn cooldown' : 'once a fight'}`, gem: cd || '', gemCls: 'cd',
+      cool: cd && T.cd ? cd / T.cd : 0, text: esc(T.desc), off: busy || !!why, why, armed: ui.tech === k, key };
+  }
+  const A = HOT_ACTIONS[id], st = A.state(c, s);
+  return { kind: 'act', name: A.name, icon: A.icon, color: A.color, type: `${CARD_TYPE[id] || 'Action'}${A.key && A.key !== 'click' ? ' · ' + A.key : ''}`, gem: st.qty ? st.qty : '', gemCls: 'qty',
+    text: esc(A.desc), off: busy || !!st.off, why: st.off ? (id === 'dash' && s.ex ? 'Dash only matters in a fight.' : st.qty === undefined && ['potion', 'mana', 'torch'].includes(id) ? 'You have none.' : 'Not right now.') : '', on: !!st.on, key };
+}
+const cardHtml = i => `<span class="cf">${i.gem !== '' && i.gem !== undefined ? `<span class="gem ${i.gemCls || ''}">${i.gem}</span>` : ''}
+  <span class="cn">${esc(i.name)}</span><span class="art">${i.cool ? `<span class="cool" style="--f:${i.cool}"></span>` : ''}<i>${i.icon}</i></span>
+  <span class="ct">${esc(i.type)}</span><span class="cx">${i.text}</span>${i.key !== '' ? `<span class="ck">${i.key}</span>` : ''}${i.on ? '<span class="rib">ACTIVE</span>' : ''}</span>`;
+function renderHand() {
+  const el = $('spellbar'), c = state.char, t = state.turn, ex = exploring(), cur = entryOf();
+  const s = { ex, t, actOk: ex || t.action, heroTurn: ex || (cur?.t === 'h' && !busy) };
+  const ids = handIds(c), seen = new Set();
+  ids.forEach((id, i) => {
+    const info = cardInfo(id, c, { ...s, n: i - 1 });
+    let b = HAND.els.get(id);
+    if (!b) {
+      b = document.createElement('button'); b.type = 'button'; b.dataset.id = id; HAND.els.set(id, b);
+      if (id === 'atk') b.dataset.card = 'atk'; else if (id.startsWith('s:')) b.dataset.spell = id.slice(2); else if (id.startsWith('t:')) b.dataset.tech = id.slice(2); else b.dataset.hot = id;
+      el.appendChild(b);
+    }
+    const html = cardHtml(info);
+    if (b._h !== html) { b.innerHTML = html; b._h = html; }
+    const cls = `card k-${info.kind}${info.off ? ' off' : ''}${info.on ? ' on' : ''}${i === HAND.hover ? ' lift' : ''}${HAND.press?.drag && HAND.press.id === id ? ' held' : ''}`;
+    if (b.className !== cls) b.className = cls;
+    b.style.setProperty('--c', info.color);
+    b.setAttribute('aria-pressed', !!info.armed); b.setAttribute('aria-disabled', !!info.off);
+    b.setAttribute('aria-label', `${info.name}. ${info.type}.${info.why ? ' ' + info.why : ''}`);
+    b.dataset.why = info.why || ''; b.title = info.why || '';
+    seen.add(id);
+  });
+  for (const [id, b] of HAND.els) if (!seen.has(id)) { b.remove(); HAND.els.delete(id); }
+  if ([...el.children].some((b, i) => b.dataset.id !== ids[i])) ids.forEach(id => el.appendChild(HAND.els.get(id)));
+  const armed = ui.spell ? 's:' + ui.spell : ui.tech ? 't:' + ui.tech : ui.atk ? 'atk' : null;
+  document.body.classList.toggle('hand-armed', !!armed);
+  layoutHand();
+  if (armed !== HAND.armed) { HAND.armed = armed; frameForCard(); }
+}
+function layoutHand() {
+  const el = $('spellbar'), cards = [...el.children], n = cards.length; if (!n) return;
+  const cw = parseFloat(getComputedStyle(document.body).getPropertyValue('--cw')) || 112;
+  const avail = el.clientWidth, step = n > 1 ? Math.max(8, Math.min(cw * 0.94, (avail - cw) / (n - 1))) : 0;
+  const total = cw + step * (n - 1), x0 = (avail - total) / 2, half = Math.max(1, (n - 1) / 2), spread = Math.min(4, 30 / n), arc = cw * 0.1;
+  const h = HAND.hover, gap = h >= 0 && step < cw * 0.8 ? Math.min(cw * 0.32, cw * 0.8 - step) : 0;
+  HAND.geo = { x0, step, cw, n };
+  cards.forEach((b, i) => {
+    const k = n > 1 ? i - (n - 1) / 2 : 0, push = gap ? (i < h ? -gap : i > h ? gap : 0) : 0;
+    b.style.setProperty('--x', (x0 + i * step + push).toFixed(1));
+    b.style.setProperty('--r', (k * spread).toFixed(2));
+    b.style.setProperty('--y', ((k / half) ** 2 * arc).toFixed(1));
+    b.style.setProperty('--z', i + 1);
+    b.classList.toggle('lift', i === h);
+  });
+  // how much of the screen the hand takes: the board is centred in what is left
+  const z = parseFloat(getComputedStyle($('playBar')).zoom) || 1, bs = getComputedStyle(document.body);
+  LENS.bot = playing() ? (parseFloat(bs.getPropertyValue('--peek')) || 0) * z : 0;
+  LENS.top = playing() ? 44 * z : 0;
+}
+function cardIndexAt(x) {
+  const g = HAND.geo; if (!g) return -1;
+  const r = $('spellbar').getBoundingClientRect(), z = parseFloat(getComputedStyle($('playBar')).zoom) || 1, lx = (x - r.left) / z;
+  if (lx < g.x0 - 6 || lx > g.x0 + g.step * (g.n - 1) + g.cw + 6) return -1;
+  return Math.max(0, Math.min(g.n - 1, Math.floor((lx - g.x0 - (g.cw - g.step) / 2) / Math.max(1, g.step) + 0.5)));
+}
+function setHandHover(i) { if (i === HAND.hover) return; HAND.hover = i; if (i >= 0) SFX.card(); layoutHand(); }
+const handTop = () => $('playBar').getBoundingClientRect().top;
+const cardAims = id => id === 'atk' || id.startsWith('s:') || (id.startsWith('t:') && !TECHS[id.slice(2)].self);
+function shakeCard(b) { if (!b) return; b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); }
+function flyCard(b) {
+  if (!b || reduceMotion) return;
+  const r = b.getBoundingClientRect(), g = document.createElement('div');
+  g.className = 'card fly k-' + (b.className.match(/k-(\w+)/)?.[1] || 'act'); g.innerHTML = b.innerHTML;
+  g.style.cssText = `--c:${b.style.getPropertyValue('--c')};left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px`;
+  $('stage').appendChild(g); setTimeout(() => g.remove(), 700); SFX.card(true);
+}
+function armAttack(on) {
+  if (on) {
+    if (ui.spell) cancelSpell();
+    const w = derived().weapon;
+    ui.atk = true; const aim = $('aim'); aim.hidden = false; aim.style.setProperty('--c', '#e6cf9c');
+    aim.textContent = `Attack with your ${w === UNARMED ? 'fists' : w.name.toLowerCase()}: ${window.matchMedia('(pointer: coarse)').matches ? 'tap' : 'click'} an enemy. Esc cancels.`;
+  } else { ui.atk = false; if (!ui.spell && !ui.tech) $('aim').hidden = true; }
+  refresh();
+}
+// play a card: aimed cards arm (tap again to put them down), the rest act at once
+function playCard(id) {
+  if (!playing() || state.over) return;
+  const b = HAND.els.get(id);
+  if (b?.getAttribute('aria-disabled') === 'true') { if (b.dataset.why) toast(b.dataset.why); shakeCard(b); SFX.bump(); return; }
+  SFX.card(true);
+  if (id === 'atk') return ui.tech ? useTech(ui.tech) : armAttack(!ui.atk);
+  if (id.startsWith('s:')) return selectSpell(id.slice(2));
+  if (id.startsWith('t:')) { const k = id.slice(2); if (TECHS[k].self) flyCard(b); return useTech(k); }
+  if (['potion', 'mana', 'search', 'dash', 'torch'].includes(id)) flyCard(b);
+  useHot(id);
+}
+// arm the card being dragged; false if it can't be
+function armForDrag(id) {
+  if (id === 'atk') { if (!ui.atk && !ui.tech) armAttack(true); return true; }
+  if (id.startsWith('s:')) { const k = id.slice(2); if (ui.spell !== k) selectSpell(k); return ui.spell === k; }
+  if (id.startsWith('t:')) { const k = id.slice(2); if (ui.tech !== k) useTech(k); return ui.tech === k; }
+  return true;
+}
+function dragOverBoard(e) {
+  const P = HAND.press, g = P.ghost, over = e.clientY < handTop() - 6;
+  g.style.setProperty('--gx', e.clientX); g.style.setProperty('--gy', e.clientY);
+  g.classList.toggle('over', over);
+  if (!over || !cardAims(P.id)) { if (ui.spell) previewSpell(null); else clearPath(); g.classList.remove('hit'); return; }
+  const p = pick(e);
+  if (P.id.startsWith('s:')) { previewSpell(tileOf(p)); g.classList.toggle('hit', !!p); return; }
+  const c = p && p.kind === 'creature' ? creatureById(p.cid) : null, hov = c?.alive ? c.id : null;
+  g.classList.toggle('hit', !!hov);
+  if (hov !== ui.hover) { ui.hover = hov; renderHud(); }
+  if (c?.alive) { const w = worldOf(c.x, c.z); hoverBox.position.set(w.x, Math.max(w.y, 0.2) + 0.01, w.z); hoverBox.visible = true; } else hoverBox.visible = false;
+}
+function dropCard(e) {
+  const P = HAND.press, id = P.id, over = e.clientY < handTop() - 6;
+  P.ghost?.remove(); HAND.els.get(id)?.classList.remove('held');
+  if (!over) { if (P.armedHere) { if (id === 'atk') armAttack(false); else if (id.startsWith('s:')) cancelSpell(); else if (ui.tech) { ui.tech = null; $('aim').hidden = true; refresh(); } } return; }
+  if (!cardAims(id)) return playCard(id);
+  const p = pick(e);
+  if (id.startsWith('s:')) { const t = tileOf(p); if (!t) return toast('Drop it on the board.'); return cast(id.slice(2), t.x, t.z); }
+  const c = p && p.kind === 'creature' ? creatureById(p.cid) : null;
+  if (c?.alive) return attack(c);
+  toast('Drop it on an enemy. Tap one to strike, or Esc to put the card down.');
+}
+{
+  const el = $('spellbar');
+  el.addEventListener('pointermove', e => {
+    const P = HAND.press;
+    if (P && P.id) {
+      const dx = e.clientX - P.x0, dy = e.clientY - P.y0;
+      if (P.drag) return dragOverBoard(e);
+      if (Math.hypot(dx, dy) > 8) clearTimeout(P.lp);
+      if (dy < -26 && Math.abs(dy) > Math.abs(dx) * 0.9) {   // pulled up out of the hand: aim it
+        const b = HAND.els.get(P.id);
+        if (b?.getAttribute('aria-disabled') === 'true') { shakeCard(b); if (b.dataset.why) toast(b.dataset.why); HAND.press = { ...P, id: null }; return; }
+        const was = HAND.armed; if (!armForDrag(P.id)) { HAND.press = { ...P, id: null }; return; }
+        P.armedHere = was !== HAND.armed; P.drag = true; SFX.card(true);
+        const g = document.createElement('div'); g.className = b.className.replace(/\b(lift|held|off|shake)\b/g, '') + ' ghost'; g.innerHTML = b.innerHTML;
+        g.style.setProperty('--c', b.style.getPropertyValue('--c')); $('stage').appendChild(g); P.ghost = g;
+        b.classList.add('held'); setHandHover(-1); return dragOverBoard(e);
+      }
+      if (e.pointerType !== 'mouse' || Math.abs(dx) > 4) { const i = cardIndexAt(e.clientX); if (i >= 0 && i !== HAND.hover) { setHandHover(i); P.id = handIds()[i]; P.scrub = true; } }
+      return;
+    }
+    if (e.pointerType === 'mouse' && !P) setHandHover(cardIndexAt(e.clientX));
+  });
+  el.addEventListener('pointerleave', e => { if (!HAND.press && e.pointerType === 'mouse') setHandHover(-1); });
+  el.addEventListener('pointerdown', e => {
+    if (e.button !== 0 || !playing()) return;
+    const i = cardIndexAt(e.clientX), b = e.target.closest('.card'), id = b?.dataset.id ?? (i >= 0 ? handIds()[i] : null);
+    if (!id) return;
+    e.preventDefault(); el.setPointerCapture(e.pointerId);
+    const lifted = HAND.hover >= 0 && handIds()[HAND.hover] === id;
+    HAND.press = { id, x0: e.clientX, y0: e.clientY, type: e.pointerType, lifted, lp: setTimeout(() => { if (HAND.press && !HAND.press.drag && HAND.press.id) { HAND.press.inspected = true; inspectCard(HAND.press.id); } }, 480) };
+    setHandHover(handIds().indexOf(id));
+  });
+  const end = e => {
+    const P = HAND.press; if (!P) return; HAND.press = null; clearTimeout(P.lp);
+    try { el.releasePointerCapture(e.pointerId); } catch {}
+    if (P.drag) { dropCard(e); refresh(); return; }
+    if (e.type === 'pointercancel' || P.inspected || !P.id) return;
+    // a touch that slid along the hand only looks; a clean tap plays
+    if (P.scrub && P.type !== 'mouse') return;
+    if (P.type !== 'mouse' && !P.lifted && !cardAims(P.id) && handSmall()) return;   // small screens: the first tap lifts an instant card so you can read it
+    playCard(P.id);
+    if (P.type !== 'mouse') setHandHover(-1);
+  };
+  el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+  el.addEventListener('click', e => { if (e.detail === 0) { const b = e.target.closest('.card'); if (b) playCard(b.dataset.id); } });   // keyboard
+  el.addEventListener('contextmenu', e => { const b = e.target.closest('.card'); if (b) { e.preventDefault(); inspectCard(b.dataset.id); } });
+  new ResizeObserver(() => layoutHand()).observe(el);
+  canvas.addEventListener('pointerdown', () => { if (HAND.hover >= 0 && !HAND.press) setHandHover(-1); });
+  $('handTuck').addEventListener('click', () => {
+    const on = document.body.classList.toggle('hand-tuck'); $('handTuck').setAttribute('aria-pressed', on); $('handTuck').textContent = on ? '▴' : '▾';
+    $('handTuck').title = on ? 'Raise the hand' : 'Lower the hand to see more of the board'; setTimeout(layoutHand, 260); layoutHand();
+  });
+}
+function inspectCard(id) {
+  const b = HAND.els.get(id); if (!b) return;
+  const z = $('cardZoom'), why = b.dataset.why;
+  z.innerHTML = `<div class="${b.className.replace(/\b(lift|held|shake)\b/g, '')} big" style="--c:${b.style.getPropertyValue('--c')}">${b.innerHTML}</div>
+    <div class="zrow">${why ? `<p class="muted">${esc(why)}</p>` : ''}<button class="btn primary" data-z="play" ${why ? 'disabled' : ''}>${cardAims(id) ? 'Aim it' : 'Play it'}</button><button class="btn" data-z="close">Close</button></div>`;
+  z.hidden = false; SFX.card(true);
+  z.onclick = e => { const a = e.target.closest('[data-z]')?.dataset.z; if (a === 'play') { z.hidden = true; playCard(id); } else if (a === 'close' || e.target === z) z.hidden = true; };
+  z.querySelector('[data-z="play"]:not([disabled])')?.focus();
+}
+
+/* --- the lens: the board is centred in the part of the screen the hand leaves free, and the camera suits the screen's shape --- */
+function camProfile() {
+  const w = canvas.clientWidth, h = Math.max(1, canvas.clientHeight), a = w / h, deg = THREE.MathUtils.degToRad;
+  if (a < 0.9) return { id: 'portrait', dist: 8, elev: 1.0, fov: Math.min(78, THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(deg(22)) / a))) };   // keep ~44° across, look down on the room
+  if (h < 520) return { id: 'short', dist: 5.2, elev: 0.72, fov: 50 };
+  return { id: 'wide', dist: 3.6, elev: 0.42, fov: 45 };
+}
+function lensTick(dt) {
+  const fp = fpOn(), cw = canvas.clientWidth, chh = Math.max(1, canvas.clientHeight), P = camProfile(), play = playing();
+  if (P.id !== LENS.prof) {   // turned the phone, or resized the window: start from this screen's camera
+    const first = !LENS.prof; LENS.prof = P.id;
+    if (!first && play && !fp && !ui.tac) { CAM.dist = P.dist; CAM.elev = P.elev; camToHero(0.5); }
+  }
+  const want = play ? LENS.bot : 0;
+  LENS.cur += (want - LENS.cur) * Math.min(1, dt * 7); if (Math.abs(want - LENS.cur) < 0.5) LENS.cur = want;
+  const top = play ? LENS.top : 0, safeH = Math.max(80, chh - top - LENS.cur);
+  let cy = top + safeH / 2; if (fp) cy = Math.min(cy, chh * 0.42); cy = Math.min(cy, chh / 2);
+  const fullH = 2 * (chh - cy), base = fp ? 76 : P.fov;
+  const fov = fp ? 76 : THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(base / 2)) * fullH / chh));
+  LENS.base = base; LENS.safeH = safeH;
+  const key = `${cw}|${chh}|${fov.toFixed(3)}|${fullH.toFixed(1)}`;
+  if (key === LENS.key) return;
+  LENS.key = key;
+  camera.fov = fov; camera.aspect = cw / fullH;
+  camera.setViewOffset(cw, fullH, 0, chh - 2 * cy, cw, chh);
+  pScale.value = fullH * renderer.getPixelRatio() / (2 * Math.tan(THREE.MathUtils.degToRad(fov / 2)));
+}
+// an aimed card pulls the camera up and back until you can see everything it can reach
+function frameForCard() {
+  const armed = HAND.armed;
+  if (!armed) { if (CAM.framed) { CAM.framed = false; if (!busy && !anim && playing()) camToHero(0.6); } return; }
+  if (fpOn() || ui.tac || !playing()) return;
+  const pts = [{ x: state.pos.x, z: state.pos.z }], sp = ui.spell ? SPELLS[ui.spell] : null, w = derived().weapon;
+  const reachR = sp ? rangeOf(sp) : w.ranged ? w.range : w.range + (exploring() ? 4 : state.turn.move);
+  if (sp?.target === 'ally') for (const m of state.party) pts.push(m.pos);
+  else for (const o of state.creatures) if (o.alive && MONSTERS[o.type].ai !== 'none' && vis[o.z * W + o.x] && cheb(o, state.pos) <= Math.min(reachR, 9)) pts.push(o);
+  if (pts.length === 1) { const r = Math.min(reachR, 3); pts.push({ x: state.pos.x + r, z: state.pos.z }, { x: state.pos.x - r, z: state.pos.z }, { x: state.pos.x, z: state.pos.z + r }, { x: state.pos.x, z: state.pos.z - r }); }
+  const ws = pts.map(p => worldOf(p.x, p.z)), c = ws.reduce((a, p) => a.add(p), new THREE.Vector3()).multiplyScalar(1 / ws.length);
+  const r = Math.max(1.5, ...ws.map(p => Math.hypot(p.x - c.x, p.z - c.z)));
+  const tb = Math.tan(THREE.MathUtils.degToRad(LENS.base / 2)), chh = Math.max(1, canvas.clientHeight);
+  const tanV = tb * LENS.safeH / chh, tanH = tb * canvas.clientWidth / chh, d = Math.min(22, Math.max(4.5, (r + 1.2) / Math.min(tanV, tanH)));
+  const focus = { position: new THREE.Vector3(c.x, (hero.position.y || 0), c.z) };
+  CAM.framed = true; CAM.focus = focus;
+  CAM.anim = { t: 0, dur: reduceMotion ? 0.01 : 0.55, fromT: controls.target.clone(), toT: focusPos(focus), fromYaw: camYaw(), toYaw: camYaw(),
+               fromEl: camElev(), toEl: Math.max(camElev(), 0.95), fromD: camera.position.distanceTo(controls.target), toD: d };
+}
 // a catalogue for tools/tests: every data table, plus a rendered picture of every item and monster
 function renderCatalog(size = 224) {
   const sc = new THREE.Scene(); sc.background = new THREE.Color('#2b241d'); sc.environment = scene.environment;
@@ -7924,7 +8274,7 @@ window.battleBoard = {
     applyKit: (c, k) => applyKit(c, k), newCharacter: () => newCharacter(), preparedSpells: () => preparedSpells(), togglePrepared: k => togglePrepared(k), openMerchant: () => openMerchant(() => {}),
     openSettings: () => openSettings(), reachProblems: m => reachProblems(m), oddsText: id => oddsText(creatureById(id)), bossPhase: id => bossPhase(creatureById(id)), damage: (id, n) => damageCreature(creatureById(id), n, 'dmg'),
     passiveOf: c => passiveOf(c), respec: () => respec(state.char), undoGrowth: () => undoGrowth(), spendPoint: k => spendPoint(k), lightTorch: () => lightTorch(), giveItem: (k, i) => giveItem(k, i),
-    exploreStatusTick: () => exploreStatusTick(), knownTechs: () => knownTechs(), useTech: k => useTech(k), attack: id => attack(creatureById(id)), derived: () => { const d = derived(); return { atk: d.atk, dmgMod: d.dmgMod, ac: d.ac, guard: d.guard, trained: d.trained }; }, hitChance: id => hitChance(derived().atk, acOf(creatureById(id))), hotbar: () => hotbarOf(), openHotbar: () => openHotbar(), setFp: on => setFp(on), fp: () => ({ on: fpOn(), yaw: FP.yaw, look: (y, p) => { FP.yaw = y ?? FP.yaw; FP.pitch = p ?? FP.pitch; }, fov: camera.fov, ceiling: !!ceiling?.visible, rig: FP.rig.visible }), stepKey: (f, r) => stepKey(f, r), turnKey: d => turnKey(d),
+    exploreStatusTick: () => exploreStatusTick(), knownTechs: () => knownTechs(), useTech: k => useTech(k), attack: id => attack(creatureById(id)), derived: () => { const d = derived(); return { atk: d.atk, dmgMod: d.dmgMod, ac: d.ac, guard: d.guard, trained: d.trained }; }, hitChance: id => hitChance(derived().atk, acOf(creatureById(id))), hotbar: () => hotbarOf(), openHotbar: () => openHotbar(), hand: () => handIds(), screenOf: id => { const c = creatureById(id), v = worldOf(c.x, c.z).setY(0.45).project(camera), r = canvas.getBoundingClientRect(); return { x: r.left + (v.x + 1) / 2 * r.width, y: r.top + (1 - v.y) / 2 * r.height }; }, playCard: id => playCard(id), inspectCard: id => inspectCard(id), armAttack: on => armAttack(on), lens: () => ({ ...LENS, prof: camProfile(), framed: !!CAM.framed, fov: camera.fov, view: camera.view && { ...camera.view } }), camDist: () => camera.position.distanceTo(controls.target), setFp: on => setFp(on), fp: () => ({ on: fpOn(), yaw: FP.yaw, look: (y, p) => { FP.yaw = y ?? FP.yaw; FP.pitch = p ?? FP.pitch; }, fov: camera.fov, ceiling: !!ceiling?.visible, rig: FP.rig.visible }), stepKey: (f, r) => stepKey(f, r), turnKey: d => turnKey(d),
     mood: () => ({ ...MOOD, music: SFX.musicWant }), musicMood: () => musicMood(), film: () => filmPass.enabled, setSneak: on => setSneak(on), remapKey: k => remapKey(k), prefs: () => prefs, toastCount: () => document.getElementById('toast').children.length,
     freshState: (k, chars) => freshState(k, chars), enterPlay: st => enterPlay(st, 'play', true), refresh: () => refresh(), heroes: () => heroes, toast: m => toast(m), itemModelOk: () => Object.keys(ITEMS).every(k => !!itemModel(k)) },
   wanderers() { const m = spawnWanderers(6, 13); if (m && exploring() === false) startCombat(); refresh(); return m && m.map(c => c.type); },

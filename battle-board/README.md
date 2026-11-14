@@ -60,15 +60,19 @@ Wardens and Rangers have **martial training** (Warden: +2 to hit and +2 damage w
 | Volley | Ranger | 2 | 3 turns | Extra arrows at up to two enemies within 10 ft of the target |
 | Pinning Shot | Ranger | 3 | 4 turns | The target loses its next turn |
 
-Techniques appear first on the hotbar and are listed at the top of the Spells tab.
+Techniques come first in your hand of cards and are listed at the top of the Spells tab.
 
 ### The play screen
 
 The board fills the screen and the controls stay out of its way.
 
 - **Health and mana** are two small pills at the top left (♥ and ◆), with icons beside them for effects, wounds, sneaking and a waiting level-up. Hover for the full numbers; click for the character sheet.
-- **The hotbar** is one row at the bottom. Keys **1** to **0** fire the first ten slots. On a narrow screen it scrolls sideways.
-- **Customise it** with the ✎ button: add or remove any spell you know, plus healing potion, mana potion, search, dash, sneak, light a torch, first person and tactical view, and put them in any order (up to 12). Each hero keeps their own hotbar.
+- **Your hand of cards** fans out along the bottom: an **Attack** card for your weapon first, then your techniques, prepared spells and actions. Each card shows its cost (blue gem: mana), cooldown (gold dial), uses left, range and what it does. Cards you can't play right now are greyed; tapping one says why.
+- **Playing a card:** click or tap it. Attacks, spells and aimed techniques lift and wait for a target; tap the card again or press Esc to put it down. Potions, Search, Dash and other instant cards are used at once. Or **drag a card up onto the board** and let go over the target.
+- **Reading a card:** hover with a mouse and it rises to full size; on a phone, slide your finger along the hand. Hold a card (or right-click it) to see it large.
+- **The camera** keeps the board centred in the space above the hand. Aiming a card pulls the camera up and back until everything the card can reach is on screen, then returns when you play it or put it down.
+- **On a phone held upright** the camera looks down on the room from higher up with a wider lens. The cards are smaller, and while you aim, the rest of the hand drops out of the way. On a phone held sideways the camera sits a little higher. The **▾** button lowers the hand on any screen.
+- Keys **1** to **0** play the first ten cards after Attack. **Arrange your hand** with the ✎ button: add or remove any spell you know or technique you have, plus healing potion, mana potion, search, dash, sneak, light a torch, first person and tactical view, in any order (up to 12 besides Attack). Each hero keeps their own hand.
 - On screens narrower than 900 px the side buttons fold into a **☰** menu at the top right.
 
 ### Settings and controls
@@ -168,7 +172,7 @@ Freely editing ability scores is now only allowed outside the dungeon (in the Tr
 
 ## Magic: mana, buffs and debuffs
 
-Spells cost **mana** instead of spell slots. Max mana is 6 + 4 per level + 2 × casting modifier. **Mana never comes back on its own**: only making camp, Potions of Mana and the Siphoning Charm (+2 mana for every foe you slay) restore it. Weapons do the everyday work. Fire Bolt costs 2 mana, reaches 60 ft and deals 1d10. Up to **eight prepared spells** sit on the hotbar (keys 1–8); choose them on the Spells tab. You learn new spells as you level, from your kit's list:
+Spells cost **mana** instead of spell slots. Max mana is 6 + 4 per level + 2 × casting modifier. **Mana never comes back on its own**: only making camp, Potions of Mana and the Siphoning Charm (+2 mana for every foe you slay) restore it. Weapons do the everyday work. Fire Bolt costs 2 mana, reaches 60 ft and deals 1d10. Up to **eight prepared spells** sit in your hand of cards; choose them on the Spells tab. You learn new spells as you level, from your kit's list:
 
 | Level | Spells |
 |---|---|
