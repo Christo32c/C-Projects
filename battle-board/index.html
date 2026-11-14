@@ -5870,7 +5870,7 @@ canvas.addEventListener('pointermove', e => {
   canvas.style.cursor = 'grab'; clearPath();
   if (!p) return;
   if (p.kind === 'creature') { canvas.style.cursor = canAttack(creatureById(p.cid)) ? 'crosshair' : 'pointer'; return; }
-  if (p.kind === 'corpse' || p.kind === 'ally') { canvas.style.cursor = 'pointer'; return; }
+  if (p.kind === 'corpse' || p.kind === 'ally' || p.kind === 'hero') { canvas.style.cursor = 'pointer'; return; }
   const ch = tileAt(p.x, p.z), tr = state.traps[keyOf(p.x, p.z)];
   if (p.kind === 'prop' && !WALKABLE.has(ch) || (tr && tr.found)) { canvas.style.cursor = 'pointer'; return; }
   if ((p.kind === 'tile' || p.kind === 'prop') && reachable(p.x, p.z)) { showPath(p.x, p.z); canvas.style.cursor = 'pointer'; }
@@ -8071,8 +8071,8 @@ function dragOverBoard(e) {
   if (hov !== ui.hover) { ui.hover = hov; renderHud(); }
   if (c?.alive) { const w = worldOf(c.x, c.z); hoverBox.position.set(w.x, Math.max(w.y, 0.2) + 0.01, w.z); hoverBox.visible = true; } else hoverBox.visible = false;
 }
-function dropCard(e) {
-  const P = HAND.press, id = P.id, over = e.clientY < handTop() - 6;
+function dropCard(e, P) {
+  const id = P.id, over = e.clientY < handTop() - 6;
   P.ghost?.remove(); HAND.els.get(id)?.classList.remove('held');
   if (!over) { if (P.armedHere) { if (id === 'atk') armAttack(false); else if (id.startsWith('s:')) cancelSpell(); else if (ui.tech) { ui.tech = null; $('aim').hidden = true; refresh(); } } return; }
   if (!cardAims(id)) return playCard(id);
@@ -8117,7 +8117,7 @@ function dropCard(e) {
   const end = e => {
     const P = HAND.press; if (!P) return; HAND.press = null; clearTimeout(P.lp); HAND.upAt = Date.now();
     try { el.releasePointerCapture(e.pointerId); } catch {}
-    if (P.drag) { dropCard(e); refresh(); return; }
+    if (P.drag) { dropCard(e, P); refresh(); return; }
     if (e.type === 'pointercancel' || P.inspected || !P.id) return;
     // a touch that slid along the hand only looks; a clean tap plays
     if (P.scrub && P.type !== 'mouse') return;

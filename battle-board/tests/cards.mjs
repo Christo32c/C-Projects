@@ -68,7 +68,7 @@ const enter = (key, kits = ['spellblade'], pg = page) => D(([key, kits]) => {
   B.enterPlay(B.freshState(key, chars));
 }, [key, kits], pg);
 const settle = async (pg = page) => { await pg.waitForFunction(() => document.getElementById('curtain').hidden, null, { timeout: 0 }); };
-const cardBox = (id, pg = page) => pg.evaluate(id => { const b = document.querySelector(`#spellbar .card[data-id="${id}"]`).getBoundingClientRect(); return { x: b.left + b.width / 2, y: b.top + Math.min(b.height / 2, 20), top: b.top, w: b.width }; }, id);
+const cardBox = (id, pg = page) => pg.evaluate(id => { const b = document.querySelector(`#spellbar .card[data-id="${id}"]`).getBoundingClientRect(); return { left: b.left, x: b.left + b.width / 2, y: b.top + Math.min(b.height / 2, 20), top: b.top, w: b.width }; }, id);
 
 await page.setViewportSize({ width: 1280, height: 800 });
 await check('desktop: an Attack card leads the hand, the board is centred above it', async () => {
@@ -168,7 +168,7 @@ await check('phone upright: a top-down camera, a small hand that fits the screen
 
 await check('phone: tapping an aimed card lifts it, tucks the rest away and frames the targets', async () => {
   const b = await cardBox('t:aimed', phone);
-  await phone.touchscreen.tap(b.x, b.y + 6); await phone.waitForTimeout(1500);
+  await phone.touchscreen.tap(b.left + 8, b.y + 6); await phone.waitForTimeout(1500);
   const r = await D(() => ({ armed: document.body.classList.contains('hand-armed'), bot: battleBoard.dev.lens().bot, framed: battleBoard.dev.lens().framed, pressed: [...document.querySelectorAll('#spellbar .card[aria-pressed="true"]')].map(b => b.dataset.id) }), null, phone);
   await shot('cards-phone-aim', phone);
   assert(r.armed && r.bot < 40 && r.pressed.includes('t:aimed'), JSON.stringify(r));
