@@ -8090,7 +8090,7 @@ function dropCard(e) {
       const dx = e.clientX - P.x0, dy = e.clientY - P.y0;
       if (P.drag) return dragOverBoard(e);
       if (Math.hypot(dx, dy) > 8) clearTimeout(P.lp);
-      if (dy < -26 && Math.abs(dy) > Math.abs(dx) * 0.9) {   // pulled up out of the hand: aim it
+      if (dy < -30 && (P.type === 'mouse' || Math.abs(dy) > Math.abs(dx) * 0.7)) {   // pulled up out of the hand: aim it
         const b = HAND.els.get(P.id);
         if (b?.getAttribute('aria-disabled') === 'true') { shakeCard(b); if (b.dataset.why) toast(b.dataset.why); HAND.press = { ...P, id: null }; return; }
         const was = HAND.armed; if (!armForDrag(P.id)) { HAND.press = { ...P, id: null }; return; }
@@ -8099,7 +8099,7 @@ function dropCard(e) {
         g.style.setProperty('--c', b.style.getPropertyValue('--c')); $('stage').appendChild(g); P.ghost = g;
         b.classList.add('held'); setHandHover(-1); return dragOverBoard(e);
       }
-      if (e.pointerType !== 'mouse' || Math.abs(dx) > 4) { const i = cardIndexAt(e.clientX); if (i >= 0 && i !== HAND.hover) { setHandHover(i); P.id = handIds()[i]; P.scrub = true; } }
+      if (e.pointerType !== 'mouse') { const i = cardIndexAt(e.clientX); if (i >= 0 && i !== HAND.hover) { setHandHover(i); P.id = handIds()[i]; P.scrub = true; } }
       return;
     }
     if (e.pointerType === 'mouse' && !P) setHandHover(cardIndexAt(e.clientX));
@@ -8115,7 +8115,7 @@ function dropCard(e) {
     setHandHover(handIds().indexOf(id));
   });
   const end = e => {
-    const P = HAND.press; if (!P) return; HAND.press = null; clearTimeout(P.lp);
+    const P = HAND.press; if (!P) return; HAND.press = null; clearTimeout(P.lp); HAND.upAt = Date.now();
     try { el.releasePointerCapture(e.pointerId); } catch {}
     if (P.drag) { dropCard(e); refresh(); return; }
     if (e.type === 'pointercancel' || P.inspected || !P.id) return;
@@ -8126,7 +8126,7 @@ function dropCard(e) {
     if (P.type !== 'mouse') setHandHover(-1);
   };
   el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
-  el.addEventListener('click', e => { if (e.detail === 0) { const b = e.target.closest('.card'); if (b) playCard(b.dataset.id); } });   // keyboard
+  el.addEventListener('click', e => { if (e.detail === 0 && Date.now() - (HAND.upAt || 0) > 700) { const b = e.target.closest('.card'); if (b) playCard(b.dataset.id); } });   // keyboard
   el.addEventListener('contextmenu', e => { const b = e.target.closest('.card'); if (b) { e.preventDefault(); inspectCard(b.dataset.id); } });
   new ResizeObserver(() => layoutHand()).observe(el);
   canvas.addEventListener('pointerdown', () => { if (HAND.hover >= 0 && !HAND.press) setHandHover(-1); });
@@ -8275,7 +8275,7 @@ window.battleBoard = {
     applyKit: (c, k) => applyKit(c, k), newCharacter: () => newCharacter(), preparedSpells: () => preparedSpells(), togglePrepared: k => togglePrepared(k), openMerchant: () => openMerchant(() => {}),
     openSettings: () => openSettings(), reachProblems: m => reachProblems(m), oddsText: id => oddsText(creatureById(id)), bossPhase: id => bossPhase(creatureById(id)), damage: (id, n) => damageCreature(creatureById(id), n, 'dmg'),
     passiveOf: c => passiveOf(c), respec: () => respec(state.char), undoGrowth: () => undoGrowth(), spendPoint: k => spendPoint(k), lightTorch: () => lightTorch(), giveItem: (k, i) => giveItem(k, i),
-    exploreStatusTick: () => exploreStatusTick(), knownTechs: () => knownTechs(), useTech: k => useTech(k), attack: id => attack(creatureById(id)), derived: () => { const d = derived(); return { atk: d.atk, dmgMod: d.dmgMod, ac: d.ac, guard: d.guard, trained: d.trained }; }, hitChance: id => hitChance(derived().atk, acOf(creatureById(id))), hotbar: () => hotbarOf(), openHotbar: () => openHotbar(), hand: () => handIds(), screenOf: id => { const c = creatureById(id), v = worldOf(c.x, c.z).setY(0.45).project(camera), r = canvas.getBoundingClientRect(); return { x: r.left + (v.x + 1) / 2 * r.width, y: r.top + (1 - v.y) / 2 * r.height }; }, playCard: id => playCard(id), inspectCard: id => inspectCard(id), armAttack: on => armAttack(on), lens: () => ({ ...LENS, prof: camProfile(), framed: !!CAM.framed, fov: camera.fov, view: camera.view && { ...camera.view } }), camDist: () => camera.position.distanceTo(controls.target), setFp: on => setFp(on), fp: () => ({ on: fpOn(), yaw: FP.yaw, look: (y, p) => { FP.yaw = y ?? FP.yaw; FP.pitch = p ?? FP.pitch; }, fov: camera.fov, ceiling: !!ceiling?.visible, rig: FP.rig.visible }), stepKey: (f, r) => stepKey(f, r), turnKey: d => turnKey(d),
+    exploreStatusTick: () => exploreStatusTick(), knownTechs: () => knownTechs(), useTech: k => useTech(k), attack: id => attack(creatureById(id)), derived: () => { const d = derived(); return { atk: d.atk, dmgMod: d.dmgMod, ac: d.ac, guard: d.guard, trained: d.trained }; }, hitChance: id => hitChance(derived().atk, acOf(creatureById(id))), hotbar: () => hotbarOf(), openHotbar: () => openHotbar(), hand: () => handIds(), stand: (x, z, lookId) => { state.pos.x = x; state.pos.z = z; placeHero(); computeVisibility(); applyFog(); const c = creatureById(lookId); CAM.hold = 0; camShot(hero, worldOf(c.x, c.z), 0.01); refresh(); }, screenOf: id => { const c = creatureById(id), v = worldOf(c.x, c.z).setY(0.45).project(camera), r = canvas.getBoundingClientRect(); return { x: r.left + (v.x + 1) / 2 * r.width, y: r.top + (1 - v.y) / 2 * r.height }; }, playCard: id => playCard(id), inspectCard: id => inspectCard(id), armAttack: on => armAttack(on), lens: () => ({ ...LENS, prof: camProfile(), framed: !!CAM.framed, fov: camera.fov, view: camera.view && { ...camera.view } }), camDist: () => camera.position.distanceTo(controls.target), setFp: on => setFp(on), fp: () => ({ on: fpOn(), yaw: FP.yaw, look: (y, p) => { FP.yaw = y ?? FP.yaw; FP.pitch = p ?? FP.pitch; }, fov: camera.fov, ceiling: !!ceiling?.visible, rig: FP.rig.visible }), stepKey: (f, r) => stepKey(f, r), turnKey: d => turnKey(d),
     mood: () => ({ ...MOOD, music: SFX.musicWant }), musicMood: () => musicMood(), film: () => filmPass.enabled, setSneak: on => setSneak(on), remapKey: k => remapKey(k), prefs: () => prefs, toastCount: () => document.getElementById('toast').children.length,
     freshState: (k, chars) => freshState(k, chars), enterPlay: st => enterPlay(st, 'play', true), refresh: () => refresh(), heroes: () => heroes, toast: m => toast(m), itemModelOk: () => Object.keys(ITEMS).every(k => !!itemModel(k)) },
   wanderers() { const m = spawnWanderers(6, 13); if (m && exploring() === false) startCombat(); refresh(); return m && m.map(c => c.type); },

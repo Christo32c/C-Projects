@@ -41,7 +41,7 @@ const assert = (c, msg) => { if (!c) throw new Error(msg); };
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: 960, height: 600 } });
 const errors = [];
-page.on('pageerror', e => errors.push(String(e)));
+page.on('pageerror', e => errors.push(String(e.stack || e).slice(0, 500)));
 page.on('console', m => { if (m.type() === 'error' && !/ERR_FAILED|favicon/.test(m.text())) errors.push(m.text()); });
 // a fixed-step clock, so animations and timers advance the same way however slow the machine is
 await page.addInitScript(() => {
@@ -67,7 +67,7 @@ const enter = (key, kits = ['spellblade'], pg = page) => D(([key, kits]) => {
   const B = battleBoard.dev, chars = kits.map((k, i) => { const c = B.applyKit(B.newCharacter(), k); c.name = 'Hero ' + i; return c; });
   B.enterPlay(B.freshState(key, chars));
 }, [key, kits], pg);
-const settle = async (pg = page) => { await pg.waitForFunction(() => document.getElementById('curtain').hidden, null, { timeout: 30000 }); };
+const settle = async (pg = page) => { await pg.waitForFunction(() => document.getElementById('curtain').hidden, null, { timeout: 0 }); };
 const cardBox = (id, pg = page) => pg.evaluate(id => { const b = document.querySelector(`#spellbar .card[data-id="${id}"]`).getBoundingClientRect(); return { x: b.left + b.width / 2, y: b.top + Math.min(b.height / 2, 20), top: b.top, w: b.width }; }, id);
 
 await page.setViewportSize({ width: 1280, height: 800 });
@@ -94,11 +94,14 @@ await check('desktop: hovering lifts a card to full size; neighbours make room',
 await check('desktop: drag the Attack card up onto the training dummy to strike it', async () => {
   const e0 = errCount();
   await enter('trainingYard', ['warden']); await settle(); await wait(1.5);
-  const id = await D(() => { const B = battleBoard.dev, s = B.state, c = s.creatures.find(c => c.alive); c.hp = 200; s.turn.action = true; B.refresh(); return c.id; });
+  const id = await D(() => { const B = battleBoard.dev, s = B.state, c = s.creatures.find(c => c.alive); c.hp = 200; s.turn.action = true; B.stand(c.x, c.z - 2, c.id); return c.id; });
+  await wait(1);
+  const on = await D(id => { const p = battleBoard.dev.screenOf(id); return p.x > 0 && p.x < 1280 && p.y > 0 && p.y < 680; }, id);
+  assert(on, 'the dummy is not on screen');
   await wait(0.5);
   const a = await cardBox('atk'), t = await D(id => battleBoard.dev.screenOf(id), id);
-  await page.mouse.move(a.x, a.y + 10); await page.mouse.down();
-  for (let k = 1; k <= 12; k++) { await page.mouse.move(a.x + (t.x - a.x) * k / 12, a.y + (t.y - a.y) * k / 12); }
+  await page.mouse.move(a.x, a.y + 10); await page.mouse.down(); await page.mouse.move(a.x, a.y - 30); await page.mouse.move(a.x, a.y - 60);
+  for (let k = 1; k <= 12; k++) { await page.mouse.move(a.x + (t.x - a.x) * k / 12, a.y - 60 + (t.y - a.y + 60) * k / 12); }
   await wait(0.3);
   const mid = await D(() => ({ ghost: !!document.querySelector('.card.ghost.over'), armed: document.body.classList.contains('hand-armed') }));
   await shot('cards-desktop-drag');
@@ -139,7 +142,7 @@ await check('keys still play the hand: 1 arms the first card after Attack; right
 
 // --- a phone held upright, and on its side ---
 const phone = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
-phone.on('pageerror', e => errors.push(String(e)));
+phone.on('pageerror', e => errors.push(String(e.stack || e).slice(0, 500)));
 await phone.addInitScript(() => {
   localStorage.clear();
   localStorage.setItem('battleboard.prefs', JSON.stringify({ sandbox: true, quality: 'low', sound: false }));
