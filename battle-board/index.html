@@ -609,6 +609,7 @@
   .cardzoom .zrow { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; max-width: 90%; }
   .cardzoom .zrow p { width: 100%; text-align: center; margin: 0; }
   body[data-mode="play"] .aim { bottom: calc(var(--peek) + 44px); }
+  body[data-mode="play"].hand-armed .aim { bottom: calc(var(--peek) + var(--ch) * var(--af) + 14px); }
   body[data-mode="play"] .toast { bottom: calc(var(--peek) + 44px); }
   @media (prefers-reduced-motion: reduce) { .card, .card .art::before { transition: none; animation: none; } }
   @media (max-width: 700px), (max-height: 520px) {
@@ -8138,7 +8139,7 @@ function dropCard(e, P) {
 function inspectCard(id) {
   const b = HAND.els.get(id); if (!b) return;
   const z = $('cardZoom'), why = b.dataset.why;
-  z.innerHTML = `<div class="${b.className.replace(/\b(lift|held|shake)\b/g, '')} big" style="--c:${b.style.getPropertyValue('--c')}">${b.innerHTML}</div>
+  z.innerHTML = `<div class="${b.className.replace(/\b(lift|held|shake|off)\b/g, '')} big" style="--c:${b.style.getPropertyValue('--c')}">${b.innerHTML}</div>
     <div class="zrow">${why ? `<p class="muted">${esc(why)}</p>` : ''}<button class="btn primary" data-z="play" ${why ? 'disabled' : ''}>${cardAims(id) ? 'Aim it' : 'Play it'}</button><button class="btn" data-z="close">Close</button></div>`;
   z.hidden = false; SFX.card(true);
   z.onclick = e => { const a = e.target.closest('[data-z]')?.dataset.z; if (a === 'play') { z.hidden = true; playCard(id); } else if (a === 'close' || e.target === z) z.hidden = true; };
