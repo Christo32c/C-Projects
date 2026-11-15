@@ -687,6 +687,30 @@
   .guide code, .guide pre { font: 12px/1.45 ui-monospace, Menlo, Consolas, monospace; }
   .guide pre { background: #0d0a08; border: 1px solid var(--line); border-radius: 6px; padding: 8px; overflow-x: auto; white-space: pre; }
   .guide table { border-collapse: collapse; width: 100%; font-size: 12.5px; } .guide td { border-top: 1px solid var(--line); padding: 4px 6px; vertical-align: top; } .guide td:first-child { white-space: nowrap; color: #e8f0d8; font-family: ui-monospace, Menlo, Consolas, monospace; }
+
+  /* ---- THE HERO BUILDER ---- */
+  #buildPanel { display: none; }
+  body.building .app { grid-template-columns: minmax(0, 1fr) 410px; grid-template-rows: minmax(0, 1fr); }
+  body.building #buildPanel { display: flex; zoom: var(--ui, 1); }
+  body.building #sideBtns, body.building #sbToggle, body.building #partyFrames, body.building #playBar, body.building #vitals, body.building #hudChips, body.building .narr, body.building #initBar { display: none !important; }
+  .forge .tabs2 { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+  .forge .tabs2 button { padding: 5px 10px; border-radius: 8px; border: 1px solid var(--line); background: #ffffff08; color: var(--ink); font-size: 13px; }
+  .forge .tabs2 button[aria-pressed="true"] { background: var(--brass); color: #1a120b; border-color: var(--brass); font-weight: 700; }
+  .forge .bases { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .forge .bases button { text-align: left; padding: 8px 10px; border-radius: 9px; border: 1px solid var(--line); background: #ffffff08; color: var(--ink); }
+  .forge .bases button b { display: block; font-family: var(--display); font-size: 15px; color: #f3e7cf; }
+  .forge .bases button span { font-size: 11.5px; color: var(--muted); }
+  .forge .bases button[aria-pressed="true"] { border-color: var(--brass); box-shadow: inset 0 0 0 1px var(--brass); }
+  .forge .opt { display: flex; flex-direction: column; gap: 4px; }
+  .forge .opt > span { font-size: 12px; color: var(--muted); }
+  .forge .sws { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+  .forge .sws button { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #0008; background: var(--sw); padding: 0; }
+  .forge .sws button[aria-pressed="true"] { outline: 2px solid #fff; outline-offset: 1px; }
+  .forge .camrow { display: flex; gap: 4px; flex-wrap: wrap; }
+  @media (max-width: 700px), (max-height: 520px) {
+    body.building .app { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 45vh) minmax(0, 1fr); }
+    body.building #buildPanel { border-left: 0; border-top: 1px solid var(--brass); }
+  }
 </style>
 <script type="importmap">
 { "imports": {
@@ -756,6 +780,7 @@
 
   <aside class="panel" id="edPanel" aria-label="Dungeon creator"></aside>
   <aside class="panel forge" id="forgePanel" aria-label="Spell Forge"></aside>
+  <aside class="panel forge build" id="buildPanel" aria-label="Hero Builder"></aside>
   <aside class="panel" id="panel" aria-label="Character sheet">
     <button class="drawer-x" id="panelClose" aria-label="Close panel" title="Close (Esc)">×</button>
     <div class="sheet-head">
@@ -1975,8 +2000,8 @@ const mailTex = () => _mail ||= (() => {
 const capsule = (r, len, m) => new THREE.Mesh(new THREE.CapsuleGeometry(r, len, 4, 12), m);
 const CHEST_PROFILE = [[0.085, 0], [0.105, 0.06], [0.125, 0.16], [0.134, 0.22], [0.118, 0.265], [0.05, 0.29]].map(([a, b]) => new THREE.Vector2(a, b));
 
-function buildHuman() {
-  const c = state.char, H = { gear: [] };
+function buildHuman(c = state.char) {
+  const H = { gear: [], boots: [] };
   const M = H.mats = { skin: mat(c.skin, { roughness: 0.6 }), hair: mat(c.hair, { roughness: 0.75 }), tunic: mat(c.color, { roughness: 0.8 }),
     trousers: mat('#4a3a2c', { roughness: 0.85 }), boot: mat('#3a2618', { roughness: 0.6 }) };
   const root = H.root = new THREE.Group();
@@ -1987,7 +2012,7 @@ function buildHuman() {
     const thigh = capsule(0.044, 0.15, M.trousers); thigh.position.y = -0.11; leg.add(thigh);
     const knee = new THREE.Group(); knee.position.y = -0.22; leg.add(knee);
     const shin = capsule(0.037, 0.13, M.trousers); shin.position.y = -0.09; knee.add(shin);
-    const bootShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.042, 0.12, 12), M.boot); bootShaft.position.y = -0.15; knee.add(bootShaft);
+    const bootShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.042, 0.12, 12), M.boot); bootShaft.position.y = -0.15; knee.add(bootShaft); H.boots.push(bootShaft);
     const foot = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.05, 0.14), M.boot); foot.position.set(0, -0.205, 0.028); knee.add(foot);
     H[sd < 0 ? 'legR' : 'legL'] = leg; H[sd < 0 ? 'kneeR' : 'kneeL'] = knee;
   }
@@ -1997,16 +2022,7 @@ function buildHuman() {
   const head = H.head = new THREE.Group(); head.position.y = 0.39; torso.add(head);
   const skull = new THREE.Mesh(new THREE.SphereGeometry(0.082, 18, 14), M.skin); skull.scale.set(0.93, 1.05, 1); head.add(skull);
   const jaw = new THREE.Mesh(new THREE.SphereGeometry(0.06, 14, 10), M.skin); jaw.position.set(0, -0.04, 0.018); jaw.scale.set(1, 0.8, 1); head.add(jaw);
-  const nose = new THREE.Mesh(new THREE.ConeGeometry(0.014, 0.036, 6), M.skin); nose.rotation.x = Math.PI / 2; nose.position.set(0, -0.005, 0.083); head.add(nose);
-  const eyeM = new THREE.MeshStandardMaterial({ color: '#1a120c', roughness: 0.2 });
-  for (const sd of [-1, 1]) {
-    const ear = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6), M.skin); ear.scale.set(0.5, 1, 0.8); ear.position.set(sd * 0.078, 0, 0); head.add(ear);
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.011, 8, 6), eyeM); eye.position.set(sd * 0.028, 0.012, 0.072); head.add(eye);
-    const brow = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.007, 0.01), M.hair); brow.position.set(sd * 0.029, 0.032, 0.076); brow.rotation.z = sd * 0.15; head.add(brow);
-  }
-  const hair = H.hair = new THREE.Group(); head.add(hair);
-  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.089, 18, 12, 0, 6.283, 0, 1.75), M.hair); cap.position.set(0, 0.01, -0.006); cap.rotation.x = -0.28; hair.add(cap);
-  const back = new THREE.Mesh(new THREE.SphereGeometry(0.08, 14, 10), M.hair); back.position.set(0, -0.025, -0.035); back.scale.set(0.95, 0.85, 0.75); hair.add(back);
+  H.hair = new THREE.Group(); head.add(H.hair);   // the face, hair and hat are made by dressLook
   for (const sd of [-1, 1]) {
     const sh = new THREE.Group(); sh.position.set(sd * 0.152, 0.245, 0); torso.add(sh);
     const upper = capsule(0.034, 0.11, M.tunic); upper.position.y = -0.075; sh.add(upper);
@@ -2081,14 +2097,141 @@ function shieldModel(color) {
   return g;
 }
 
-function dressHuman() {
-  const H = human, c = state.char, eq = c.equipped, M = H.mats, inv = k => !!invEntry(k);
+
+/* --- the look: a base (ancestry) plus proportions, face, hair and a costume layer. Armour and weapons still come from what is equipped. --- */
+const LOOK_DEFAULT = { base: 'human', height: 1, build: 1, head: 1, eyes: 'round', eyeColor: '#2a1d14', brows: 'thin', nose: 'small', mouth: 'neutral', beard: 'none',
+  ears: 'round', horns: 'none', tusks: 'no', scar: 'none', paint: 'none', paintColor: '#3a6aff', hair: 'short', hat: 'none', cloak: 'short', cloakColor: '',
+  trim: '#c9a24a', trousers: '#4a3a2c', bootColor: '#3a2618', pack: 'none', scarf: 'no' };
+const lookOf = c => ({ ...LOOK_DEFAULT, ...(c?.look || {}) });
+const LOOK_BASES = {
+  human:    { name: 'Human', blurb: 'The everyday adventurer. A blank slate for any look.', skin: '#d6a982', hairColor: '#5a3a20',
+              look: { height: 1, build: 1, head: 1, ears: 'round', horns: 'none', tusks: 'no', beard: 'none', eyes: 'round', brows: 'thin', nose: 'small', mouth: 'neutral', hair: 'short' } },
+  elf:      { name: 'Elf', blurb: 'Tall and slight, with long pointed ears.', skin: '#f1c9a5', hairColor: '#d8c08a',
+              look: { height: 1.07, build: 0.86, head: 0.96, ears: 'long', horns: 'none', tusks: 'no', beard: 'none', eyes: 'narrow', brows: 'thin', nose: 'pointed', mouth: 'neutral', hair: 'long' } },
+  dwarf:    { name: 'Dwarf', blurb: 'Short, broad and bearded.', skin: '#d6a982', hairColor: '#8a3a22',
+              look: { height: 0.8, build: 1.3, head: 1.1, ears: 'round', horns: 'none', tusks: 'no', beard: 'braided', eyes: 'round', brows: 'thick', nose: 'broad', mouth: 'neutral', hair: 'short' } },
+  orc:      { name: 'Orc', blurb: 'Big, green and tusked.', skin: '#7a9a5a', hairColor: '#2a1d14',
+              look: { height: 1.06, build: 1.22, head: 1.02, ears: 'pointed', horns: 'none', tusks: 'yes', beard: 'none', eyes: 'round', brows: 'angry', nose: 'broad', mouth: 'frown', hair: 'mohawk' } },
+  halfling: { name: 'Halfling', blurb: 'Small and quick, with a big smile.', skin: '#f1c9a5', hairColor: '#b07a3a',
+              look: { height: 0.7, build: 0.98, head: 1.16, ears: 'pointed', horns: 'none', tusks: 'no', beard: 'none', eyes: 'wide', brows: 'raised', nose: 'small', mouth: 'smile', hair: 'short' } },
+  horned:   { name: 'Horned', blurb: 'Demon-touched: horns, red skin and glowing eyes.', skin: '#b04a4a', hairColor: '#2a1d14',
+              look: { height: 1.02, build: 0.96, head: 1, ears: 'pointed', horns: 'curled', tusks: 'no', beard: 'none', eyes: 'glow', eyeColor: '#ffd36a', brows: 'thin', nose: 'small', mouth: 'neutral', hair: 'long' } },
+};
+const LOOK_SKINS = ['#f1c9a5', '#d6a982', '#a8724a', '#6b4428', '#7a9a5a', '#5f7a4a', '#9aa0a8', '#b04a4a', '#6a4a8a', '#4a6a8a'];
+const LOOK_HAIRS = ['#2a1d14', '#5a3a20', '#b07a3a', '#d8c08a', '#8a3a22', '#9a9a9a', '#e8e4dc', '#3a5a9a', '#9a3a6a', '#2a6a4a'];
+const LOOK_EYES = ['#2a1d14', '#3a6a9a', '#3a7a4a', '#7a5a2a', '#9a9aa8', '#ffd36a', '#ff5a3a', '#7ad8ff'];
+const LOOK_OPTS = {
+  eyes: [['round', 'Round'], ['narrow', 'Narrow'], ['wide', 'Wide'], ['glow', 'Glowing']],
+  brows: [['none', 'None'], ['thin', 'Thin'], ['thick', 'Thick'], ['angry', 'Fierce'], ['raised', 'Raised']],
+  nose: [['small', 'Small'], ['pointed', 'Pointed'], ['broad', 'Broad'], ['hooked', 'Hooked']],
+  mouth: [['neutral', 'Neutral'], ['smile', 'Smile'], ['frown', 'Frown'], ['grin', 'Grin']],
+  beard: [['none', 'None'], ['stubble', 'Stubble'], ['moustache', 'Moustache'], ['goatee', 'Goatee'], ['short', 'Short'], ['long', 'Long'], ['braided', 'Braided']],
+  ears: [['round', 'Round'], ['pointed', 'Pointed'], ['long', 'Long']],
+  tusks: [['no', 'None'], ['yes', 'Tusks']],
+  horns: [['none', 'None'], ['small', 'Nubs'], ['straight', 'Straight'], ['curled', 'Curled']],
+  scar: [['none', 'None'], ['eye', 'Across the eye'], ['cheek', 'Cheek']],
+  paint: [['none', 'None'], ['stripe', 'Stripe'], ['mask', 'Mask'], ['dots', 'Dots']],
+  hair: [['bald', 'Bald'], ['short', 'Short'], ['long', 'Long'], ['ponytail', 'Ponytail'], ['mohawk', 'Crest'], ['braids', 'Braids'], ['topknot', 'Topknot'], ['bun', 'Bun']],
+  hat: [['none', 'None'], ['hood', 'Hood'], ['wizard', 'Pointed hat'], ['bandana', 'Bandana'], ['circlet', 'Circlet'], ['helm', 'Horned helm']],
+  cloak: [['none', 'None'], ['short', 'Short'], ['long', 'Long'], ['tattered', 'Tattered']],
+  pack: [['none', 'None'], ['backpack', 'Backpack'], ['bedroll', 'Bedroll'], ['satchel', 'Satchel']],
+  scarf: [['no', 'None'], ['yes', 'Scarf']],
+};
+function dressLook(H, c, add, { trim, leather, deep }) {
+  const LK = lookOf(c), M = H.mats, head = H.head, eq = c.equipped || {};
+  H.root.scale.set(LK.build, LK.height, LK.build);
+  head.scale.set(LK.head / LK.build, LK.head / LK.height, LK.head / LK.build);
+  M.trousers.color.set(LK.trousers); M.boot.color.set(LK.bootColor);
+  const hm = M.hair, sk = M.skin, dark = new THREE.MeshBasicMaterial({ color: '#2a1410' }), bone = mat('#ece2c8', { roughness: 0.5 });
+  const mk = (geo, m, x, y, z, parent = head) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); add(parent, o); return o; };
+  const cloakCol = LK.cloakColor || deep;
+  // ears and horns
+  for (const sd of [-1, 1]) {
+    if (LK.ears === 'round') { const e = mk(new THREE.SphereGeometry(0.018, 8, 6), sk, sd * 0.078, 0, 0); e.scale.set(0.5, 1, 0.8); }
+    else { const long = LK.ears === 'long', e = mk(new THREE.ConeGeometry(0.017, long ? 0.095 : 0.05, 6), sk, sd * (long ? 0.1 : 0.088), long ? 0.022 : 0.012, -0.01); e.rotation.set(-0.35, 0, -sd * (long ? 1.0 : 0.7)); e.scale.z = 0.45; }
+    const hornM = mat('#2a2220', { roughness: 0.5 });
+    if (LK.horns === 'small') { const h = mk(new THREE.ConeGeometry(0.013, 0.04, 8), hornM, sd * 0.04, 0.085, 0.025); h.rotation.z = -sd * 0.3; }
+    if (LK.horns === 'straight') { const h = mk(new THREE.ConeGeometry(0.017, 0.12, 8), hornM, sd * 0.055, 0.105, -0.005); h.rotation.set(-0.35, 0, -sd * 0.45); }
+    if (LK.horns === 'curled') mk(taperedTube(new THREE.CatmullRomCurve3([[0.045, 0.065, 0.01], [0.085, 0.11, -0.025], [0.115, 0.08, -0.07], [0.105, 0.025, -0.075], [0.085, 0.005, -0.045]].map(([x, y, z]) => new THREE.Vector3(sd * x, y, z))), 16, 0.026, 8), hornM, 0, 0, 0);
+  }
+  // eyes, brows, nose, mouth
+  const eyeM = LK.eyes === 'glow' ? new THREE.MeshBasicMaterial({ color: hdrColor(LK.eyeColor, 3) }) : new THREE.MeshStandardMaterial({ color: LK.eyeColor, roughness: 0.15 });
+  for (const sd of [-1, 1]) {
+    const e = mk(new THREE.SphereGeometry(LK.eyes === 'wide' ? 0.0145 : 0.011, 10, 8), eyeM, sd * 0.028, 0.012, 0.072);
+    if (LK.eyes === 'narrow') { e.scale.set(1.2, 0.45, 1); e.rotation.z = sd * 0.25; }
+    if (LK.eyes === 'glow') e.userData.noShadow = true;
+    if (LK.brows !== 'none') {
+      const b = mk(new THREE.BoxGeometry(0.032, LK.brows === 'thick' ? 0.014 : 0.007, 0.01), hm, sd * 0.029, LK.brows === 'raised' ? 0.04 : 0.032, 0.076);
+      b.rotation.z = sd * ({ angry: 0.45, raised: -0.3, thick: 0.12 }[LK.brows] ?? 0.15);
+    }
+  }
+  if (LK.nose === 'pointed') { const n = mk(new THREE.ConeGeometry(0.012, 0.06, 6), sk, 0, -0.003, 0.094); n.rotation.x = Math.PI / 2; }
+  else if (LK.nose === 'broad') { const n = mk(new THREE.SphereGeometry(0.022, 10, 8), sk, 0, -0.01, 0.078); n.scale.set(1.25, 0.8, 0.85); }
+  else if (LK.nose === 'hooked') { const n = mk(new THREE.ConeGeometry(0.016, 0.05, 6), sk, 0, -0.002, 0.087); n.rotation.x = Math.PI / 2 + 0.45; }
+  else { const n = mk(new THREE.ConeGeometry(0.014, 0.036, 6), sk, 0, -0.005, 0.083); n.rotation.x = Math.PI / 2; }
+  if (LK.mouth === 'smile') { const m = mk(new THREE.TorusGeometry(0.015, 0.0032, 4, 12, Math.PI), dark, 0, -0.036, 0.072); m.rotation.z = Math.PI; }
+  else if (LK.mouth === 'frown') mk(new THREE.TorusGeometry(0.015, 0.0032, 4, 12, Math.PI), dark, 0, -0.052, 0.072);
+  else if (LK.mouth === 'grin') { mk(new THREE.BoxGeometry(0.036, 0.013, 0.006), dark, 0, -0.045, 0.073); mk(new THREE.BoxGeometry(0.03, 0.007, 0.006), bone, 0, -0.043, 0.075); }
+  else mk(new THREE.BoxGeometry(0.03, 0.0045, 0.006), dark, 0, -0.045, 0.074);
+  if (LK.tusks === 'yes') for (const sd of [-1, 1]) { const t = mk(new THREE.ConeGeometry(0.0075, 0.034, 6), bone, sd * 0.022, -0.038, 0.072); t.rotation.z = -sd * 0.25; }
+  // scars and paint
+  const scarM = mat('#e7a99a', { roughness: 0.8 });
+  if (LK.scar === 'eye') { const s = mk(new THREE.BoxGeometry(0.006, 0.055, 0.004), scarM, 0.03, 0.015, 0.079); s.rotation.z = 0.3; }
+  if (LK.scar === 'cheek') { const s = mk(new THREE.BoxGeometry(0.035, 0.005, 0.004), scarM, -0.042, -0.02, 0.07); s.rotation.set(0, -0.5, -0.4); }
+  const paintM = mat(LK.paintColor, { roughness: 0.7, side: THREE.DoubleSide });
+  if (LK.paint === 'stripe' || LK.paint === 'mask') mk(new THREE.CylinderGeometry(0.0835, 0.0835, LK.paint === 'mask' ? 0.034 : 0.012, 20, 1, true, -1.0, 2.0), paintM, 0, 0.013, -0.002);
+  if (LK.paint === 'dots') for (const sd of [-1, 1]) for (let i = 0; i < 3; i++) mk(new THREE.SphereGeometry(0.005, 6, 4), paintM, sd * (0.038 + i * 0.008), -0.012 - i * 0.004, 0.066 - i * 0.005);
+  // beard
+  if (LK.beard === 'stubble') { const s = mk(new THREE.SphereGeometry(0.0625, 14, 10), new THREE.MeshStandardMaterial({ color: c.hair, transparent: true, opacity: 0.4, roughness: 1 }), 0, -0.042, 0.019); s.scale.set(1, 0.82, 1); }
+  const moustache = () => { for (const sd of [-1, 1]) { const m = mk(new THREE.CapsuleGeometry(0.006, 0.022, 3, 6), hm, sd * 0.014, -0.03, 0.079); m.rotation.z = sd * 1.2; } };
+  if (LK.beard === 'moustache') moustache();
+  if (LK.beard === 'goatee') { const g = mk(new THREE.ConeGeometry(0.017, 0.05, 8), hm, 0, -0.098, 0.058); g.rotation.x = Math.PI; moustache(); }
+  if (['short', 'long', 'braided'].includes(LK.beard)) {
+    const b = mk(new THREE.SphereGeometry(0.063, 14, 10), hm, 0, -0.056, 0.027); b.scale.set(1.05, 0.88, 1.0); moustache();
+    if (LK.beard === 'long') { const l = mk(new THREE.ConeGeometry(0.052, 0.17, 10), hm, 0, -0.14, 0.05); l.rotation.x = Math.PI; l.scale.z = 0.7; }
+    if (LK.beard === 'braided') for (const sd of [-1, 1]) { const l = mk(new THREE.ConeGeometry(0.017, 0.15, 8), hm, sd * 0.024, -0.15, 0.06); l.rotation.x = Math.PI; mk(new THREE.SphereGeometry(0.009, 8, 6), trim, sd * 0.024, -0.215, 0.06); }
+  }
+  // hair
+  const hair = H.hair; hair.clear(); hair.visible = true;
+  const hp = o => { hair.add(o); return o; };
+  const cap = () => { const m = hp(new THREE.Mesh(new THREE.SphereGeometry(0.089, 18, 12, 0, 6.283, 0, 1.75), hm)); m.position.set(0, 0.01, -0.006); m.rotation.x = -0.28; };
+  const back = (sy = 0.85) => { const m = hp(new THREE.Mesh(new THREE.SphereGeometry(0.08, 14, 10), hm)); m.position.set(0, -0.025, -0.035); m.scale.set(0.95, sy, 0.75); };
+  const tube = (pts, r) => hp(new THREE.Mesh(taperedTube(new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(...p))), 14, r, 6), hm));
+  switch (LK.hair) {
+    case 'bald': break;
+    case 'long': cap(); back(); { const l = hp(new THREE.Mesh(new THREE.CapsuleGeometry(0.068, 0.15, 4, 10), hm)); l.position.set(0, -0.12, -0.05); l.scale.z = 0.55; } break;
+    case 'ponytail': cap(); tube([[0, 0.03, -0.08], [0, -0.04, -0.13], [0, -0.16, -0.125], [0, -0.24, -0.1]], 0.024); { const t = hp(new THREE.Mesh(new THREE.TorusGeometry(0.018, 0.005, 5, 12), trim)); t.position.set(0, 0.0, -0.11); t.rotation.x = 1.2; } break;
+    case 'mohawk': for (let i = 0; i <= 8; i++) { const a = 0.75 - i * 0.32, m = hp(new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.06, 0.03), hm)); m.position.set(0, 0.088 * Math.cos(a), 0.088 * Math.sin(a)); m.rotation.x = a; } break;
+    case 'braids': cap(); back(0.7); for (const sd of [-1, 1]) tube([[sd * 0.07, -0.01, 0], [sd * 0.088, -0.11, 0.02], [sd * 0.085, -0.23, 0.035]], 0.017); break;
+    case 'topknot': cap(); { const k = hp(new THREE.Mesh(new THREE.SphereGeometry(0.034, 12, 10), hm)); k.position.set(0, 0.105, -0.02); const t = hp(new THREE.Mesh(new THREE.TorusGeometry(0.02, 0.006, 5, 12), trim)); t.position.set(0, 0.078, -0.015); t.rotation.x = Math.PI / 2; } break;
+    case 'bun': cap(); { const k = hp(new THREE.Mesh(new THREE.SphereGeometry(0.042, 12, 10), hm)); k.position.set(0, 0.02, -0.1); } break;
+    default: cap(); back();
+  }
+  // a cosmetic hat, if nothing is worn on the head
+  if (!eq.head) {
+    const cm = mat(cloakCol, { roughness: 0.85, side: THREE.DoubleSide });
+    if (LK.hat === 'hood') { const h = mk(new THREE.SphereGeometry(0.103, 18, 12, 0, 6.283, 0, 1.95), cm, 0, 0.0, -0.012); h.rotation.x = -0.55; const tip = mk(new THREE.ConeGeometry(0.05, 0.12, 10), cm, 0, 0.03, -0.11); tip.rotation.x = -1.9; hair.visible = false; }
+    if (LK.hat === 'wizard') { mk(new THREE.CylinderGeometry(0.155, 0.155, 0.008, 28), cm, 0, 0.06, 0); const cone = mk(new THREE.ConeGeometry(0.085, 0.22, 18), cm, 0, 0.17, -0.02); cone.rotation.x = -0.18; mk(new THREE.TorusGeometry(0.086, 0.008, 6, 20), trim, 0, 0.068, 0).rotation.x = Math.PI / 2; }
+    if (LK.hat === 'bandana') { const b = mk(new THREE.TorusGeometry(0.086, 0.013, 6, 22), cm, 0, 0.035, -0.004); b.rotation.x = Math.PI / 2 - 0.15; }
+    if (LK.hat === 'circlet') { mk(new THREE.TorusGeometry(0.085, 0.005, 5, 24), trim, 0, 0.038, 0).rotation.x = Math.PI / 2 - 0.1; mk(new THREE.OctahedronGeometry(0.012), new THREE.MeshStandardMaterial({ color: '#4a8aff', emissive: '#2a5aff', emissiveIntensity: 1.2 }), 0, 0.045, 0.086); }
+    if (LK.hat === 'helm') { mk(new THREE.SphereGeometry(0.097, 16, 12, 0, 6.283, 0, 1.6), steelM(), 0, 0.006, 0); for (const sd of [-1, 1]) { const h = mk(new THREE.ConeGeometry(0.018, 0.1, 8), bone, sd * 0.09, 0.07, 0); h.rotation.z = -sd * 0.9; } hair.visible = false; }
+  }
+  // packs and scarf
+  if (LK.pack === 'backpack') { const b = mk(new THREE.BoxGeometry(0.16, 0.18, 0.08), leather, 0, 0.15, -0.135, H.torso); const r = mk(new THREE.CylinderGeometry(0.034, 0.034, 0.18, 10), mat(LK.cloakColor || '#7a6a4a'), 0, 0.26, -0.13, H.torso); r.rotation.z = Math.PI / 2; b.userData.pack = 1; }
+  if (LK.pack === 'bedroll') { const r = mk(new THREE.CylinderGeometry(0.036, 0.036, 0.22, 10), mat(LK.cloakColor || '#7a6a4a'), 0, 0.25, -0.12, H.torso); r.rotation.z = Math.PI / 2; }
+  if (LK.pack === 'satchel') { mk(new THREE.BoxGeometry(0.03, 0.085, 0.085), leather, 0.12, -0.03, 0.02, H.hips); const s = mk(new THREE.TorusGeometry(0.13, 0.006, 4, 24), leather, 0, 0.15, 0, H.torso); s.rotation.set(Math.PI / 2, 0.6, 0); s.scale.y = 0.75; }
+  if (LK.scarf === 'yes') { const s = mk(new THREE.TorusGeometry(0.048, 0.02, 8, 18), mat(LK.cloakColor || deep, { roughness: 0.9 }), 0, 0.29, 0.005, H.torso); s.rotation.x = Math.PI / 2; mk(new THREE.BoxGeometry(0.035, 0.1, 0.012), mat(LK.cloakColor || deep, { roughness: 0.9 }), 0.03, 0.22, 0.07, H.torso).rotation.z = 0.2; }
+}
+function dressHuman(H = human, c = state.char) {
+  const eq = c.equipped, M = H.mats, inv = k => !!c.inventory?.some(i => i.key === k);
   for (const o of H.gear) o.removeFromParent();
   H.gear = [];
   const add = (parent, o) => { parent.add(o); H.gear.push(o); return o; };
   M.skin.color.set(c.skin); M.hair.color.set(c.hair); M.tunic.color.set(c.color);
-  const cloth = mat(c.color, { roughness: 0.8, side: THREE.DoubleSide }), trim = brassM(), leather = mat('#4a3020', { roughness: 0.65 });
+  const LK = lookOf(c);
+  const cloth = mat(c.color, { roughness: 0.8, side: THREE.DoubleSide }), trim = mat(LK.trim, { metalness: 0.85, roughness: 0.3 }), leather = mat('#4a3020', { roughness: 0.65 });
   const deep = new THREE.Color(c.color).multiplyScalar(0.55);
+  dressLook(H, c, add, { trim, leather, deep });
 
   // armour layers
   const belt = (parentY = 0.02) => { const b = new THREE.Mesh(new THREE.TorusGeometry(0.098, 0.014, 6, 20), leather); b.rotation.x = Math.PI / 2; b.scale.y = 0.72; b.position.y = parentY; add(H.torso, b);
@@ -2122,15 +2265,23 @@ function dressHuman() {
   } else { skirt(M.tunic); belt(); }
 
   // cloak
-  const cg = new THREE.PlaneGeometry(0.3, 0.5, 6, 8); cg.translate(0, -0.25, 0);
-  const cp = cg.attributes.position;
-  for (let n = 0; n < cp.count; n++) { const x = cp.getX(n), y = cp.getY(n); cp.setZ(n, Math.sin(x * 32) * 0.012 + y * 0.12); cp.setX(n, x * (1 - y * 0.6)); }
-  cg.computeVertexNormals();
-  const cloak = new THREE.Mesh(cg, mat(deep, { side: THREE.DoubleSide, roughness: 0.85 })); cloak.position.set(0, 0.27, -0.09); add(H.torso, cloak); H.cloak = cloak;
+  H.cloak = null;
+  if (LK.cloak !== 'none') {
+    const len = LK.cloak === 'long' ? 0.72 : LK.cloak === 'tattered' ? 0.62 : 0.5;
+    const cg = new THREE.PlaneGeometry(LK.cloak === 'long' ? 0.33 : 0.3, len, 8, 10); cg.translate(0, -len / 2, 0);
+    const cp = cg.attributes.position;
+    for (let n = 0; n < cp.count; n++) {
+      const x = cp.getX(n), y = cp.getY(n);
+      cp.setZ(n, Math.sin(x * 32) * 0.012 + y * 0.12); cp.setX(n, x * (1 - y * 0.6));
+      if (LK.cloak === 'tattered' && y < -len + 0.02) cp.setY(n, y + Math.abs(Math.sin(x * 97 + 1.3)) * 0.12);
+    }
+    cg.computeVertexNormals();
+    const cloak = new THREE.Mesh(cg, mat(LK.cloakColor || deep, { side: THREE.DoubleSide, roughness: 0.85 })); cloak.position.set(0, 0.27, -0.09); add(H.torso, cloak); H.cloak = cloak;
+  }
   const clasp = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.012, 6, 16, Math.PI), trim); clasp.rotation.set(-Math.PI / 2 - 0.3, 0, Math.PI); clasp.position.set(0, 0.255, 0); clasp.scale.z = 0.7; add(H.torso, clasp);
 
   // head and neck
-  H.hair.visible = eq.head !== 'wardenHelm';
+  if (eq.head === 'wardenHelm') H.hair.visible = false;
   if (eq.head === 'crown') add(H.head, crownMesh(0.07, 0.083));
   if (eq.head === 'wardenHelm') {
     const iron = mat('#3a3f45', { metalness: 0.85, roughness: 0.35, envMapIntensity: 1 }), g = new THREE.Group();
@@ -6288,6 +6439,7 @@ function toMenu(screen = 'title', opts) {
 }
 function menuButton() {
   if (ui.forge) return closeForge();
+  if (ui.builder) return closeBuilder(false);
   if (mode === 'edit') { edSave(); return toMenu('creator'); }
   if (mode === 'test') return openEditor(ed.id, true);
   if (busy || anim) return;
@@ -6347,6 +6499,7 @@ const SCREENS = {
             <div class="row">
               ${canContinue(h) ? `<button class="btn primary small" data-act="continue" data-id="${h.id}">Continue</button>` : ''}
               <button class="btn small" data-act="expedition" data-id="${h.id}">${h.run ? 'Start over' : 'Choose a dungeon'}</button>
+              <button class="btn small" data-act="restyle" data-id="${h.id}">Restyle</button>
               ${scr.confirmDel === h.id ? `<button class="btn small danger" data-act="delHero" data-id="${h.id}">Delete for good?</button>`
                 : `<button class="btn small" data-act="askDelHero" data-id="${h.id}">Delete</button>`}
             </div>
@@ -6367,6 +6520,7 @@ const SCREENS = {
       <div class="form">
         <label class="field"><span>Name</span><input type="text" id="hName" maxlength="40" value="${esc(d.name)}"></label>
         <div class="field"><span>Look</span>
+          <div class="row"><button class="btn primary" data-act="openBuilder">✦ Open the Hero Builder</button><span class="muted">${d.look ? esc((LOOK_BASES[d.look.base]?.name || 'Human') + ' · ' + (LOOK_OPTS.hair.find(h => h[0] === d.look.hair)?.[1] || '') + ' hair' + (d.look.beard !== 'none' ? ' · ' + d.look.beard + ' beard' : '') + (d.look.hat !== 'none' ? ' · ' + (LOOK_OPTS.hat.find(h => h[0] === d.look.hat)?.[1] || '').toLowerCase() : '')) : 'Base, face, hair, outfit and colours, in 3D.'}</span></div>
           <div class="row">${seg('hModel', d.model, [['adventurer', 'Adventurer'], ['paladin', 'Paladin sculpt']])}
             <label class="row muted">Colour <input type="color" id="hColor" value="${d.color}"></label></div>
           <div class="row"><span class="label" style="width:36px">Skin</span>${swatches(SKIN_TONES, d.skin, 'hSkin')}</div>
@@ -6451,6 +6605,7 @@ function draftHero() {
 function charFromDraft(d) {
   const c = newCharacter();
   Object.assign(c, { name: d.name.trim() || 'Nameless wanderer', color: d.color, skin: d.skin, hair: d.hair, model: d.model });
+  if (d.look) { c.look = clone(d.look); c.species = d.species || LOOK_BASES[d.look.base]?.name || c.species; }
   for (const [k] of ABILITIES) c.abilities[k] = d.rolled ? d.rolled[k] : d.base[k] + 1;
   applyKit(c, d.kit);
   return c;
@@ -6500,6 +6655,8 @@ $('screen').addEventListener('click', e => {
     case 'delHero': heroes = heroes.filter(x => x !== h); saveHeroes(); scr.confirmDel = null; break;
     case 'newHero': return showScreen('newHero', { draft: draftHero() });
     case 'forge': return openForge();
+    case 'openBuilder': return openBuilder({ draft: scr.draft });
+    case 'restyle': return openBuilder({ heroId: id });
     case 'hModel': scr.draft.model = k; break;
     case 'hKit': scr.draft.kit = k; if (!scr.draft.rolled) scr.draft.base = { ...KITS[k].scores }; break;
     case 'exportAll': exportAll(); return;
@@ -6517,7 +6674,7 @@ $('screen').addEventListener('click', e => {
       const hero = heroById(scr.hero), key = scr.map, members = [hero, ...(scr.companions || []).map(heroById).filter(Boolean)].slice(0, PARTY_MAX);
       const chars = members.map(m => {
         let c = m.char;
-        if (scr.fresh) { const fresh = newCharacter(); for (const f of ['name', 'color', 'skin', 'hair', 'model', 'abilities', 'species', 'cls', 'kit']) fresh[f] = clone(c[f]); c = applyKit(fresh, fresh.kit); }
+        if (scr.fresh) { const fresh = newCharacter(); for (const f of ['name', 'color', 'skin', 'hair', 'model', 'abilities', 'species', 'cls', 'kit', 'look']) if (c[f] !== undefined) fresh[f] = clone(c[f]); c = applyKit(fresh, fresh.kit); }
         c = clone(c); c.hp = maxHpOf(c); c.curseSteps = 0; return c;
       });
       hero.run = freshState(key, chars); hero.run.partyMode = scr.pmode || 'all';
@@ -8078,7 +8235,7 @@ function layoutHand() {
   });
   // how much of the screen the hand takes: the board is centred in what is left
   const z = parseFloat(getComputedStyle($('playBar')).zoom) || 1, bs = getComputedStyle(document.body);
-  LENS.bot = playing() ? (parseFloat(bs.getPropertyValue('--peek')) || 0) * z : 0;
+  LENS.bot = playing() && !ui.builder ? (parseFloat(bs.getPropertyValue('--peek')) || 0) * z : 0;
   LENS.top = playing() ? 44 * z : 0;
 }
 function cardIndexAt(x) {
@@ -8259,6 +8416,120 @@ function frameForCard() {
                fromEl: camElev(), toEl: Math.max(camElev(), 0.95), fromD: camera.position.distanceTo(controls.target), toD: d };
 }
 
+
+/* ================================================================== *
+ * THE HERO BUILDER: start from a base, then change the body, face, hair, outfit and colours, with the figure turning in front of you.
+ * Used when creating a hero, and to restyle one later. The Monster Forge uses the same figure for humanoid monsters and characters.
+ * ================================================================== */
+const BUILD = { on: false, tab: 'base', from: null, heroId: null, draft: null, back: null };
+const BUILD_TABS = [['base', 'Base'], ['body', 'Body'], ['face', 'Face'], ['hair', 'Hair'], ['outfit', 'Outfit'], ['colours', 'Colours']];
+function openBuilder(o) {
+  const h = o.heroId && heroById(o.heroId);
+  const c = h ? clone(h.char) : charFromDraft(o.draft);
+  c.look = lookOf(c); c.model = 'adventurer'; c.hp = maxHpOf(c);
+  Object.assign(BUILD, { on: true, tab: 'base', from: h ? 'hero' : 'new', heroId: o.heroId || null, draft: o.draft || null, undo: [] });
+  curHero = null; ui.builder = true; document.body.classList.add('building');
+  enterPlay(freshState('trainingYard', [c]), 'play');
+  builderCam('body'); renderBuilder(); setTimeout(resize, 0);
+}
+function closeBuilder(keep) {
+  const c = state.char;
+  if (keep) {
+    const fields = { look: clone(c.look), skin: c.skin, hair: c.hair, color: c.color, model: 'adventurer', species: LOOK_BASES[c.look.base]?.name || c.species };
+    if (BUILD.from === 'new' && BUILD.draft) Object.assign(BUILD.draft, fields);
+    if (BUILD.from === 'hero') {
+      const h = heroById(BUILD.heroId);
+      if (h) {
+        Object.assign(h.char, fields);
+        for (const o of heroes) for (const m of o.run?.party || []) if (m.heroId === h.id || (o === h && !m.heroId)) Object.assign(m.char, clone(fields));
+        h.updated = Date.now(); saveHeroes();
+      }
+    }
+  }
+  BUILD.on = false; ui.builder = false; CAM.hold = 0; document.body.classList.remove('building'); $('buildPanel').innerHTML = '';
+  if (BUILD.from === 'new') toMenu('newHero', { draft: BUILD.draft }); else toMenu('heroes');
+  if (keep) toast(BUILD.from === 'new' ? 'Look saved. Finish your hero below.' : 'Your hero has a new look.');
+}
+// frame the figure: the whole body, or a close look at the face
+function builderCam(what) {
+  const L = lookOf(state.char), h = L.height, t = hero.position.clone();
+  t.y += what === 'face' ? 1.0 * h : 0.55 * h;
+  CAM.anim = null; CAM.hold = performance.now() + 1e9; CAM.focus = { position: t.clone().setY(t.y - CHEST) };
+  const yaw = (hero.rotation.y || 0) + Math.PI + (BUILD.spin || 0);
+  camPlace(t, yaw, what === 'face' ? 0.1 : 0.22, what === 'face' ? 0.5 : 2.3 * Math.max(0.85, h)); controls.update();
+}
+function builderSet(field, val) {
+  const c = state.char;
+  BUILD.undo.push(JSON.stringify({ look: c.look, skin: c.skin, hair: c.hair, color: c.color })); if (BUILD.undo.length > 40) BUILD.undo.shift();
+  if (field === 'base') {
+    const B = LOOK_BASES[val]; if (!B) return;
+    Object.assign(c.look, { base: val, ...B.look }); if (!B.look.eyeColor) c.look.eyeColor = LOOK_DEFAULT.eyeColor;
+    c.skin = B.skin; c.hair = B.hairColor;
+  } else if (['skin', 'hairColor', 'color'].includes(field)) c[field === 'hairColor' ? 'hair' : field] = val;
+  else c.look[field] = ['height', 'build', 'head'].includes(field) ? +val : val;
+  dressHero();
+}
+function builderRandom() {
+  const c = state.char, pick = a => a[Math.floor(Math.random() * a.length)];
+  builderSet('base', pick(Object.keys(LOOK_BASES)));
+  for (const k of ['eyes', 'brows', 'nose', 'mouth', 'hair', 'hat', 'cloak', 'pack', 'scarf', 'scar', 'paint']) c.look[k] = pick(LOOK_OPTS[k])[0];
+  if (Math.random() < 0.4) c.look.beard = pick(LOOK_OPTS.beard)[0];
+  c.look.height = +(c.look.height * (0.95 + Math.random() * 0.1)).toFixed(2); c.look.build = +(c.look.build * (0.92 + Math.random() * 0.16)).toFixed(2);
+  if (Math.random() < 0.6) c.hair = pick(LOOK_HAIRS);
+  c.color = pick(['#3f6f8f', '#8f3f3f', '#3f8f5a', '#6a4a8f', '#8f7a3f', '#2a2a2a', '#c8c0b0']); c.look.cloakColor = Math.random() < 0.5 ? '' : pick(['#4a1416', '#1a2a4a', '#2a3a1a', '#3a2a4a', '#6a5a3a']);
+  c.look.trim = pick(['#c9a24a', '#c0c4cc', '#b06a3a', '#3a3a3a']); c.look.eyeColor = c.look.eyes === 'glow' ? pick(['#ffd36a', '#7ad8ff', '#ff5a3a', '#7ff0a0']) : pick(LOOK_EYES.slice(0, 5));
+  dressHero();
+}
+const bOpt = (label, field, cur) => `<div class="opt"><span>${label}</span><div class="chips">${LOOK_OPTS[field].map(([k, l]) => `<button class="chip2" data-bk="${field}" data-v="${k}" aria-pressed="${cur === k}">${l}</button>`).join('')}</div></div>`;
+const bSw = (label, field, list, cur) => `<div class="opt"><span>${label}</span><div class="sws">${list.map(s => `<button style="--sw:${s}" data-bk="${field}" data-v="${s}" aria-pressed="${String(cur).toLowerCase() === s}" aria-label="${s}"></button>`).join('')}<input type="color" data-bc="${field}" value="${/^#[0-9a-f]{6}$/i.test(cur) ? cur : '#808080'}" title="Any colour"></div></div>`;
+const bSl = (label, field, min, max, cur) => `${frow(`${label} <b>${Math.round(cur * 100)}%</b>`, `<input type="range" data-bs="${field}" min="${min}" max="${max}" step="0.01" value="${cur}">`)}`;
+function renderBuilder() {
+  const c = state.char, L = c.look, T = BUILD.tab;
+  let body = '';
+  if (T === 'base') body = `<p class="hint">Start from a base, then change anything. Bases only change the look; your kit and scores decide how you fight.</p>
+    <div class="bases">${Object.entries(LOOK_BASES).map(([k, B]) => `<button data-bk="base" data-v="${k}" aria-pressed="${L.base === k}"><b>${B.name}</b><span>${B.blurb}</span></button>`).join('')}</div>`;
+  if (T === 'body') body = `${bSl('Height', 'height', 0.65, 1.2, L.height)}${bSl('Build', 'build', 0.8, 1.35, L.build)}${bSl('Head', 'head', 0.85, 1.25, L.head)}${bSw('Skin', 'skin', LOOK_SKINS, c.skin)}`;
+  if (T === 'face') body = `${bOpt('Eyes', 'eyes', L.eyes)}${bSw('Eye colour', 'eyeColor', LOOK_EYES, L.eyeColor)}${bOpt('Brows', 'brows', L.brows)}${bOpt('Nose', 'nose', L.nose)}${bOpt('Mouth', 'mouth', L.mouth)}
+    ${bOpt('Ears', 'ears', L.ears)}${bOpt('Beard', 'beard', L.beard)}${bOpt('Tusks', 'tusks', L.tusks)}${bOpt('Horns', 'horns', L.horns)}${bOpt('Scar', 'scar', L.scar)}${bOpt('Face paint', 'paint', L.paint)}
+    ${L.paint !== 'none' ? bSw('Paint colour', 'paintColor', ['#3a6aff', '#e0405a', '#f3e7cf', '#1a1a1a', '#7ff0a0', '#ffd36a'], L.paintColor) : ''}`;
+  if (T === 'hair') body = `${bOpt('Style', 'hair', L.hair)}${bSw('Colour (hair and beard)', 'hairColor', LOOK_HAIRS, c.hair)}`;
+  if (T === 'outfit') body = `<p class="hint">Armour, shields and weapons follow what your hero has equipped. These are worn as well.</p>
+    ${bOpt('Hat', 'hat', L.hat)}${bOpt('Cloak', 'cloak', L.cloak)}${bOpt('Pack', 'pack', L.pack)}${bOpt('Scarf', 'scarf', L.scarf)}`;
+  if (T === 'colours') body = `${bSw('Main colour (tunic, shield, ring)', 'color', ['#3f6f8f', '#8f3f3f', '#3f8f5a', '#6a4a8f', '#8f7a3f', '#2a2a2a', '#c8c0b0'], c.color)}
+    ${bSw('Cloak, hat and scarf', 'cloakColor', ['#4a1416', '#1a2a4a', '#2a3a1a', '#3a2a4a', '#6a5a3a', '#1a1a1a', '#d8d0c0'], L.cloakColor)}
+    ${bSw('Trim (buckles, clasps)', 'trim', ['#c9a24a', '#c0c4cc', '#b06a3a', '#3a3a3a', '#e8e0cc'], L.trim)}
+    ${bSw('Trousers', 'trousers', ['#4a3a2c', '#2a2a2a', '#3a4a5a', '#5a4a3a', '#6a2a2a', '#c8c0b0'], L.trousers)}
+    ${bSw('Boots', 'bootColor', ['#3a2618', '#1a1a1a', '#6a4a2a', '#5a5a5a', '#8a6a4a'], L.bootColor)}`;
+  $('buildPanel').innerHTML = `<h2>Hero Builder</h2>
+    <p class="hint">${esc(c.name)} · ${esc(LOOK_BASES[L.base]?.name || 'Human')} ${esc(c.cls || '')}. Drag the view to turn around them.</p>
+    <div class="camrow"><button class="chip2" data-ba="turnL">⟲ Turn</button><button class="chip2" data-ba="turnR">Turn ⟳</button><button class="chip2" data-ba="camBody">Whole body</button><button class="chip2" data-ba="camFace">Face</button><button class="chip2" data-ba="random">🎲 Surprise me</button><button class="chip2" data-ba="undo" ${BUILD.undo.length ? '' : 'disabled'}>↶ Undo</button></div>
+    <div class="tabs2">${BUILD_TABS.map(([k, l]) => `<button data-bt="${k}" aria-pressed="${T === k}">${l}</button>`).join('')}</div>
+    ${body}
+    <div class="fact"><button class="btn primary" data-ba="done">✓ Keep this look</button><button class="btn" data-ba="cancel">Cancel</button></div>`;
+}
+{
+  const P = $('buildPanel');
+  P.addEventListener('click', e => {
+    const t = e.target.closest('[data-bt]'); if (t) { BUILD.tab = t.dataset.bt; renderBuilder(); builderCam(BUILD.tab === 'face' || BUILD.tab === 'hair' ? 'face' : 'body'); return; }
+    const k = e.target.closest('[data-bk]'); if (k) { builderSet(k.dataset.bk, k.dataset.v); renderBuilder(); return; }
+    const a = e.target.closest('[data-ba]'); if (!a) return;
+    switch (a.dataset.ba) {
+      case 'done': return closeBuilder(true);
+      case 'cancel': return closeBuilder(false);
+      case 'random': builderRandom(); return renderBuilder();
+      case 'undo': { const u = BUILD.undo.pop(); if (!u) return; Object.assign(state.char, JSON.parse(u)); dressHero(); return renderBuilder(); }
+      case 'turnL': case 'turnR': BUILD.spin = (BUILD.spin || 0) + (a.dataset.ba === 'turnL' ? -0.8 : 0.8); return builderCam(BUILD.tab === 'face' || BUILD.tab === 'hair' ? 'face' : 'body');
+      case 'camBody': return builderCam('body');
+      case 'camFace': return builderCam('face');
+    }
+  });
+  P.addEventListener('input', e => {
+    const t = e.target;
+    if (t.dataset.bs) { builderSet(t.dataset.bs, t.value); const b = t.closest('.frow')?.querySelector('span b'); if (b) b.textContent = Math.round(t.value * 100) + '%'; }
+    if (t.dataset.bc) builderSet(t.dataset.bc, t.value);
+  });
+  P.addEventListener('change', e => { if (e.target.dataset.bc) renderBuilder(); if (e.target.dataset.bs) builderCam(BUILD.tab === 'face' ? 'face' : 'body'); });
+}
 /* ================================================================== *
  * THE SPELL FORGE: invent spells. Rules (damage, saves, effects), card art (a glyph, an uploaded picture or pixel art),
  * and the look when cast: start from an existing effect, then change its colours, size, speed and amount.
@@ -9102,7 +9373,7 @@ window.battleBoard = {
     applyKit: (c, k) => applyKit(c, k), newCharacter: () => newCharacter(), preparedSpells: () => preparedSpells(), togglePrepared: k => togglePrepared(k), openMerchant: () => openMerchant(() => {}),
     openSettings: () => openSettings(), reachProblems: m => reachProblems(m), oddsText: id => oddsText(creatureById(id)), bossPhase: id => bossPhase(creatureById(id)), damage: (id, n) => damageCreature(creatureById(id), n, 'dmg'),
     passiveOf: c => passiveOf(c), respec: () => respec(state.char), undoGrowth: () => undoGrowth(), spendPoint: k => spendPoint(k), lightTorch: () => lightTorch(), giveItem: (k, i) => giveItem(k, i),
-    exploreStatusTick: () => exploreStatusTick(), knownTechs: () => knownTechs(), useTech: k => useTech(k), attack: id => attack(creatureById(id)), derived: () => { const d = derived(); return { atk: d.atk, dmgMod: d.dmgMod, ac: d.ac, guard: d.guard, trained: d.trained }; }, hitChance: id => hitChance(derived().atk, acOf(creatureById(id))), hotbar: () => hotbarOf(), openHotbar: () => openHotbar(), hand: () => handIds(), openForge: id => openForge(id), closeForge: () => closeForge(), forge: () => FORGE, forgeSet: (p, v) => { forgeSet(p, v); renderForge(); }, forgeCast: () => forgeCast(), fxLibrary: () => Object.keys(FX_LIBRARY), idle: () => !busy && !anim, showGuide: () => showGuide(), forgeSave: () => forgeSave(), forged: () => FORGED.map(f => f.id), knownSpells: () => knownSpells(), pixelsChanged: () => pixelsChanged(), showCard: id => { const i = cardInfo(id, state.char, { ex: true, t: { action: true, move: 6 }, actOk: true, heroTurn: true, n: -1 }); i.off = false; i.armed = false; const z = $('cardZoom'); z.innerHTML = `<div class="card k-${i.kind} big" style="--c:${i.color}">${cardHtml({ ...i, key: '' })}</div>`; z.hidden = false; return { name: i.name, type: i.type }; }, allIds: () => ({ spells: Object.keys(SPELLS).map(k => 's:' + k), techs: Object.keys(TECHS).map(k => 't:' + k), acts: Object.keys(HOT_ACTIONS) }), stand: (x, z, lookId) => { state.pos.x = x; state.pos.z = z; placeHero(); computeVisibility(); applyFog(); const c = creatureById(lookId); CAM.hold = 0; camShot(hero, worldOf(c.x, c.z), 0.01); refresh(); }, screenOf: id => { const c = creatureById(id), v = worldOf(c.x, c.z).setY(0.45).project(camera), r = canvas.getBoundingClientRect(); return { x: r.left + (v.x + 1) / 2 * r.width, y: r.top + (1 - v.y) / 2 * r.height }; }, playCard: id => playCard(id), inspectCard: id => inspectCard(id), armAttack: on => armAttack(on), lens: () => ({ ...LENS, prof: camProfile(), framed: !!CAM.framed, fov: camera.fov, view: camera.view && { ...camera.view } }), camDist: () => camera.position.distanceTo(controls.target), setFp: on => setFp(on), fp: () => ({ on: fpOn(), yaw: FP.yaw, look: (y, p) => { FP.yaw = y ?? FP.yaw; FP.pitch = p ?? FP.pitch; }, fov: camera.fov, ceiling: !!ceiling?.visible, rig: FP.rig.visible }), stepKey: (f, r) => stepKey(f, r), turnKey: d => turnKey(d),
+    exploreStatusTick: () => exploreStatusTick(), knownTechs: () => knownTechs(), useTech: k => useTech(k), attack: id => attack(creatureById(id)), derived: () => { const d = derived(); return { atk: d.atk, dmgMod: d.dmgMod, ac: d.ac, guard: d.guard, trained: d.trained }; }, hitChance: id => hitChance(derived().atk, acOf(creatureById(id))), hotbar: () => hotbarOf(), openHotbar: () => openHotbar(), hand: () => handIds(), openBuilder: o => openBuilder(o), closeBuilder: k => closeBuilder(k), builderSet: (f, v) => { builderSet(f, v); renderBuilder(); }, builderRandom: () => { builderRandom(); renderBuilder(); }, builderCam: w => builderCam(w), look: () => clone(state.char.look || null), openForge: id => openForge(id), closeForge: () => closeForge(), forge: () => FORGE, forgeSet: (p, v) => { forgeSet(p, v); renderForge(); }, forgeCast: () => forgeCast(), fxLibrary: () => Object.keys(FX_LIBRARY), idle: () => !busy && !anim, showGuide: () => showGuide(), forgeSave: () => forgeSave(), forged: () => FORGED.map(f => f.id), knownSpells: () => knownSpells(), pixelsChanged: () => pixelsChanged(), showCard: id => { const i = cardInfo(id, state.char, { ex: true, t: { action: true, move: 6 }, actOk: true, heroTurn: true, n: -1 }); i.off = false; i.armed = false; const z = $('cardZoom'); z.innerHTML = `<div class="card k-${i.kind} big" style="--c:${i.color}">${cardHtml({ ...i, key: '' })}</div>`; z.hidden = false; return { name: i.name, type: i.type }; }, allIds: () => ({ spells: Object.keys(SPELLS).map(k => 's:' + k), techs: Object.keys(TECHS).map(k => 't:' + k), acts: Object.keys(HOT_ACTIONS) }), stand: (x, z, lookId) => { state.pos.x = x; state.pos.z = z; placeHero(); computeVisibility(); applyFog(); const c = creatureById(lookId); CAM.hold = 0; camShot(hero, worldOf(c.x, c.z), 0.01); refresh(); }, screenOf: id => { const c = creatureById(id), v = worldOf(c.x, c.z).setY(0.45).project(camera), r = canvas.getBoundingClientRect(); return { x: r.left + (v.x + 1) / 2 * r.width, y: r.top + (1 - v.y) / 2 * r.height }; }, playCard: id => playCard(id), inspectCard: id => inspectCard(id), armAttack: on => armAttack(on), lens: () => ({ ...LENS, prof: camProfile(), framed: !!CAM.framed, fov: camera.fov, view: camera.view && { ...camera.view } }), camDist: () => camera.position.distanceTo(controls.target), setFp: on => setFp(on), fp: () => ({ on: fpOn(), yaw: FP.yaw, look: (y, p) => { FP.yaw = y ?? FP.yaw; FP.pitch = p ?? FP.pitch; }, fov: camera.fov, ceiling: !!ceiling?.visible, rig: FP.rig.visible }), stepKey: (f, r) => stepKey(f, r), turnKey: d => turnKey(d),
     mood: () => ({ ...MOOD, music: SFX.musicWant }), musicMood: () => musicMood(), film: () => filmPass.enabled, setSneak: on => setSneak(on), remapKey: k => remapKey(k), prefs: () => prefs, toastCount: () => document.getElementById('toast').children.length,
     freshState: (k, chars) => freshState(k, chars), enterPlay: st => enterPlay(st, 'play', true), refresh: () => refresh(), heroes: () => heroes, toast: m => toast(m), itemModelOk: () => Object.keys(ITEMS).every(k => !!itemModel(k)) },
   wanderers() { const m = spawnWanderers(6, 13); if (m && exploring() === false) startCombat(); refresh(); return m && m.map(c => c.type); },
