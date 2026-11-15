@@ -675,6 +675,16 @@
     body.forging #playBar { display: none !important; }
     .forge .frow { grid-template-columns: 100px minmax(0, 1fr); }
   }
+
+  .forge textarea.code { min-height: 300px; font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre; tab-size: 2; color: #e8f0d8; background: #0d0a08; }
+  .forge .codebar { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .forge .codebar select { flex: 1 1 160px; width: auto; }
+  .forge .codeerr { font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace; color: #ffb0a0; background: #3a0f0a; border: 1px solid #a0301c; border-radius: 6px; padding: 6px 8px; white-space: pre-wrap; }
+  .forge .codeok { font-size: 12px; color: #a6e07a; }
+  .guide h4 { margin: 12px 0 4px; font-family: var(--display); color: var(--brass); }
+  .guide code, .guide pre { font: 12px/1.45 ui-monospace, Menlo, Consolas, monospace; }
+  .guide pre { background: #0d0a08; border: 1px solid var(--line); border-radius: 6px; padding: 8px; overflow-x: auto; white-space: pre; }
+  .guide table { border-collapse: collapse; width: 100%; font-size: 12.5px; } .guide td { border-top: 1px solid var(--line); padding: 4px 6px; vertical-align: top; } .guide td:first-child { white-space: nowrap; color: #e8f0d8; font-family: ui-monospace, Menlo, Consolas, monospace; }
 </style>
 <script type="importmap">
 { "imports": {
@@ -8357,6 +8367,7 @@ function fxImpact(fx, P, to, tiles) {
   }
 }
 function spellFx(sp, from, to, tiles) {
+  if (sp.fx?.mode === 'code' && sp.fx.code?.trim()) return runCodeFx(sp, from, to, tiles);
   const fx = sp.fx || { travel: 'orb', impact: 'sparks', color: sp.color, color2: sp.color }, P = fxPal(fx);
   return fxTravel(fx, P, from, to).then(() => { fxImpact(fx, P, to, tiles); return waitT(fx.impact === 'pillar' || fx.impact === 'swirl' ? 0.3 : 0.08); });
 }
@@ -8445,12 +8456,249 @@ function loadForged() {
 }
 loadForged();
 
+
+/* --- animations written in JavaScript: the spell's code gets an `fx` toolkit and calls fx.hit() when the spell should land --- */
+const FX_LIMITS = { particles: 6000, seconds: 10, hitBy: 6 };
+function runCodeFx(sp, from, to, tiles) {
+  const f0 = sp.fx, P = fxPal(f0), keep = P.spr && !f0.tint;
+  let hitRes, landed = false, budget = FX_LIMITS.particles;
+  const hitP = new Promise(r => { hitRes = r; }), hit = () => { if (!landed) { landed = true; hitRes(); } };
+  const report = e => { const msg = String(e?.message || e).slice(0, 300); FORGE.err = msg; if (ui.forge) { const b = $('forgePanel').querySelector('.codemsg'); if (b) b.innerHTML = `<div class="codeerr">${esc(msg)}</div>`; } toast(`${sp.name}: the animation stopped. ${msg}`); };
+  const V = v => Array.isArray(v) ? v : v ? [v.x ?? 0, v.y ?? 0, v.z ?? 0] : [0, 0, 0];
+  const pt = v => ({ x: v.x, y: v.y, z: v.z });
+  const pts = tiles?.length ? tiles.map(t => pt(worldOf(t.x, t.z).add(new THREE.Vector3(0, 0.1, 0)))) : [pt(to)];
+  const center = pts.length > 1 ? pts.reduce((a, q) => ({ x: a.x + q.x / pts.length, y: a.y + q.y / pts.length, z: a.z + q.z / pts.length }), { x: 0, y: 0, z: 0 }) : pt(to);
+  const col = (hex, smoke, end) => keep ? [1, 1, 1] : hex ? hdr(hex, smoke ? (end ? 0.45 : 0.9) : end ? 1 : (P.spr ? 1.3 : 5)) : (smoke && !P.spr ? hdr(end ? (f0.color2 || f0.color) : f0.color, end ? 0.45 : 0.9) : (end ? P.c1 : P.c0));
+  const every = (sec, fn) => new Promise(res => {
+    let t = 0; const dur = Math.max(0, Math.min(FX_LIMITS.seconds, +sec || 0));
+    fxList.push({ update(dt) {
+      t += dt;
+      try { fn(Math.min(t, dur), dur ? Math.min(1, t / dur) : 1, dt); } catch (e) { report(e); res(); return false; }
+      if (t >= dur) { res(); return false; } return true;
+    } });
+  });
+  const api = {
+    from: pt(from), to: pt(to), tiles: pts, center, area: pts.length > 1,
+    color: f0.color, color2: f0.color2 || f0.color, size: +f0.size || 1, speed: +f0.speed || 1, amount: +f0.amount || 1, picture: P.spr,
+    particle(o = {}) {
+      if (budget-- <= 0) return;
+      const sz = Array.isArray(o.size) ? o.size : [o.size ?? 0.1, (o.size ?? 0.1) * 0.15];
+      (o.smoke ? P.haze : P.sys).emit({ p: V(o.at || center), v: V(o.vel), life: Math.max(0.02, Math.min(8, o.life ?? 0.6)), s: [sz[0] * P.s, sz[1] * P.s],
+        c0: col(o.color, o.smoke, false), c1: col(o.color2 || o.color && o.color, o.smoke, true), a: o.alpha ?? (o.smoke ? 0.5 : 1),
+        drag: o.drag || 0, g: o.gravity || 0, turb: o.wobble || 0, bounce: !!o.bounce, fi: o.fadeIn ?? 0.08 });
+    },
+    burst(n, fn) { const m = Math.max(0, Math.round((+n || 0) * P.n * Q.mult)); for (let i = 0; i < m; i++) api.particle(fn ? fn(i, m) : {}); },
+    every,
+    move(a, b, o = {}, step) {
+      if (typeof o === 'function') { step = o; o = {}; }
+      const A = pt(a), B = pt(b), dur = o.time ?? (0.25 + Math.hypot(B.x - A.x, B.y - A.y, B.z - A.z) * 0.05) / api.speed, arc = o.arc ?? 0.25;
+      return every(dur, (t, k) => {
+        const e = o.ease === 'in' ? k * k : o.ease === 'out' ? 1 - (1 - k) * (1 - k) : k;
+        const p = { x: A.x + (B.x - A.x) * e, y: A.y + (B.y - A.y) * e + Math.sin(e * Math.PI) * arc, z: A.z + (B.z - A.z) * e };
+        step?.(p, k);
+      });
+    },
+    wait: s => waitT(Math.max(0, Math.min(FX_LIMITS.seconds, +s || 0))),
+    light(color = f0.color, strength = 10, sec = 0.5, at = center) {
+      const owner = {}, l = takeLight(owner, color); if (!l) return; let t = 0; const A = pt(at);
+      fxList.push({ update(dt) { t += dt; l.position.set(A.x, A.y + 0.6, A.z); l.intensity = strength * Math.max(0, 1 - t / sec); l.distance = 6; if (t >= sec) { freeLight(owner); return false; } return true; } });
+    },
+    shake: (k = 0.2) => shakeCam(Math.max(0, Math.min(0.6, +k || 0))),
+    hit,
+    random: (a = 0, b = 1) => rnd(a, b),
+    direction: () => pt(rndDir()),
+    mix: (a, b, k) => ({ x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k, z: a.z + (b.z - a.z) * k }),
+    add: (a, b) => ({ x: a.x + b.x, y: a.y + b.y, z: a.z + b.z }),
+    scale: (a, k) => ({ x: a.x * k, y: a.y * k, z: a.z * k }),
+    distance: (a, b) => Math.hypot(b.x - a.x, b.y - a.y, b.z - a.z),
+    travel: kind => fxTravel({ ...f0, travel: kind || 'orb' }, P, from, to),
+    impact: kind => fxImpact({ ...f0, impact: kind || 'sparks' }, P, to, tiles),
+  };
+  FORGE.err = '';
+  let run;
+  try { run = new Function('fx', `"use strict"; return (async () => {\n${f0.code}\n})();`); }
+  catch (e) { report(e); hit(); return hitP; }
+  Promise.resolve().then(() => run(api)).then(() => { if (ui.forge && !FORGE.err) { const b = $('forgePanel').querySelector('.codemsg'); if (b) b.innerHTML = '<span class="codeok">✓ Ran without errors.</span>'; } hit(); }, e => { report(e); hit(); });
+  after(FX_LIMITS.hitBy, hit);   // a spell always lands, even if the code never calls fx.hit()
+  return hitP;
+}
+// what the Settings mode does, written out as code: a starting point for your own
+const fxAsCode = fx => `// Made from your settings: ${fx.travel} travel, ${fx.impact} impact.\n// fx.travel and fx.impact are the forge's built-in styles. Replace them with your own particles.\nawait fx.travel('${fx.travel}');\nfx.hit();\nfx.impact('${fx.impact}');\n${fx.light ? 'fx.light(fx.color, 14, 0.6, fx.to);\n' : ''}${fx.shake ? 'fx.shake(0.22);\n' : ''}`;
+
+/* --- the animation library: ready-made code to load, read and change --- */
+const FX_LIBRARY = {
+  bolt: { name: 'Fire Bolt: an orb that bursts', code:
+`// A glowing shot flies to the target, leaving a trail, then bursts into sparks.
+await fx.move(fx.from, fx.to, { arc: 0.25 }, p => {
+  fx.burst(3, () => ({ at: p, vel: [fx.random(-.2, .2), fx.random(-.1, .3), fx.random(-.2, .2)], life: fx.random(.25, .5), size: [.1, .01] }));
+});
+fx.hit();                                   // damage and effects happen now
+fx.burst(50, () => {
+  const d = fx.direction(), s = fx.random(.5, 2.5) * fx.speed;
+  return { at: fx.to, vel: [d.x * s, d.y * s, d.z * s], life: fx.random(.3, .7), size: [.09, .01] };
+});
+fx.light(fx.color, 12, 0.5, fx.to);` },
+  fireball: { name: 'Fireball: a lobbed orb and an explosion', code:
+`// A heavy orb arcs high, then explodes with smoke and a shake.
+await fx.move(fx.from, fx.to, { arc: 1.2, time: 0.8 / fx.speed, ease: 'in' }, p => {
+  fx.burst(5, () => ({ at: p, vel: [fx.random(-.3, .3), fx.random(0, .4), fx.random(-.3, .3)], life: .4, size: [.16, .02] }));
+});
+fx.hit();
+fx.shake(0.25);
+fx.light(fx.color, 30, 0.7);
+fx.burst(160, () => {
+  const d = fx.direction(), s = fx.random(1, 4) * fx.speed;
+  return { at: fx.center, vel: [d.x * s, Math.abs(d.y) * s, d.z * s], life: fx.random(.35, .8), size: [.2, .02], drag: 1.8 };
+});
+fx.burst(30, () => ({ at: fx.center, smoke: true, color: '#3a302a', color2: '#141110', vel: [fx.random(-.5, .5), fx.random(.4, 1.2), fx.random(-.5, .5)], life: fx.random(1.2, 2), size: [.5, 1.4], wobble: 1 }));` },
+  frost: { name: 'Ray of Frost: a beam and bouncing shards', code:
+`// Particles fill the line between you and the target at once, then icy shards bounce away.
+fx.burst(140, () => {
+  const p = fx.mix(fx.from, fx.to, Math.random());
+  return { at: p, vel: [fx.random(-.1, .1), fx.random(-.1, .2), fx.random(-.1, .1)], life: fx.random(.2, .45), size: [.08, .01], fadeIn: .02 };
+});
+await fx.wait(0.12);
+fx.hit();
+fx.burst(70, () => {
+  const d = fx.direction();
+  return { at: fx.to, vel: [d.x * 3, Math.abs(d.y) * 4 + 1, d.z * 3], life: fx.random(.7, 1.2), size: [.11, .05], gravity: -9, bounce: true };
+});` },
+  chain: { name: 'Chain Lightning: a flickering zigzag', code:
+`// A jagged bolt flickers three times between you and the target.
+function zigzag() {
+  const points = [fx.from], steps = 8;
+  for (let i = 1; i < steps; i++) {
+    const p = fx.mix(fx.from, fx.to, i / steps);
+    points.push({ x: p.x + fx.random(-.35, .35), y: p.y + fx.random(-.25, .35), z: p.z + fx.random(-.35, .35) });
+  }
+  points.push(fx.to);
+  for (let i = 0; i < points.length - 1; i++)
+    for (let k = 0; k < 1; k += 0.08)
+      fx.particle({ at: fx.mix(points[i], points[i + 1], k), life: .12, size: [.09, .06], fadeIn: .01 });
+}
+for (let n = 0; n < 3; n++) { zigzag(); fx.light(fx.color, 18, 0.12, fx.to); await fx.wait(0.09); }
+fx.hit();
+fx.shake(0.15);
+fx.impact('pillar');` },
+  meteors: { name: 'Meteor Shower: rocks rain on the area', code:
+`// Six meteors fall onto random squares of the area, one after another.
+const falls = [];
+for (let i = 0; i < 6; i++) {
+  const spot = fx.tiles[Math.floor(Math.random() * fx.tiles.length)];
+  const sky = { x: spot.x + fx.random(-1, 1), y: spot.y + 6, z: spot.z + fx.random(-1, 1) };
+  falls.push(fx.move(sky, spot, { time: 0.45 / fx.speed, arc: 0, ease: 'in' }, p => {
+    fx.burst(4, () => ({ at: p, vel: [0, 1, 0], life: .35, size: [.18, .02] }));
+  }).then(() => {
+    fx.shake(0.12);
+    fx.burst(40, () => { const d = fx.direction(); return { at: spot, vel: [d.x * 2.5, Math.abs(d.y) * 3, d.z * 2.5], life: fx.random(.3, .6), size: [.14, .02], drag: 1.5 }; });
+  }));
+  await fx.wait(0.12);
+}
+await Promise.all(falls);
+fx.hit();` },
+  vortex: { name: 'Vortex: a whirl that pulls inward', code:
+`// Particles spiral in toward the target for a moment, then it lands with an outward burst.
+await fx.every(1.0, (t, k) => {
+  fx.burst(5, () => {
+    const a = Math.random() * Math.PI * 2, r = 1.6 * (1 - k * 0.5);
+    const at = { x: fx.to.x + Math.cos(a) * r, y: fx.to.y + fx.random(-.3, .5), z: fx.to.z + Math.sin(a) * r };
+    // velocity: around the circle and in toward the middle
+    return { at, vel: [-Math.sin(a) * 2 - Math.cos(a) * 1.5, .3, Math.cos(a) * 2 - Math.sin(a) * 1.5], life: .5, size: [.08, .02] };
+  });
+});
+fx.hit();
+fx.burst(80, () => { const d = fx.direction(); return { at: fx.to, vel: [d.x * 3, d.y * 3, d.z * 3], life: .5, size: [.1, .01] }; });` },
+  fountain: { name: 'Healing Fountain: rising sparkles', code:
+`// A ring on the ground, then sparkles spray up and fall back around your friend.
+fx.hit();
+fx.burst(60, () => { const a = Math.random() * Math.PI * 2; return { at: fx.to, vel: [Math.cos(a) * 2, 0, Math.sin(a) * 2], life: .5, size: [.1, .02], drag: 2 }; });
+await fx.every(1.2, () => {
+  fx.burst(4, () => ({ at: fx.add(fx.to, { x: 0, y: -.6, z: 0 }), vel: [fx.random(-.8, .8), fx.random(3, 4.5) * fx.speed, fx.random(-.8, .8)], life: 1, size: [.09, .03], gravity: -6 }));
+});` },
+  shockwave: { name: 'Shockwave: three rings along the ground', code:
+`// Three rings race out across the ground, one after another.
+fx.hit();
+fx.shake(0.2);
+for (let ring = 0; ring < 3; ring++) {
+  fx.burst(90, () => {
+    const a = Math.random() * Math.PI * 2, s = (2.5 + ring) * fx.speed;
+    return { at: { x: fx.center.x, y: fx.center.y + .05, z: fx.center.z }, vel: [Math.cos(a) * s, 0, Math.sin(a) * s], life: .55, size: [.12, .03], drag: 1.6 };
+  });
+  await fx.wait(0.15);
+}` },
+  implode: { name: 'Black Hole: implode, then flash', code:
+`// Particles are sucked in from all around, then everything bursts in a flash.
+fx.burst(220, () => {
+  const d = fx.direction(), r = fx.random(1.5, 2.5);
+  const at = fx.add(fx.to, fx.scale(d, r));
+  return { at, vel: [-d.x * r * 2, -d.y * r * 2, -d.z * r * 2], life: .5, size: [.03, .12], color: fx.color2, color2: fx.color };
+});
+await fx.wait(0.5);
+fx.hit();
+fx.light('#ffffff', 40, 0.3, fx.to);
+fx.burst(120, () => { const d = fx.direction(); return { at: fx.to, vel: [d.x * 5, d.y * 5, d.z * 5], life: .35, size: [.12, .01] }; });` },
+  confetti: { name: 'Picture Confetti: throws your card picture', code:
+`// Best with a picture or pixel art: set "Particles" to "Your card picture".
+fx.hit();
+fx.burst(40, () => ({
+  at: fx.to, vel: [fx.random(-2, 2), fx.random(3, 6), fx.random(-2, 2)],
+  life: fx.random(1, 1.6), size: [.3, .25], gravity: -9, bounce: true
+}));` },
+  wisps: { name: 'Spirit Wisps: five curving lights', code:
+`// Five wisps leave at different heights and curve onto the target together.
+const flights = [];
+for (let i = 0; i < 5; i++) {
+  flights.push(fx.move(fx.from, fx.to, { time: fx.random(.6, .9) / fx.speed, arc: fx.random(-.4, 1.4) }, p => {
+    fx.particle({ at: p, vel: [0, .2, 0], life: .4, size: [.1, .01] });
+  }));
+}
+await Promise.all(flights);
+fx.hit();
+fx.impact('swirl');` },
+};
+
+function showGuide() {
+  const rows = [
+    ['fx.from, fx.to', 'Where the spell starts (your hand) and where it lands, as {x, y, z}. One square is 1 unit; y is up.'],
+    ['fx.center, fx.tiles, fx.area', 'The middle of an area spell, every square it covers, and whether it is an area at all.'],
+    ['fx.color, fx.color2', 'The two colours chosen below the code. Particles fade from the first to the second.'],
+    ['fx.size, fx.speed, fx.amount', 'The sliders. Sizes and amounts are applied for you; use fx.speed in your own timings.'],
+    ['fx.particle({…})', 'One particle. Options below.'],
+    ['fx.burst(n, i => ({…}))', 'n particles at once (scaled by Amount and the quality setting).'],
+    ['await fx.every(sec, (t, k, dt) => …)', 'Runs your function every frame for sec seconds. t is time so far, k goes 0 → 1.'],
+    ['await fx.move(a, b, {time, arc, ease}, p => …)', 'Moves a point from a to b, calling you with its position each frame. ease: "in" or "out".'],
+    ['await fx.wait(sec)', 'Pause.'],
+    ['fx.hit()', 'The spell lands now: damage, healing and effects. If you never call it, it lands when your code ends (or after 6 s).'],
+    ['fx.light(color, strength, sec, at)', 'A flash of light.'],
+    ['fx.shake(amount)', 'Shake the camera (0 to 0.6).'],
+    ['fx.travel(kind), fx.impact(kind)', 'The forge\'s built-in styles: orb, arc, beam, rain, none / sparks, explosion, cloud, pillar, ring, swirl, shards.'],
+    ['fx.random(a, b), fx.direction()', 'A random number, and a random direction of length 1.'],
+    ['fx.mix(a, b, k), fx.add(a, b), fx.scale(a, k), fx.distance(a, b)', 'Point arithmetic.'],
+  ];
+  const opts = [
+    ['at', 'Where it starts: {x, y, z} or [x, y, z].'], ['vel', 'Velocity in units a second.'], ['life', 'Seconds it lives (up to 8).'],
+    ['size', 'A number, or [start, end] to grow or shrink. 0.1 is a spark, 1 is a big puff.'], ['color, color2', 'Start and end colour (defaults to fx.color and fx.color2).'],
+    ['alpha', 'Opacity, 0 to 1.'], ['drag', 'Slows it down: 0 none, 2 a lot.'], ['gravity', 'Up or down pull: -9 falls like a stone.'],
+    ['wobble', 'Drifts like smoke.'], ['bounce', 'true: bounces off the floor.'], ['smoke', 'true: a soft, dark-friendly puff instead of a glowing spark.'], ['fadeIn', 'Share of its life spent fading in (0.08).'],
+  ];
+  showModal('Spell animation build guide', `<div class="guide">
+    <p>In <b>Code</b> mode your JavaScript runs each time the spell is cast. It gets one object, <code>fx</code>, for making particles and timing them. Call <code>fx.hit()</code> at the moment the spell should land. You can use <code>await</code>.</p>
+    <pre>// the smallest useful animation
+await fx.move(fx.from, fx.to, {}, p => fx.particle({ at: p, life: .3 }));
+fx.hit();
+fx.burst(40, () => ({ at: fx.to, vel: fx.direction(), life: .5 }));</pre>
+    <h4>The toolkit</h4><table>${rows.map(([a, b]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join('')}</table>
+    <h4>Particle options</h4><table>${opts.map(([a, b]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join('')}</table>
+    <h4>Limits</h4><p>${FX_LIMITS.particles} particles a cast, ${FX_LIMITS.seconds} s for any one fx.every or fx.move, and the spell always lands within ${FX_LIMITS.hitBy} s. If your code throws an error, the message shows under the editor and the spell still lands.</p>
+    <h4>Start from the library</h4><p>${Object.values(FX_LIBRARY).map(a => esc(a.name)).join(' · ')}. Load one, cast it, then change numbers and see what happens.</p>
+    <p class="muted">The full guide, with worked examples, is docs/spell-animation-guide.md in the game's folder.</p></div>`, [{ label: 'Close', primary: true }]);
+}
 /* --- the forge screen --- */
-const FORGE = { d: null, px: null, tool: 'pen', ink: '#ffd36a', mirror: false, confirmDel: false, sandbox: true };
+const FORGE = { d: null, px: null, tool: 'pen', ink: '#ffd36a', mirror: false, confirmDel: false, sandbox: true, err: '', lib: 'bolt' };
 const PX = 16;
 const forgeDefault = () => ({ id: null, name: 'Starfall', icon: '✶', color: '#9ab8ff', level: 1, cost: 3, range: 60, target: 'enemy', shape: 'single', radius: 10, land: 'attack', save: 'dex', half: true,
   dn: 2, ds: 8, dtype: 'radiant', hn: 2, hs: 4, eff: 'none', erounds: 2, echance: 100, kits: ['spellblade', 'warden', 'ranger'], desc: '', art: 'glyph', img: null, pixels: null,
-  fx: { preset: 'firebolt', ...FX_PRESETS.firebolt, color: '#9ab8ff', color2: '#4a5aff', particle: 'glow', tint: false } });
+  fx: { preset: 'firebolt', ...FX_PRESETS.firebolt, color: '#9ab8ff', color2: '#4a5aff', particle: 'glow', tint: false, mode: 'settings', code: '' } });
 function openForge(id) {
   curHero = null;
   const c = applyKit(newCharacter(), 'spellblade'); c.name = 'The Forge'; c.level = 5; c.hp = maxHpOf(c); c.mp = maxMpOf(c);
@@ -8584,6 +8832,18 @@ function renderForge() {
       </div></div>` : ''}
 
     <h3>How it looks</h3>
+    <div class="chips">${[['settings', 'Settings'], ['code', 'Code (JavaScript)']].map(([k, l]) => `<button class="chip2" data-fa="fxmode" data-k="${k}" aria-pressed="${(fx.mode || 'settings') === k}">${l}</button>`).join('')}<button class="chip2" data-fa="guide">? Build guide</button></div>
+    ${fx.mode === 'code' ? `
+    <div class="codebar"><select id="fxLib">${Object.entries(FX_LIBRARY).map(([k, a]) => `<option value="${k}" ${FORGE.lib === k ? 'selected' : ''}>${esc(a.name)}</option>`).join('')}</select><button class="btn small" data-fa="libload">Load from library</button><button class="btn small" data-fa="fromsettings">From my settings</button></div>
+    <textarea class="code" data-f="fx.code" spellcheck="false" maxlength="12000" aria-label="Animation code">${esc(fx.code || '')}</textarea>
+    <div class="codemsg">${FORGE.err ? `<div class="codeerr">${esc(FORGE.err)}</div>` : '<span class="hint">Runs when you cast. Call <code>fx.hit()</code> when the spell should land. The colours, size, speed and amount below reach your code as fx.color, fx.size, fx.speed and fx.amount.</span>'}</div>
+    ${frow('Colours', `<input type="color" data-f="fx.color" value="${fx.color}"><span class="hint">and</span><input type="color" data-f="fx.color2" value="${fx.color2}">`)}
+    ${frow(`Size <b>${(+fx.size).toFixed(1)}×</b>`, `<input type="range" data-f="fx.size" min="0.4" max="2.5" step="0.1" value="${fx.size}">`)}
+    ${frow(`Speed <b>${(+fx.speed).toFixed(1)}×</b>`, `<input type="range" data-f="fx.speed" min="0.4" max="2.5" step="0.1" value="${fx.speed}">`)}
+    ${frow(`Amount <b>${(+fx.amount).toFixed(1)}×</b>`, `<input type="range" data-f="fx.amount" min="0.2" max="2.5" step="0.1" value="${fx.amount}">`)}
+    ${frow('Particles', fsel('fx.particle', fx.particle, [['glow', 'Soft glow'], ['image', 'Your card picture']]) + (fx.particle === 'image' ? `<label class="hint"><input type="checkbox" data-f="fx.tint" ${fx.tint ? 'checked' : ''}> tint</label>` : ''))}
+    ${frow('Sound', fsel('fx.sound', fx.sound, FX_SOUND))}
+    <p class="hint">Code runs in your own browser with full access to this page. Only paste code you trust.</p>` : `
     ${frow('Start from', fsel('fx.preset', fx.preset, [['custom', '(your own)'], ...Object.entries(FX_PRESETS).map(([k, p]) => [k, p.label])]))}
     ${frow('Travel', fsel('fx.travel', fx.travel, FX_TRAVEL))}
     ${frow('Impact', fsel('fx.impact', fx.impact, FX_IMPACT))}
@@ -8594,8 +8854,7 @@ function renderForge() {
     ${frow('Particles', fsel('fx.particle', fx.particle, [['glow', 'Soft glow'], ['image', 'Your card picture']]) + (fx.particle === 'image' ? `<label class="hint"><input type="checkbox" data-f="fx.tint" ${fx.tint ? 'checked' : ''}> tint</label>` : ''))}
     ${fx.particle === 'image' && !(f.art !== 'glyph' && (f.img || f.art === 'pixel')) ? '<p class="hint">Upload a picture or draw pixel art above to use it as particles.</p>' : ''}
     ${frow('Extras', `<label class="hint"><input type="checkbox" data-f="fx.light" ${fx.light ? 'checked' : ''}> flash of light</label><label class="hint"><input type="checkbox" data-f="fx.shake" ${fx.shake ? 'checked' : ''}> shake</label>`)}
-    ${frow('Sound', fsel('fx.sound', fx.sound, FX_SOUND))}
-
+    ${frow('Sound', fsel('fx.sound', fx.sound, FX_SOUND))}`}
 `;
   renderForgePreview(); drawPixels();
 }
@@ -8605,7 +8864,8 @@ function forgeSet(path, val) {
   const v = num.includes(b || a) ? +val : val;
   if (b) f[a][b] = v; else f[a] = v;
   if (path === 'fx.preset' && FX_PRESETS[val]) { const p = FX_PRESETS[val]; Object.assign(f.fx, { travel: p.travel, impact: p.impact, color: p.color, color2: p.color2, size: p.size, speed: p.speed, amount: p.amount, light: p.light, shake: p.shake, sound: p.sound }); }
-  else if (a === 'fx' && !['particle', 'tint', 'sound', 'light', 'shake'].includes(b)) f.fx.preset = 'custom';
+  else if (a === 'fx' && !['particle', 'tint', 'sound', 'light', 'shake', 'code', 'mode'].includes(b)) f.fx.preset = 'custom';
+  if (path === 'fx.code') FORGE.err = '';
   if (path === 'color' && f.fx.preset === 'custom') {}
   forgeRegister();
 }
@@ -8621,6 +8881,8 @@ function forgeSet(path, val) {
     const t = e.target;
     if (t.id === 'forgeFile' && t.files[0]) return forgeUpload(t.files[0]);
     if (t.id === 'pxInk') { FORGE.ink = t.value; return; }
+    if (t.id === 'fxLib') { FORGE.lib = t.value; return; }
+    if (t.dataset.f === 'fx.code') return;
     if (t.dataset.kit) { const k = t.dataset.kit, ks = FORGE.d.kits; FORGE.d.kits = t.checked ? [...new Set([...ks, k])] : ks.filter(x => x !== k); forgeRegister(); return; }
     if (t.tagName === 'SELECT' || t.type === 'checkbox') { forgeSet(t.dataset.f, t.type === 'checkbox' ? t.checked : t.value); renderForge(); }
     if (t.dataset.f === 'range') forgeStand();
@@ -8631,6 +8893,10 @@ function forgeSet(path, val) {
     if (a !== 'del') FORGE.confirmDel = false;
     switch (a) {
       case 'cast': return forgeCast();
+      case 'fxmode': f.fx.mode = b.dataset.k; if (f.fx.mode === 'code' && !f.fx.code?.trim()) f.fx.code = fxAsCode(f.fx); forgeRegister(); return renderForge();
+      case 'libload': FORGE.lib = $('fxLib').value; f.fx.code = FX_LIBRARY[FORGE.lib].code; FORGE.err = ''; forgeRegister(); return renderForge();
+      case 'fromsettings': f.fx.code = fxAsCode(f.fx); FORGE.err = ''; forgeRegister(); return renderForge();
+      case 'guide': return showGuide();
       case 'save': return forgeSave();
       case 'del': FORGE.confirmDel = true; return renderForge();
       case 'delYes': return forgeDelete();
@@ -8648,6 +8914,10 @@ function forgeSet(path, val) {
         return pixelsChanged();
       }
     }
+  });
+  P.addEventListener('keydown', e => {
+    if (e.key !== 'Tab' || !e.target.classList?.contains('code')) return;
+    e.preventDefault(); const t = e.target, a = t.selectionStart; t.setRangeText('  ', a, t.selectionEnd, 'end'); t.dispatchEvent(new Event('input', { bubbles: true }));
   });
   // painting
   let painting = false;
@@ -8779,7 +9049,7 @@ window.battleBoard = {
     applyKit: (c, k) => applyKit(c, k), newCharacter: () => newCharacter(), preparedSpells: () => preparedSpells(), togglePrepared: k => togglePrepared(k), openMerchant: () => openMerchant(() => {}),
     openSettings: () => openSettings(), reachProblems: m => reachProblems(m), oddsText: id => oddsText(creatureById(id)), bossPhase: id => bossPhase(creatureById(id)), damage: (id, n) => damageCreature(creatureById(id), n, 'dmg'),
     passiveOf: c => passiveOf(c), respec: () => respec(state.char), undoGrowth: () => undoGrowth(), spendPoint: k => spendPoint(k), lightTorch: () => lightTorch(), giveItem: (k, i) => giveItem(k, i),
-    exploreStatusTick: () => exploreStatusTick(), knownTechs: () => knownTechs(), useTech: k => useTech(k), attack: id => attack(creatureById(id)), derived: () => { const d = derived(); return { atk: d.atk, dmgMod: d.dmgMod, ac: d.ac, guard: d.guard, trained: d.trained }; }, hitChance: id => hitChance(derived().atk, acOf(creatureById(id))), hotbar: () => hotbarOf(), openHotbar: () => openHotbar(), hand: () => handIds(), openForge: id => openForge(id), closeForge: () => closeForge(), forge: () => FORGE, forgeSet: (p, v) => { forgeSet(p, v); renderForge(); }, forgeCast: () => forgeCast(), forgeSave: () => forgeSave(), forged: () => FORGED.map(f => f.id), knownSpells: () => knownSpells(), pixelsChanged: () => pixelsChanged(), showCard: id => { const i = cardInfo(id, state.char, { ex: true, t: { action: true, move: 6 }, actOk: true, heroTurn: true, n: -1 }); i.off = false; i.armed = false; const z = $('cardZoom'); z.innerHTML = `<div class="card k-${i.kind} big" style="--c:${i.color}">${cardHtml({ ...i, key: '' })}</div>`; z.hidden = false; return { name: i.name, type: i.type }; }, allIds: () => ({ spells: Object.keys(SPELLS).map(k => 's:' + k), techs: Object.keys(TECHS).map(k => 't:' + k), acts: Object.keys(HOT_ACTIONS) }), stand: (x, z, lookId) => { state.pos.x = x; state.pos.z = z; placeHero(); computeVisibility(); applyFog(); const c = creatureById(lookId); CAM.hold = 0; camShot(hero, worldOf(c.x, c.z), 0.01); refresh(); }, screenOf: id => { const c = creatureById(id), v = worldOf(c.x, c.z).setY(0.45).project(camera), r = canvas.getBoundingClientRect(); return { x: r.left + (v.x + 1) / 2 * r.width, y: r.top + (1 - v.y) / 2 * r.height }; }, playCard: id => playCard(id), inspectCard: id => inspectCard(id), armAttack: on => armAttack(on), lens: () => ({ ...LENS, prof: camProfile(), framed: !!CAM.framed, fov: camera.fov, view: camera.view && { ...camera.view } }), camDist: () => camera.position.distanceTo(controls.target), setFp: on => setFp(on), fp: () => ({ on: fpOn(), yaw: FP.yaw, look: (y, p) => { FP.yaw = y ?? FP.yaw; FP.pitch = p ?? FP.pitch; }, fov: camera.fov, ceiling: !!ceiling?.visible, rig: FP.rig.visible }), stepKey: (f, r) => stepKey(f, r), turnKey: d => turnKey(d),
+    exploreStatusTick: () => exploreStatusTick(), knownTechs: () => knownTechs(), useTech: k => useTech(k), attack: id => attack(creatureById(id)), derived: () => { const d = derived(); return { atk: d.atk, dmgMod: d.dmgMod, ac: d.ac, guard: d.guard, trained: d.trained }; }, hitChance: id => hitChance(derived().atk, acOf(creatureById(id))), hotbar: () => hotbarOf(), openHotbar: () => openHotbar(), hand: () => handIds(), openForge: id => openForge(id), closeForge: () => closeForge(), forge: () => FORGE, forgeSet: (p, v) => { forgeSet(p, v); renderForge(); }, forgeCast: () => forgeCast(), fxLibrary: () => Object.keys(FX_LIBRARY), showGuide: () => showGuide(), forgeSave: () => forgeSave(), forged: () => FORGED.map(f => f.id), knownSpells: () => knownSpells(), pixelsChanged: () => pixelsChanged(), showCard: id => { const i = cardInfo(id, state.char, { ex: true, t: { action: true, move: 6 }, actOk: true, heroTurn: true, n: -1 }); i.off = false; i.armed = false; const z = $('cardZoom'); z.innerHTML = `<div class="card k-${i.kind} big" style="--c:${i.color}">${cardHtml({ ...i, key: '' })}</div>`; z.hidden = false; return { name: i.name, type: i.type }; }, allIds: () => ({ spells: Object.keys(SPELLS).map(k => 's:' + k), techs: Object.keys(TECHS).map(k => 't:' + k), acts: Object.keys(HOT_ACTIONS) }), stand: (x, z, lookId) => { state.pos.x = x; state.pos.z = z; placeHero(); computeVisibility(); applyFog(); const c = creatureById(lookId); CAM.hold = 0; camShot(hero, worldOf(c.x, c.z), 0.01); refresh(); }, screenOf: id => { const c = creatureById(id), v = worldOf(c.x, c.z).setY(0.45).project(camera), r = canvas.getBoundingClientRect(); return { x: r.left + (v.x + 1) / 2 * r.width, y: r.top + (1 - v.y) / 2 * r.height }; }, playCard: id => playCard(id), inspectCard: id => inspectCard(id), armAttack: on => armAttack(on), lens: () => ({ ...LENS, prof: camProfile(), framed: !!CAM.framed, fov: camera.fov, view: camera.view && { ...camera.view } }), camDist: () => camera.position.distanceTo(controls.target), setFp: on => setFp(on), fp: () => ({ on: fpOn(), yaw: FP.yaw, look: (y, p) => { FP.yaw = y ?? FP.yaw; FP.pitch = p ?? FP.pitch; }, fov: camera.fov, ceiling: !!ceiling?.visible, rig: FP.rig.visible }), stepKey: (f, r) => stepKey(f, r), turnKey: d => turnKey(d),
     mood: () => ({ ...MOOD, music: SFX.musicWant }), musicMood: () => musicMood(), film: () => filmPass.enabled, setSneak: on => setSneak(on), remapKey: k => remapKey(k), prefs: () => prefs, toastCount: () => document.getElementById('toast').children.length,
     freshState: (k, chars) => freshState(k, chars), enterPlay: st => enterPlay(st, 'play', true), refresh: () => refresh(), heroes: () => heroes, toast: m => toast(m), itemModelOk: () => Object.keys(ITEMS).every(k => !!itemModel(k)) },
   wanderers() { const m = spawnWanderers(6, 13); if (m && exploring() === false) startCombat(); refresh(); return m && m.map(c => c.type); },

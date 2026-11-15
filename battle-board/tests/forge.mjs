@@ -122,6 +122,35 @@ await check('upload a picture for the card', async () => {
   return `${Math.round(r.len / 1024)} KB stored`;
 });
 
+await check('code mode: every library animation casts without errors', async () => {
+  const e0 = errCount();
+  await page.click('[data-fa="fxmode"][data-k="code"]'); await wait(0.3);
+  const lib = await D(() => battleBoard.dev.fxLibrary());
+  for (const k of lib) {
+    await D(k => { const s = document.getElementById('fxLib'); s.value = k; s.dispatchEvent(new Event('change', { bubbles: true })); }, k);
+    await press('[data-fa="libload"]');
+    await press('[data-fa="cast"]'); await wait(k === 'meteors' || k === 'vortex' ? 1.4 : 0.9);
+    if (['chain', 'meteors', 'vortex', 'implode'].includes(k)) await shot('forge-code-' + k);
+    await wait(2.2);
+    const err = await D(() => battleBoard.dev.forge().err); if (err) throw new Error(k + ': ' + err);
+  }
+  noNewErrors(e0); return lib.length + ' animations';
+});
+
+await check('code mode: a mistake shows under the editor and the spell still lands; the guide opens', async () => {
+  await F('fx.code', 'fx.particle({ at: fx.to });\nundefinedThing();');
+  const log0 = await D(() => battleBoard.dev.state.log.length);
+  await press('[data-fa="cast"]'); await wait(2.5);
+  const r = await D(() => ({ err: battleBoard.dev.forge().err, box: document.querySelector('#forgePanel .codeerr')?.textContent || '', logs: battleBoard.dev.state.log.length }));
+  await shot('forge-code-error');
+  await press('[data-fa="guide"]'); await wait(0.3);
+  const g = await D(() => !document.getElementById('modal').hidden && /build guide/i.test(document.getElementById('modal').textContent));
+  await shot('forge-guide'); await D(() => { document.getElementById('modal').hidden = true; });
+  assert(/undefinedThing/.test(r.err) && /undefinedThing/.test(r.box) && r.logs > log0 && g, JSON.stringify({ r, g }));
+  await press('[data-fa="libload"]');
+  return r.err.slice(0, 60);
+});
+
 await check('save it; a level-1 Spellblade can learn it outside the forge', async () => {
   await press('[data-fa="save"]'); await wait(0.5);
   const ids = await D(() => battleBoard.dev.forged());
