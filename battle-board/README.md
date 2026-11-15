@@ -114,6 +114,16 @@ The **Settings** button holds combat speed (normal, fast or instant monster turn
 
 Settings has the view, the film look, and one volume for music and ambience. The film look is off at Low quality.
 
+## The Spell Forge
+
+Choose **Spell Forge** on the title screen to invent spells. It opens in the Training Yard, beside the dummy, with the forge panel on the right (under the board on a phone).
+
+- **The rules:** name, icon and colour, level, mana, range, aimed at enemies or friends, one target or an area (5 to 20 ft radius). For enemies: a spell attack, a save (Strength, Dexterity, Constitution or Wisdom, half damage on a save if you like) or always hits, plus damage dice and type. For friends: healing dice. Any of the game's effects (burning, stunned, blessed…) with rounds and a chance. Which kits can learn it. Leave the description empty and the forge writes one.
+- **Card art:** a glyph, an uploaded picture (shrunk to 96 px) or **pixel art** drawn on a 16 × 16 grid with a palette, pen, eraser, fill, mirror and a starting spark.
+- **The look:** start from an existing effect (Fire Bolt, Ray of Frost, Fireball, Poison Cloud, Healing Word, Bless, Hex, Hold Monster, Lightning), then change how it travels (orb, arc, beam, rain, none), how it lands (sparks, explosion, cloud, pillar, ring, swirl, shards), both colours, size, speed and amount, a flash of light, screen shake and the sound. Pick **Your card picture** under Particles and the spell throws your picture or pixel art instead of glowing dots.
+- **Cast at the dummy** to try it (casting is free in the forge), or drag its card from the hand. The panel says what the spell is worth next to the game's own spells and how much mana they would charge for it.
+- **Save** keeps it in this browser. Heroes of the right kit and level can then prepare it on the Spells tab like any other spell.
+
 ## The dungeon creator
 
 Start from solid rock (small to huge) or from a copy of a built-in map. Then build in the 3D view:
