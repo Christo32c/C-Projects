@@ -7,6 +7,7 @@
 <style>
   :root {
     --bg: #1b1d23; --panel: #23262e; --panel2: #2b2f39; --line: #3a3f4c;
+    color-scheme: dark;
     --text: #dfe3ea; --dim: #8f97a6; --accent: #ffb454; --accent2: #5cc8ff; --danger: #ff6b6b;
   }
   * { box-sizing: border-box; }
@@ -64,6 +65,13 @@
   .bar input[type=number] { width: 64px; }
   #modeBadge { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); padding: 4px 12px;
     border-radius: 12px; background: var(--accent); color: #1b1d23; font-weight: 600; display: none; pointer-events: none; }
+  @media (max-width: 820px) {
+    body { overflow: auto; grid-template-rows: auto auto auto; }
+    main { grid-template-columns: 1fr; }
+    #stage { height: 62vh; order: -1; }
+    #left, #right { border: 0; border-top: 1px solid var(--line); overflow: visible; }
+    header { padding-left: max(10px, env(safe-area-inset-left, 0px)); padding-right: max(10px, env(safe-area-inset-right, 0px)); }
+  }
   kbd { background: var(--panel2); border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; font-size: 11px; }
 </style>
 </head>
@@ -86,7 +94,7 @@
   <button id="btnExport" class="primary">Export for Godot</button>
   <input id="fileImages" type="file" accept="image/*" multiple hidden>
   <input id="fileSheet" type="file" accept="image/*" hidden>
-  <input id="fileProject" type="file" accept=".rigproj,application/json" hidden>
+  <input id="fileProject" type="file" accept=".rigproj,.json,application/json" hidden>
 </header>
 
 <main>
@@ -153,6 +161,13 @@
     <button id="sliceCancel">Cancel</button>
     <button id="sliceOk" class="primary">Create parts</button>
   </div>
+</dialog>
+
+<dialog id="confirm" style="width:min(360px,90vw)">
+  <form method="dialog">
+    <p style="margin:0 0 14px">Discard unsaved changes?</p>
+    <div class="bar"><span style="flex:1"></span><button value="no">Keep editing</button><button value="yes" class="primary">Discard</button></div>
+  </form>
 </dialog>
 
 <script src="app.js"></script>

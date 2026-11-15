@@ -475,9 +475,9 @@ function renderProps() {
 }
 function renderSkins() {
   $('#skins').innerHTML = doc.skins.length ? doc.skins.map((k, i) => `<div class="item" data-skin="${i}">
-    <span class="grow" title="Apply this skin">${esc(k.name)}</span>
+    <input type="text" class="grow" value="${esc(k.name)}" data-skinname="${i}" title="Skin name">
+    <button class="mini" data-skinapply="${i}" title="Show this skin">Show</button>
     <button class="mini" data-skinupd="${i}" title="Overwrite with the current look">Update</button>
-    <button class="mini" data-skinren="${i}" title="Rename">✎</button>
     <button class="mini" data-skindel="${i}">✕</button></div>`).join('')
     : '<div class="empty">A skin is a saved outfit: which variant each slot shows.</div>';
 }
@@ -532,20 +532,20 @@ $('#skins').addEventListener('click', e => {
   const t = e.target, d = t.dataset;
   if (d.skinupd) { doc.skins[+d.skinupd].map = currentLook(); commit(); return setStatus(`Skin “${doc.skins[+d.skinupd].name}” updated.`); }
   if (d.skindel) { doc.skins.splice(+d.skindel, 1); return commit(); }
-  if (d.skinren) {
-    const k = doc.skins[+d.skinren], n = prompt('Skin name', k.name);
-    if (n) { k.name = unique(n, doc.skins.filter(o => o !== k).map(o => o.name)); commit(); }
-    return;
-  }
-  const r = t.closest('[data-skin]');
-  if (r) { const k = doc.skins[+r.dataset.skin];
+  if (d.skinapply) { const k = doc.skins[+d.skinapply];
     for (const s of doc.slots) if (s.id in k.map) s.active = s.attachments.some(a => a.id === k.map[s.id]) ? k.map[s.id] : null;
     commit(); setStatus(`Showing skin “${k.name}”.`); }
 });
 $('#btnSkinAdd').onclick = () => {
-  const n = prompt('Name for this skin (outfit)', unique('skin', doc.skins.map(k => k.name)));
-  if (n) { doc.skins.push({ name: unique(n, doc.skins.map(k => k.name)), map: currentLook() }); commit(); }
+  doc.skins.push({ name: unique('skin', doc.skins.map(k => k.name)), map: currentLook() }); commit();
+  const inputs = document.querySelectorAll('#skins [data-skinname]'), last = inputs[inputs.length - 1];
+  if (last) { last.focus(); last.select(); }
+  setStatus('Skin saved. Type a name for it.');
 };
+$('#skins').addEventListener('change', e => {
+  const i = e.target.dataset.skinname; if (i == null) return;
+  const k = doc.skins[+i]; k.name = unique(e.target.value, doc.skins.filter(o => o !== k).map(o => o.name)); commit();
+});
 $('#library').addEventListener('click', e => {
   const d = e.target.dataset;
   if (d.place) {
@@ -579,7 +579,7 @@ $('#btnRedo').onclick = () => undo(1);
 $('#docName').onchange = e => { doc.name = clean(e.target.value); commit(); };
 
 window.addEventListener('keydown', e => {
-  if (e.target.matches('input, select, textarea') || $('#slicer').open) return;
+  if (e.target.matches('input, select, textarea') || document.querySelector('dialog[open]')) return;
   if (e.code === 'Space') { spaceDown = true; e.preventDefault(); return; }
   const k = e.key.toLowerCase();
   if ((e.ctrlKey || e.metaKey) && k === 'z') { undo(e.shiftKey ? 1 : -1); e.preventDefault(); }
@@ -741,15 +741,22 @@ $('#btnSlice').onclick = () => $('#fileSheet').click();
 $('#fileSheet').onchange = e => { if (e.target.files[0]) openSlicer(e.target.files[0]); e.target.value = ''; };
 
 // ---------- project files ----------
-function download(blob, name) {
+/* Saves a file. Inside a Claude artifact, page-started downloads are blocked, so use its save prompt there. */
+async function download(blob, name) {
+  let saver = null;
+  try { saver = window.claude && window.claude.use ? await window.claude.use('downloads') : null; } catch (e) { saver = null; }
+  if (saver) {
+    try { await saver.save({ filename: name, data: blob }); return true; }
+    catch (e) { setStatus(e && e.code === 'declined' ? 'Save cancelled.' : 'Could not save the file here: ' + ((e && (e.message || e.code)) || 'unknown error')); return false; }
+  }
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  return true;
 }
-function saveProject() {
+async function saveProject() {
   const data = { format: 'rigstudio-project', version: 1, doc,
     images: [...images.values()].map(i => ({ id: i.id, name: i.name, data: i.url })) };
-  download(new Blob([JSON.stringify(data)], { type: 'application/json' }), `${doc.name}.rigproj`);
-  dirty = false;
+  if (await download(new Blob([JSON.stringify(data)], { type: 'application/json' }), `${doc.name}.rigproj.json`)) dirty = false;
 }
 async function loadProject(text) {
   const data = JSON.parse(text);
@@ -762,15 +769,19 @@ async function loadProject(text) {
   doc = data.doc; ui.sel = null; ui.pose = {}; ui.mode = 'setup'; ui.tool = 'select';
   resetHistory(); frameView();
 }
-const confirmDiscard = () => !dirty || confirm('Discard unsaved changes?');
+function confirmDiscard() { // in-page dialog: browser confirm() is not available everywhere this runs
+  if (!dirty) return Promise.resolve(true);
+  const dlg = $('#confirm');
+  return new Promise(res => { dlg.onclose = () => res(dlg.returnValue === 'yes'); dlg.returnValue = ''; dlg.showModal(); });
+}
 $('#btnSave').onclick = saveProject;
-$('#btnOpen').onclick = () => { if (confirmDiscard()) $('#fileProject').click(); };
+$('#btnOpen').onclick = async () => { if (await confirmDiscard()) $('#fileProject').click(); };
 $('#fileProject').onchange = async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
   try { await loadProject(await f.text()); setStatus(`Opened ${f.name}.`); } catch (err) { setStatus('Could not open project: ' + err.message); }
 };
-$('#btnNew').onclick = () => {
-  if (!confirmDiscard()) return;
+$('#btnNew').onclick = async () => {
+  if (!await confirmDiscard()) return;
   doc = newDoc(); images.clear(); ui.sel = null; ui.pose = {}; ui.mode = 'setup'; ui.tool = 'select'; resetHistory(); frameView();
 };
 
@@ -804,8 +815,7 @@ async function exportGodot() {
     const blob = await new Promise(r => images.get(id).canvas.toBlob(r, 'image/png'));
     files.push({ name: path, data: new Uint8Array(await blob.arrayBuffer()) });
   }
-  download(zip(files), `${base}_godot.zip`);
-  setStatus(`Exported ${base}_godot.zip — unzip it into your Godot project (with the Rig Studio addon enabled).`);
+  if (await download(zip(files), `${base}_godot.zip`)) setStatus(`Exported ${base}_godot.zip — unzip it into your Godot project (with the Rig Studio addon enabled).`);
 }
 $('#btnExport').onclick = exportGodot;
 
@@ -887,7 +897,7 @@ function loadSample() {
   resetHistory(); frameView();
   setStatus('Sample loaded. Try Pose test, click the skins on the right, then Export for Godot.');
 }
-$('#btnSample').onclick = () => { if (confirmDiscard()) loadSample(); };
+$('#btnSample').onclick = async () => { if (await confirmDiscard()) loadSample(); };
 
 // ---------- start ----------
 window.rig = { get doc() { return doc; }, images, ui, view, worlds, buildRig }; // handy for debugging in the console

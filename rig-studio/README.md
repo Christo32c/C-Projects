@@ -41,7 +41,7 @@ what makes changing a weapon or a hat in-game a one-line call.
 8. **Export for Godot.** You get `<name>_godot.zip` containing `<name>.rig` and a `<name>_parts/`
    folder of PNGs.
 
-*Save project* writes a `.rigproj` file (rig and images together) that you can reopen later.
+*Save project* writes a `.rigproj.json` file (rig and images together) that you can reopen later.
 
 Keys: `V` move · `R` rotate (Shift snaps) · `B` bone · `P` pose test · `F` frame · `[` `]` draw order ·
 `Del` delete · `Ctrl+Z` / `Ctrl+Y` · wheel zooms · middle-drag or Space-drag pans.
@@ -90,8 +90,9 @@ as one unit and sorts correctly against others in a y-sorted scene.
 ## Status
 
 - The editor is tested in Chromium (rigging, slicing, skins, save/open, export).
-- The Godot addon targets Godot 4.2+ and **has not yet been run inside Godot** — treat the first
-  import as its test and report anything it prints.
+- The Godot addon targets Godot 4.2+ and is tested on Godot 4.5 (headless): the sample imports,
+  parts land where the editor shows them, and skins, part swaps, runtime attachments and bone
+  posing work. It has not been tried on 4.2–4.4.
 - Not built yet: an animation timeline in the editor (animate in Godot for now) and mesh
   deformation. The `.rig` format tags each attachment with `"type": "region"` so meshes can be added
   without breaking existing files.
