@@ -711,6 +711,19 @@
     body.building .app { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 45vh) minmax(0, 1fr); }
     body.building #buildPanel { border-left: 0; border-top: 1px solid var(--brass); }
   }
+
+  /* ---- THE MONSTER FORGE ---- */
+  #monPanel { display: none; }
+  body.mforging .app { grid-template-columns: minmax(0, 1fr) 410px; grid-template-rows: minmax(0, 1fr); }
+  body.mforging #monPanel { display: flex; zoom: var(--ui, 1); }
+  body.mforging #sideBtns, body.mforging #sbToggle, body.mforging #partyFrames { display: none !important; }
+  .forge .threat { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; font-size: 12.5px; }
+  .forge .threat b { color: #fff; text-align: right; }
+  @media (max-width: 700px), (max-height: 520px) {
+    body.mforging .app { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 42vh) minmax(0, 1fr); }
+    body.mforging #monPanel { border-left: 0; border-top: 1px solid var(--brass); }
+    body.mforging #playBar { display: none !important; }
+  }
 </style>
 <script type="importmap">
 { "imports": {
@@ -781,6 +794,7 @@
   <aside class="panel" id="edPanel" aria-label="Dungeon creator"></aside>
   <aside class="panel forge" id="forgePanel" aria-label="Spell Forge"></aside>
   <aside class="panel forge build" id="buildPanel" aria-label="Hero Builder"></aside>
+  <aside class="panel forge" id="monPanel" aria-label="Monster Forge"></aside>
   <aside class="panel" id="panel" aria-label="Character sheet">
     <button class="drawer-x" id="panelClose" aria-label="Close panel" title="Close (Esc)">×</button>
     <div class="sheet-head">
@@ -1027,6 +1041,7 @@ function rollLoot(type) {
   if (!items.length && !gold && !MONSTERS[type].object) gold = 1;
   return { items, gold };
 }
+const CUSTOM_CH = 'ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ';   // one per forged monster
 const CREATURE_CHARS = { r: 'rat', k: 'skeleton', b: 'skeleton', a: 'archer', W: 'warden', m: 'dummy', n: 'goblin', R: 'wolfRider', M: 'spiderQueen', A: 'abbot', O: 'highPriest', B: 'goblinBoss', f: 'wolf', s: 'spider', z: 'zombie', N: 'cultist', Q: 'wraith', L: 'lich',
   c: 'crate', o: 'barrel', K: 'keg', u: 'urn' };
 
@@ -1169,6 +1184,7 @@ function freshStateSolo(mapKey, carryChar, map = MAPS[mapKey]) {
         creatures.push({ id: id++, type: t, x, z, hp: MONSTERS[t].hp, alive: true, aware: false, restrained: false, ...(ch === 'b' ? { dormant: true } : {}) });
         return '.';
       }
+      if (CUSTOM_CH.includes(ch)) return '.';   // a forged monster that no longer exists here
       if (ch === '$') { const L = map.loot?.[k] || { items: [] }; loot[k] = { items: [...L.items], gold: L.gold || 0 }; return '.'; }
       if (ch === 'H') { const S = map.stash?.[k] || { items: [], gold: 20, dc: 13 }; stash[k] = { ...S, items: [...S.items], found: false }; return '.'; }
       if (ch === 'T' || ch === 'Y' || ch === 'Z') { traps[k] = { kind: { T: 'darts', Y: 'fire', Z: 'spikes' }[ch], dc: 13, found: false }; return '.'; }
@@ -2698,6 +2714,7 @@ const SFX = (() => {
     coins() { [2100, 2650, 2380].forEach((f, i) => tone({ t: i * 0.07, dur: 0.18, f0: f, vol: 0.07, wet: 0.4 })); },
     rattle(v = 1, wet = 0.5) { for (let i = 0; i < 12; i++) noise({ t: i * R(0.025, 0.06), dur: 0.035, type: 'bandpass', f0: R(1200, 3600), q: 5, vol: 0.16 * v, wet }); },
     alert(type, far = false) {
+      if (MONSTERS[type]?.alertAs) type = MONSTERS[type].alertAs;
       const v = far ? 0.45 : 1, wet = far ? 1 : 0.4;
       if (type === 'rat') { for (let i = 0; i < (far ? 6 : 2); i++) tone({ t: i * (far ? 0.09 : 0.15), dur: 0.1, wave: 'square', f0: R(1700, 2100), f1: R(2400, 2900), vol: 0.035 * v, lp: 3500, wet }); if (far) S.rattle(0.4, 1); }
       else if (type === 'skeleton') S.rattle(v, wet);
@@ -5400,6 +5417,7 @@ function heal(amount, source) {
 function hurtHero(n, what, cls = 'dmg') {
   const c = state.char;
   c.hp = Math.max(0, c.hp - n); heroFlash = 1;
+  if (ui.mforge && c.hp === 0) c.hp = 1;   // nobody dies in the Monster Forge
   toughOut(c);
   floatText(`-${n}`, above(hero, 1.2), cls);
   SFX.hurt(); shakeCam(0.1); FP.kick = 1;
@@ -6439,6 +6457,7 @@ function toMenu(screen = 'title', opts) {
 }
 function menuButton() {
   if (ui.forge) return closeForge();
+  if (ui.mforge) return closeMonsterForge();
   if (ui.builder) return closeBuilder(false);
   if (mode === 'edit') { edSave(); return toMenu('creator'); }
   if (mode === 'test') return openEditor(ed.id, true);
@@ -6483,6 +6502,7 @@ const SCREENS = {
         <button class="choice" data-go="heroes"><span class="ct">Adventure</span><span>Choose a hero or make a new one, then take them into a dungeon.</span></button>
         <button class="choice" data-go="creator"><span class="ct">Create</span><span>Build your own dungeon: rooms, doors, traps, treasure and monsters.</span></button>
         <button class="choice" data-act="forge"><span class="ct">Spell Forge</span><span>Invent your own spells: the rules, the card art, and how they look when cast.</span></button>
+        <button class="choice" data-act="mforge"><span class="ct">Monster Forge</span><span>Make monsters and characters: their look, stats and attacks. Fight them, then put them in your dungeons.</span></button>
       </div>
       <p class="sub small">Sound starts after your first click.</p>
     </div>`;
@@ -6655,6 +6675,7 @@ $('screen').addEventListener('click', e => {
     case 'delHero': heroes = heroes.filter(x => x !== h); saveHeroes(); scr.confirmDel = null; break;
     case 'newHero': return showScreen('newHero', { draft: draftHero() });
     case 'forge': return openForge();
+    case 'mforge': return openMonsterForge();
     case 'openBuilder': return openBuilder({ draft: scr.draft });
     case 'restyle': return openBuilder({ heroId: id });
     case 'hModel': scr.draft.model = k; break;
@@ -8425,9 +8446,9 @@ const BUILD = { on: false, tab: 'base', from: null, heroId: null, draft: null, b
 const BUILD_TABS = [['base', 'Base'], ['body', 'Body'], ['face', 'Face'], ['hair', 'Hair'], ['outfit', 'Outfit'], ['colours', 'Colours']];
 function openBuilder(o) {
   const h = o.heroId && heroById(o.heroId);
-  const c = h ? clone(h.char) : charFromDraft(o.draft);
+  const c = h ? clone(h.char) : o.monster ? (() => { const mc = monsterChar(o.monster), b = applyKit(newCharacter(), 'spellblade'); for (const k of ['name', 'color', 'skin', 'hair', 'look', 'equipped', 'inventory']) b[k] = clone(mc[k]); return b; })() : charFromDraft(o.draft);
   c.look = lookOf(c); c.model = 'adventurer'; c.hp = maxHpOf(c);
-  Object.assign(BUILD, { on: true, tab: 'base', from: h ? 'hero' : 'new', heroId: o.heroId || null, draft: o.draft || null, undo: [] });
+  Object.assign(BUILD, { on: true, tab: 'base', from: h ? 'hero' : o.monster ? 'monster' : 'new', heroId: o.heroId || null, draft: o.draft || null, monster: o.monster || null, undo: [] });
   curHero = null; ui.builder = true; document.body.classList.add('building');
   enterPlay(freshState('trainingYard', [c]), 'play');
   builderCam('body'); renderBuilder(); setTimeout(resize, 0);
@@ -8437,6 +8458,7 @@ function closeBuilder(keep) {
   if (keep) {
     const fields = { look: clone(c.look), skin: c.skin, hair: c.hair, color: c.color, model: 'adventurer', species: LOOK_BASES[c.look.base]?.name || c.species };
     if (BUILD.from === 'new' && BUILD.draft) Object.assign(BUILD.draft, fields);
+    if (BUILD.from === 'monster') Object.assign(BUILD.monster, { look: clone(c.look), skin: c.skin, hairColor: c.hair, color: c.color });
     if (BUILD.from === 'hero') {
       const h = heroById(BUILD.heroId);
       if (h) {
@@ -8447,6 +8469,7 @@ function closeBuilder(keep) {
     }
   }
   BUILD.on = false; ui.builder = false; CAM.hold = 0; document.body.classList.remove('building'); $('buildPanel').innerHTML = '';
+  if (BUILD.from === 'monster') return openMonsterForge(null, BUILD.monster);
   if (BUILD.from === 'new') toMenu('newHero', { draft: BUILD.draft }); else toMenu('heroes');
   if (keep) toast(BUILD.from === 'new' ? 'Look saved. Finish your hero below.' : 'Your hero has a new look.');
 }
@@ -8529,6 +8552,259 @@ function renderBuilder() {
     if (t.dataset.bc) builderSet(t.dataset.bc, t.value);
   });
   P.addEventListener('change', e => { if (e.target.dataset.bc) renderBuilder(); if (e.target.dataset.bs) builderCam(BUILD.tab === 'face' ? 'face' : 'body'); });
+}
+
+/* ================================================================== *
+ * THE MONSTER FORGE: monsters and other characters. A look (a figure made like a hero, or one of the game's monsters
+ * recoloured and resized), stats, an attack and an on-hit effect. Fight it in the Training Yard, save it, and paint it
+ * into your dungeons from the creator's "Your monsters" palette.
+ * ================================================================== */
+const MON_KEY = 'battleboard.monsters.v1';
+const mclean = (s, n) => String(s || '').replace(/[<>&"`\\]/g, '').slice(0, n);
+let FORGED_MON = store.get(MON_KEY, []);
+const MON_BASES = ['rat', 'wolf', 'spider', 'skeleton', 'zombie', 'goblin', 'archer', 'cultist', 'wraith', 'goblinBoss', 'wolfRider', 'spiderQueen', 'warden', 'abbot', 'highPriest', 'lich'];
+const MON_VERBS = { slashing: 'slashes', piercing: 'stabs', bludgeoning: 'smashes', fire: 'burns', cold: 'freezes', necrotic: 'withers', poison: 'bites', radiant: 'smites', psychic: 'assaults', lightning: 'shocks', thunder: 'batters', acid: 'sprays', force: 'strikes' };
+const MON_WEAPONS = [['', 'Empty hands'], ...Object.entries(ITEMS).filter(([k, it]) => it.type === 'weapon').map(([k, it]) => [k, it.name])];
+const monsterDefault = () => ({ id: null, ch: null, name: 'Bog Troll', epithet: '', body: 'figure',
+  look: { ...LOOK_DEFAULT, base: 'orc', ...LOOK_BASES.orc.look, hair: 'bald', cloak: 'tattered', height: 1.15, build: 1.35, mouth: 'grin' }, skin: '#5f7a4a', hairColor: '#2a1d14', color: '#4a3a2a',
+  gear: { weapon: 'mace', armor: 'leather', shield: false, head: '' }, tint: '#7a9a5a', tintAmt: 0.4, scale: 1.2,
+  hp: 30, ac: 10, guard: 'armor', speedFt: 30, ai: 'melee', atk: 5, dn: 2, ds: 8, db: 3, dmgType: 'bludgeoning', reachFt: 5, proj: 'arrow', verb: '',
+  eff: 'none', erounds: 2, echance: 50, sstr: 3, sdex: 0, scon: 3, swis: -1, boss: false, xp: '' });
+// the character the figure is built from
+function monsterChar(d) {
+  return { name: d.name, color: d.color || '#5a4a3a', skin: d.skin || '#d6a982', hair: d.hairColor || '#2a1d14', look: { ...LOOK_DEFAULT, ...(d.look || {}) }, model: 'adventurer',
+    equipped: { weapon: d.gear?.weapon || null, armor: d.gear?.armor || null, shield: d.gear?.shield ? 'shield' : null, head: d.gear?.head || null, neck: null, ammo: null },
+    inventory: [], status: [], abilities: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 }, level: 1, cls: 'Monster', kit: null, talents: [], wounds: 0 };
+}
+function monsterModel(d) {
+  return p => {
+    const s = Math.max(0.4, Math.min(2.5, +d.scale || 1)); let h;
+    if (d.body === 'figure') {
+      const c = monsterChar(d), H = buildHuman(c); dressHuman(H, c);
+      let r = { sx: -0.25, sz: -0.06, ex: -1.25 }, l = H.shield ? { sx: -0.3, sz: 0.18, ex: -1.15 } : { sx: 0.05, sz: 0.12, ex: -0.25 }, mx = 1.0, bx = 0;
+      if (H.two) { r = { sx: -0.55, sz: 0.38, ex: -0.95 }; l = { sx: -0.55, sz: -0.38, ex: -0.95 }; mx = 1.35; }
+      if (H.bow) { r = { sx: -1.25, sz: 0.45, ex: -1.7 }; l = { sx: -1.45, sz: 0.05, ex: 0 }; bx = 1.45; }
+      H.shR.rotation.set(r.sx, 0, r.sz); H.elR.rotation.x = r.ex; H.shL.rotation.set(l.sx, 0, l.sz); H.elL.rotation.x = l.ex;
+      if (H.mount) H.mount.rotation.x = mx; if (H.bowMount) H.bowMount.rotation.x = bx; if (H.shieldMount) H.shieldMount.rotation.x = 1.15;
+      p.add(H.root); h = 1.08 * c.look.height;
+    } else {
+      h = (MODELS[d.body] || MODELS.goblin)(p);
+      const amt = Math.max(0, Math.min(1, +d.tintAmt || 0));
+      if (amt > 0) { const tc = new THREE.Color(d.tint); p.traverse(o => { if (o.isMesh && o.material?.color && !o.material.isMeshBasicMaterial) { o.material = o.material.clone(); o.material.color.lerp(tc, amt); } }); }
+    }
+    p.scale.multiplyScalar(s);
+    return h * s;
+  };
+}
+function monsterStats(d) {
+  const sq = ft => Math.max(1, Math.round((+ft || 5) / 5));
+  const m = { name: mclean(d.name, 32) || 'Unnamed monster', hp: Math.max(1, Math.min(999, Math.round(+d.hp || 1))), ac: Math.max(1, Math.min(30, Math.round(+d.ac || 10))),
+    guard: d.guard === 'dodge' ? 'dodge' : 'armor', xp: d.xp === '' || d.xp == null ? monsterThreat(d).xp : Math.max(0, Math.round(+d.xp)), speed: d.ai === 'none' ? 0 : sq(d.speedFt),
+    ai: ['melee', 'ranged', 'none'].includes(d.ai) ? d.ai : 'melee', saves: { str: +d.sstr || 0, dex: +d.sdex || 0, con: +d.scon || 0, wis: +d.swis || 0 },
+    custom: true, scale: 1, alertAs: d.body === 'figure' ? 'goblin' : d.body };
+  if (m.ai !== 'none') Object.assign(m, { atk: Math.round(+d.atk || 0), dmg: [Math.max(1, Math.round(+d.dn || 1)), +d.ds || 6, Math.round(+d.db || 0)], dmgType: d.dmgType || 'slashing',
+    range: m.ai === 'ranged' ? sq(d.reachFt) : Math.min(2, sq(d.reachFt)), verb: mclean(d.verb, 20) || MON_VERBS[d.dmgType] || 'strikes', proj: m.ai === 'ranged' && d.proj === 'bolt' ? 'bolt' : undefined });
+  if (d.eff && d.eff !== 'none' && STATUS[d.eff] && m.ai !== 'none') m.onHit = { status: d.eff, rounds: Math.max(1, Math.round(+d.erounds || 1)), chance: Math.max(0.05, Math.min(1, (+d.echance || 100) / 100)) };
+  if (d.boss) { m.boss = true; m.epithet = mclean(d.epithet, 40) || 'A terror of your own making'; }
+  return m;
+}
+// how it fares against a fresh level 1 Spellblade (attack +3, 1d8+1, Defence 18, 12 HP), on the same scale as the workbook
+const REF_HERO = { atk: 3, hit: 5.5, crit: 4.5, def: 18, hp: 12, xpPer: 9 };
+function monsterThreat(d) {
+  const ac = +d.ac || 10, hp = +d.hp || 1, clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  const youHit = clamp((21 - (ac - REF_HERO.atk)) / 20, 0.05, 0.95), youDpr = youHit * REF_HERO.hit + 0.05 * REF_HERO.crit, turns = hp / youDpr;
+  const itHit = d.ai === 'none' ? 0 : clamp((21 - (REF_HERO.def - (+d.atk || 0))) / 20, 0.05, 0.95);
+  const DOT = { burning: 3.5, bleeding: 2.5, poisoned: 2.5 }, eff = d.eff && d.eff !== 'none' ? (DOT[d.eff] || 0) * (+d.erounds || 1) * ((+d.echance || 100) / 100) : 0;
+  const itDpr = itHit * ((+d.dn || 1) * ((+d.ds || 6) + 1) / 2 + (+d.db || 0) + eff), threat = turns * itDpr;
+  return { youHit, turns, itHit, itDpr, threat, share: threat / REF_HERO.hp, xp: Math.max(10, Math.round(threat * REF_HERO.xpPer / 5) * 5) };
+}
+function monsterLike(d) {
+  const t = monsterThreat(d).threat; let best = null, bd = 1e9;
+  for (const [k, m] of Object.entries(MONSTERS)) {
+    if (m.custom || m.object || m.ai === 'none' || !m.dmg) continue;
+    const o = monsterThreat({ ac: m.ac, hp: m.hp, ai: m.ai, atk: m.atk, dn: m.dmg[0], ds: m.dmg[1], db: m.dmg[2], eff: m.onHit?.status, erounds: m.onHit?.rounds, echance: (m.onHit?.chance ?? 1) * 100 }).threat;
+    if (Math.abs(o - t) < bd) { bd = Math.abs(o - t); best = m.name; }
+  }
+  return best;
+}
+// register every saved monster (and the one on the anvil) with the game and the creator
+function registerMonster(type, d) {
+  MONSTERS[type] = monsterStats(d); MODELS[type] = monsterModel(d);
+  if (d.ch) CREATURE_CHARS[d.ch] = type;
+}
+function loadForgedMonsters() {
+  for (const k of Object.keys(MONSTERS)) if (MONSTERS[k].custom && k !== 'x_draft') { delete MONSTERS[k]; delete MODELS[k]; }
+  for (const ch of CUSTOM_CH) delete CREATURE_CHARS[ch];
+  for (let i = TOOLS.length - 1; i >= 0; i--) if (TOOLS[i].g === 'Your monsters') TOOLS.splice(i, 1);
+  for (const d of FORGED_MON) {
+    const type = 'x_' + d.id; registerMonster(type, d); const m = MONSTERS[type];
+    TOOLS.push({ g: 'Your monsters', id: type, ch: d.ch, label: m.name, icon: (m.name[0] || '?').toUpperCase(), bg: d.body === 'figure' ? d.color : d.tint,
+      hint: `${m.name}: ${m.hp} HP, Defence ${m.ac}${m.dmg ? `, ${m.dmg[0]}d${m.dmg[1]}${m.dmg[2] ? '+' + m.dmg[2] : ''} ${m.dmgType}${m.ai === 'ranged' ? ', ranged' : ''}` : ', never attacks'}. Made in the Monster Forge.${m.boss ? ' Boss.' : ''}` });
+    CH_NAME[d.ch] = m.name;
+  }
+}
+loadForgedMonsters();
+
+/* --- the forge screen --- */
+const MF = { d: null, confirmDel: false, sandbox: true };
+function openMonsterForge(id, draft) {
+  curHero = null;
+  const c = applyKit(newCharacter(), 'spellblade'); c.name = 'The Forge'; c.level = 5; c.hp = maxHpOf(c); c.mp = maxMpOf(c);
+  const f = id && FORGED_MON.find(x => x.id === id);
+  MF.d = draft || (f ? clone(f) : monsterDefault()); MF.confirmDel = false;
+  MF.sandbox = ui.sandbox; ui.sandbox = true; ui.mforge = true;
+  document.body.classList.add('mforging');
+  registerMonster('x_draft', MF.d);
+  enterPlay(freshState('trainingYard', [c]), 'play');
+  mforgePlace(); renderMonsterForge(); setTimeout(resize, 0);
+}
+function closeMonsterForge() {
+  ui.mforge = false; ui.sandbox = MF.sandbox; CAM.hold = 0;
+  if (state.combat) endCombat();
+  delete MONSTERS.x_draft; delete MODELS.x_draft;
+  document.body.classList.remove('mforging'); $('monPanel').innerHTML = '';
+  toMenu('title');
+}
+// the draft stands three squares in front of you
+function mforgePlace() {
+  state.creatures = state.creatures.filter(c => c.type !== 'x_draft');
+  let best = null, bd = 1e9;
+  for (let z = 0; z < H; z++) for (let x = 0; x < W; x++) {
+    const d = cheb({ x, z }, state.pos); if (d !== 3 || !WALKABLE.has(tileAt(x, z)) || state.creatures.some(c => c.alive && c.x === x && c.z === z)) continue;
+    const s = Math.abs(z - state.pos.z - 3) + Math.abs(x - state.pos.x); if (s < bd) { bd = s; best = { x, z }; }
+  }
+  if (!best) return;
+  state.creatures.push({ id: 900, type: 'x_draft', x: best.x, z: best.z, hp: MONSTERS.x_draft.hp, alive: true, aware: false, restrained: false });
+  rebuildCreatures();
+  hero.rotation.y = Math.atan2(best.x - state.pos.x, best.z - state.pos.z);
+  CAM.hold = performance.now() + 1e9; CAM.anim = null;
+  const mid = worldOf(state.pos.x, state.pos.z).lerp(worldOf(best.x, best.z), 0.6); mid.y += 0.5 * Math.max(1, +MF.d.scale || 1);
+  CAM.focus = { position: mid.clone().setY(mid.y - CHEST) };
+  camPlace(mid, Math.atan2(best.x - state.pos.x, best.z - state.pos.z) + 0.9, 0.35, 4.2 + Math.max(0, (+MF.d.scale || 1) - 1) * 2.5); controls.update(); refresh();
+}
+function mforgeRefresh() {   // the look or the stats changed: rebuild the figure in place
+  registerMonster('x_draft', MF.d);
+  const c = state.creatures.find(c => c.type === 'x_draft');
+  if (c && !state.combat) { c.hp = MONSTERS.x_draft.hp; c.alive = true; c.status = []; }
+  rebuildCreatures(); refresh();
+  const s = $('monPanel').querySelector('.threatbox'); if (s) s.innerHTML = monsterThreatHtml();
+}
+function monsterThreatHtml() {
+  const d = MF.d, t = monsterThreat(d), word = t.share < 0.5 ? 'an easy fight' : t.share < 1 ? 'a fair fight' : t.share < 2 ? 'dangerous' : 'deadly';
+  return `<div class="threat"><span>A level 1 Spellblade hits it</span><b>${Math.round(t.youHit * 100)}%</b><span>…and needs about</span><b>${t.turns.toFixed(1)} turns</b>
+    <span>It hits them</span><b>${Math.round(t.itHit * 100)}%</b><span>Damage it deals before it falls</span><b>${t.threat.toFixed(1)} (${Math.round(t.share * 100)}% of their HP)</b>
+    <span>Suggested XP</span><b>${t.xp}</b></div><p class="verdict ${t.share < 0.5 ? 'cold' : t.share < 2 ? 'good' : 'hot'}"><b>${word[0].toUpperCase() + word.slice(1)}</b> for one level 1 hero. Closest of the game's monsters: <b>${esc(monsterLike(d) || '–')}</b>.</p>`;
+}
+const mnum = (f, v, min, max, step = 1) => `<input type="number" data-mf="${f}" min="${min}" max="${max}" step="${step}" value="${esc(v)}">`;
+const msel = (f, cur, opts) => `<select data-mf="${f}">${opts.map(([k, l]) => `<option value="${k}" ${String(cur) === String(k) ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
+function renderMonsterForge() {
+  const d = MF.d, fig = d.body === 'figure', fighting = !!state.combat;
+  const statusOpts = [['none', 'None'], ...Object.entries(STATUS).filter(([k, S]) => S.bad).map(([k, S]) => [k, `${S.icon} ${S.name}`])];
+  $('monPanel').innerHTML = `
+    <h2>Monster Forge</h2>
+    <div class="chips">${FORGED_MON.map(x => `<button class="chip2" data-ma="load" data-id="${x.id}" aria-pressed="${x.id === d.id}">${esc(x.name)}</button>`).join('')}<button class="chip2" data-ma="new">+ New</button></div>
+    <div class="threatbox">${monsterThreatHtml()}</div>
+    <h3>Who it is</h3>
+    ${frow('Name', `<input type="text" data-mf="name" maxlength="32" value="${esc(d.name)}">`)}
+    ${frow('Boss', `<label class="hint"><input type="checkbox" data-mf="boss" ${d.boss ? 'checked' : ''}> a boss: health bar and a versus card</label>`)}
+    ${d.boss ? frow('Title', `<input type="text" data-mf="epithet" maxlength="40" placeholder="Queen of the Undercroft" value="${esc(d.epithet)}">`) : ''}
+    <h3>How it looks</h3>
+    <div class="chips"><button class="chip2" data-ma="body" data-k="figure" aria-pressed="${fig}">A figure (built like a hero)</button>${MON_BASES.map(k => `<button class="chip2" data-ma="body" data-k="${k}" aria-pressed="${d.body === k}">${esc(MONSTERS[k].name)}</button>`).join('')}</div>
+    ${fig ? `<div class="row"><button class="btn primary" data-ma="builder">✦ Open in the Hero Builder</button><span class="hint">Base, face, hair, outfit and colours.</span></div>
+      ${frow('In its hands', msel('gear.weapon', d.gear.weapon, MON_WEAPONS))}
+      ${frow('Armour', msel('gear.armor', d.gear.armor, [['', 'None'], ['leather', 'Leather'], ['chain', 'Chain mail'], ['splint', 'Plate']]) + `<label class="hint"><input type="checkbox" data-mf="gear.shield" ${d.gear.shield ? 'checked' : ''}> shield</label>`)}
+      ${frow('On its head', msel('gear.head', d.gear.head, [['', 'Its own hat or hair'], ['crown', 'Iron crown'], ['wardenHelm', 'Horned helm']]))}`
+    : frow('Recolour', `<input type="color" data-mf="tint" value="${d.tint}"><input type="range" data-mf="tintAmt" min="0" max="1" step="0.05" value="${d.tintAmt}">`)}
+    ${frow(`Size <b>${Math.round((+d.scale || 1) * 100)}%</b>`, `<input type="range" data-mf="scale" min="0.5" max="2.2" step="0.05" value="${d.scale}">`)}
+    <h3>How it fights</h3>
+    ${frow('Behaviour', msel('ai', d.ai, [['melee', 'Walks up and hits'], ['ranged', 'Keeps away and shoots'], ['none', 'Stands still (never attacks)']]))}
+    ${frow('HP and Defence', `${mnum('hp', d.hp, 1, 999)}<span class="hint">HP ·</span>${mnum('ac', d.ac, 1, 30)}<span class="hint">Defence</span>`)}
+    ${frow('Defends by', msel('guard', d.guard, [['armor', 'Armour (misses are "Blocked")'], ['dodge', 'Dodging (misses are "Dodged")']]))}
+    ${d.ai !== 'none' ? `
+    ${frow('Speed', msel('speedFt', d.speedFt, [10, 20, 25, 30, 35, 40, 50, 60].map(v => [v, v + ' ft'])))}
+    ${frow('Attack', `${mnum('atk', d.atk, -2, 15)}<span class="hint">to hit ·</span>${mnum('dn', d.dn, 1, 12)}${msel('ds', d.ds, [4, 6, 8, 10, 12].map(v => [v, 'd' + v]))}<span class="hint">+</span>${mnum('db', d.db, -5, 20)}`)}
+    ${frow('Damage type', msel('dmgType', d.dmgType, Object.keys(MON_VERBS).map(k => [k, k])))}
+    ${frow(d.ai === 'ranged' ? 'Range' : 'Reach', msel('reachFt', d.reachFt, (d.ai === 'ranged' ? [30, 40, 60, 80, 100] : [5, 10]).map(v => [v, v + ' ft'])) + (d.ai === 'ranged' ? msel('proj', d.proj, [['arrow', 'Arrows'], ['bolt', 'Magic bolts']]) : ''))}
+    ${frow('It', `<input type="text" data-mf="verb" maxlength="20" placeholder="${esc(MON_VERBS[d.dmgType] || 'strikes')}" value="${esc(d.verb)}"><span class="hint">(the word in the log)</span>`)}
+    ${frow('On a hit', msel('eff', d.eff, statusOpts))}
+    ${d.eff !== 'none' ? frow('Effect lasts', `${mnum('erounds', d.erounds, 1, 6)}<span class="hint">rounds ·</span>${mnum('echance', d.echance, 5, 100, 5)}<span class="hint">% chance</span>`) : ''}` : ''}
+    ${frow('Saves', `<span class="hint">Str</span>${mnum('sstr', d.sstr, -5, 10)}<span class="hint">Dex</span>${mnum('sdex', d.sdex, -5, 10)}`)}
+    ${frow('', `<span class="hint">Con</span>${mnum('scon', d.scon, -5, 10)}<span class="hint">Wis</span>${mnum('swis', d.swis, -5, 10)}`)}
+    ${frow('XP', `<input type="number" data-mf="xp" min="0" max="10000" placeholder="${monsterThreat(d).xp} (suggested)" value="${esc(d.xp)}">`)}
+    <div class="fact">
+      ${fighting ? `<button class="btn primary" data-ma="reset">↺ Reset the fight</button>` : `<button class="btn primary" data-ma="fight">⚔ Fight it</button>`}
+      <button class="btn" data-ma="save">${d.id ? 'Save changes' : 'Save monster'}</button>
+      ${d.id ? (MF.confirmDel ? `<button class="btn" data-ma="delYes" style="color:#ff8a7a">Really delete?</button>` : `<button class="btn" data-ma="del">Delete</button>`) : ''}
+      <button class="btn" data-ma="done">Done</button>
+    </div>`;
+}
+function mforgeSet(path, val) {
+  const [a, b] = path.split('.'), num = ['hp', 'ac', 'speedFt', 'atk', 'dn', 'ds', 'db', 'reachFt', 'erounds', 'echance', 'sstr', 'sdex', 'scon', 'swis', 'scale', 'tintAmt'];
+  const v = typeof val === 'boolean' ? val : num.includes(b || a) ? +val : val;
+  if (b) MF.d[a][b] = v; else MF.d[a] = v;
+  if (path === 'ai') MF.d.reachFt = v === 'ranged' ? 60 : 5;
+}
+function mforgeSave() {
+  const d = MF.d;
+  if (!mclean(d.name, 32)) return toast('Give it a name first.');
+  if (!d.id) {
+    const used = new Set(FORGED_MON.map(x => x.ch)), ch = [...CUSTOM_CH].find(x => !used.has(x));
+    if (!ch) return toast(`The forge holds ${CUSTOM_CH.length} monsters. Delete one first.`);
+    d.id = uid(); d.ch = ch;
+  }
+  const i = FORGED_MON.findIndex(x => x.id === d.id); if (i >= 0) FORGED_MON[i] = clone(d); else FORGED_MON.push(clone(d));
+  if (!store.set(MON_KEY, FORGED_MON)) return toast('This browser is out of room.');
+  loadForgedMonsters();
+  toast(`${monsterStats(d).name} is saved. Find it under "Your monsters" in the dungeon creator.`); renderMonsterForge();
+}
+function mforgeDelete() {
+  const d = MF.d; if (!d.id) return;
+  FORGED_MON = FORGED_MON.filter(x => x.id !== d.id); store.set(MON_KEY, FORGED_MON); loadForgedMonsters();
+  MF.d = monsterDefault(); MF.confirmDel = false; mforgeRefresh(); renderMonsterForge(); toast('Monster deleted. Dungeons that used it show empty floor there.');
+}
+function mforgeFight() {
+  const c = state.creatures.find(c => c.type === 'x_draft'); if (!c || busy || anim) return;
+  if (MONSTERS.x_draft.ai === 'none') return toast('It never attacks. Hit it as much as you like.');
+  c.hp = MONSTERS.x_draft.hp; c.alive = true; c.aware = true;
+  state.char.hp = maxHpOf(state.char); state.char.mp = maxMpOf(state.char);
+  CAM.hold = 0; startCombat(); renderMonsterForge(); refresh();
+}
+function mforgeReset() {
+  if (state.combat) endCombat();
+  state.char.hp = maxHpOf(state.char); state.char.mp = maxMpOf(state.char); state.char.status = [];
+  mforgePlace(); mforgeRefresh(); renderMonsterForge();
+}
+{
+  const P = $('monPanel');
+  P.addEventListener('input', e => {
+    const t = e.target; if (!t.dataset.mf) return;
+    mforgeSet(t.dataset.mf, t.type === 'checkbox' ? t.checked : t.value);
+    if (t.type === 'range') { const b = t.closest('.frow')?.querySelector('span b'); if (b && t.dataset.mf === 'scale') b.textContent = Math.round(t.value * 100) + '%'; }
+    if (t.type !== 'range' && t.type !== 'color') { const s = P.querySelector('.threatbox'); if (s) s.innerHTML = monsterThreatHtml(); }
+  });
+  P.addEventListener('change', e => {
+    const t = e.target; if (!t.dataset.mf) return;
+    mforgeSet(t.dataset.mf, t.type === 'checkbox' ? t.checked : t.value);
+    if (!state.combat) mforgeRefresh();
+    if (t.tagName === 'SELECT' || t.type === 'checkbox') renderMonsterForge();
+    if (t.dataset.mf === 'scale') mforgePlace();
+  });
+  P.addEventListener('click', e => {
+    const b = e.target.closest('[data-ma]'); if (!b) return;
+    const a = b.dataset.ma; if (a !== 'del') MF.confirmDel = false;
+    switch (a) {
+      case 'fight': return mforgeFight();
+      case 'reset': return mforgeReset();
+      case 'save': return mforgeSave();
+      case 'del': MF.confirmDel = true; return renderMonsterForge();
+      case 'delYes': return mforgeDelete();
+      case 'done': return closeMonsterForge();
+      case 'new': MF.d = monsterDefault(); mforgeRefresh(); mforgePlace(); return renderMonsterForge();
+      case 'load': { const x = FORGED_MON.find(s => s.id === b.dataset.id); if (!x) return; MF.d = clone(x); mforgeRefresh(); mforgePlace(); return renderMonsterForge(); }
+      case 'body': MF.d.body = b.dataset.k; if (MF.d.body !== 'figure' && MONSTERS[MF.d.body]) { const m = MONSTERS[MF.d.body]; MF.d.ai = m.ai === 'none' ? 'melee' : m.ai; MF.d.reachFt = (m.range || 1) * 5; } mforgeRefresh(); mforgePlace(); return renderMonsterForge();
+      case 'builder': { ui.mforge = false; ui.sandbox = MF.sandbox; document.body.classList.remove('mforging'); $('monPanel').innerHTML = ''; return openBuilder({ monster: MF.d }); }
+    }
+  });
 }
 /* ================================================================== *
  * THE SPELL FORGE: invent spells. Rules (damage, saves, effects), card art (a glyph, an uploaded picture or pixel art),
@@ -9373,9 +9649,9 @@ window.battleBoard = {
     applyKit: (c, k) => applyKit(c, k), newCharacter: () => newCharacter(), preparedSpells: () => preparedSpells(), togglePrepared: k => togglePrepared(k), openMerchant: () => openMerchant(() => {}),
     openSettings: () => openSettings(), reachProblems: m => reachProblems(m), oddsText: id => oddsText(creatureById(id)), bossPhase: id => bossPhase(creatureById(id)), damage: (id, n) => damageCreature(creatureById(id), n, 'dmg'),
     passiveOf: c => passiveOf(c), respec: () => respec(state.char), undoGrowth: () => undoGrowth(), spendPoint: k => spendPoint(k), lightTorch: () => lightTorch(), giveItem: (k, i) => giveItem(k, i),
-    exploreStatusTick: () => exploreStatusTick(), knownTechs: () => knownTechs(), useTech: k => useTech(k), attack: id => attack(creatureById(id)), derived: () => { const d = derived(); return { atk: d.atk, dmgMod: d.dmgMod, ac: d.ac, guard: d.guard, trained: d.trained }; }, hitChance: id => hitChance(derived().atk, acOf(creatureById(id))), hotbar: () => hotbarOf(), openHotbar: () => openHotbar(), hand: () => handIds(), openBuilder: o => openBuilder(o), closeBuilder: k => closeBuilder(k), builderSet: (f, v) => { builderSet(f, v); renderBuilder(); }, builderRandom: () => { builderRandom(); renderBuilder(); }, builderCam: w => builderCam(w), look: () => clone(state.char.look || null), openForge: id => openForge(id), closeForge: () => closeForge(), forge: () => FORGE, forgeSet: (p, v) => { forgeSet(p, v); renderForge(); }, forgeCast: () => forgeCast(), fxLibrary: () => Object.keys(FX_LIBRARY), idle: () => !busy && !anim, showGuide: () => showGuide(), forgeSave: () => forgeSave(), forged: () => FORGED.map(f => f.id), knownSpells: () => knownSpells(), pixelsChanged: () => pixelsChanged(), showCard: id => { const i = cardInfo(id, state.char, { ex: true, t: { action: true, move: 6 }, actOk: true, heroTurn: true, n: -1 }); i.off = false; i.armed = false; const z = $('cardZoom'); z.innerHTML = `<div class="card k-${i.kind} big" style="--c:${i.color}">${cardHtml({ ...i, key: '' })}</div>`; z.hidden = false; return { name: i.name, type: i.type }; }, allIds: () => ({ spells: Object.keys(SPELLS).map(k => 's:' + k), techs: Object.keys(TECHS).map(k => 't:' + k), acts: Object.keys(HOT_ACTIONS) }), stand: (x, z, lookId) => { state.pos.x = x; state.pos.z = z; placeHero(); computeVisibility(); applyFog(); const c = creatureById(lookId); CAM.hold = 0; camShot(hero, worldOf(c.x, c.z), 0.01); refresh(); }, screenOf: id => { const c = creatureById(id), v = worldOf(c.x, c.z).setY(0.45).project(camera), r = canvas.getBoundingClientRect(); return { x: r.left + (v.x + 1) / 2 * r.width, y: r.top + (1 - v.y) / 2 * r.height }; }, playCard: id => playCard(id), inspectCard: id => inspectCard(id), armAttack: on => armAttack(on), lens: () => ({ ...LENS, prof: camProfile(), framed: !!CAM.framed, fov: camera.fov, view: camera.view && { ...camera.view } }), camDist: () => camera.position.distanceTo(controls.target), setFp: on => setFp(on), fp: () => ({ on: fpOn(), yaw: FP.yaw, look: (y, p) => { FP.yaw = y ?? FP.yaw; FP.pitch = p ?? FP.pitch; }, fov: camera.fov, ceiling: !!ceiling?.visible, rig: FP.rig.visible }), stepKey: (f, r) => stepKey(f, r), turnKey: d => turnKey(d),
+    exploreStatusTick: () => exploreStatusTick(), knownTechs: () => knownTechs(), useTech: k => useTech(k), attack: id => attack(creatureById(id)), derived: () => { const d = derived(); return { atk: d.atk, dmgMod: d.dmgMod, ac: d.ac, guard: d.guard, trained: d.trained }; }, hitChance: id => hitChance(derived().atk, acOf(creatureById(id))), hotbar: () => hotbarOf(), openHotbar: () => openHotbar(), hand: () => handIds(), openMonsterForge: (id, d) => openMonsterForge(id, d), closeMonsterForge: () => closeMonsterForge(), mforge: () => MF, mforgeSet: (p, v) => { mforgeSet(p, v); mforgeRefresh(); renderMonsterForge(); }, mforgeSave: () => mforgeSave(), mforgeFight: () => mforgeFight(), mforgeReset: () => mforgeReset(), forgedMonsters: () => FORGED_MON.map(m => ({ id: m.id, ch: m.ch, name: m.name })), monsters: () => Object.keys(MONSTERS), creatureChars: () => ({ ...CREATURE_CHARS }), tools: () => TOOLS.filter(t => t.g === 'Your monsters').map(t => ({ id: t.id, ch: t.ch, label: t.label })), openBuilder: o => openBuilder(o), closeBuilder: k => closeBuilder(k), builderSet: (f, v) => { builderSet(f, v); renderBuilder(); }, builderRandom: () => { builderRandom(); renderBuilder(); }, builderCam: w => builderCam(w), look: () => clone(state.char.look || null), openForge: id => openForge(id), closeForge: () => closeForge(), forge: () => FORGE, forgeSet: (p, v) => { forgeSet(p, v); renderForge(); }, forgeCast: () => forgeCast(), fxLibrary: () => Object.keys(FX_LIBRARY), idle: () => !busy && !anim, showGuide: () => showGuide(), forgeSave: () => forgeSave(), forged: () => FORGED.map(f => f.id), knownSpells: () => knownSpells(), pixelsChanged: () => pixelsChanged(), showCard: id => { const i = cardInfo(id, state.char, { ex: true, t: { action: true, move: 6 }, actOk: true, heroTurn: true, n: -1 }); i.off = false; i.armed = false; const z = $('cardZoom'); z.innerHTML = `<div class="card k-${i.kind} big" style="--c:${i.color}">${cardHtml({ ...i, key: '' })}</div>`; z.hidden = false; return { name: i.name, type: i.type }; }, allIds: () => ({ spells: Object.keys(SPELLS).map(k => 's:' + k), techs: Object.keys(TECHS).map(k => 't:' + k), acts: Object.keys(HOT_ACTIONS) }), stand: (x, z, lookId) => { state.pos.x = x; state.pos.z = z; placeHero(); computeVisibility(); applyFog(); const c = creatureById(lookId); CAM.hold = 0; camShot(hero, worldOf(c.x, c.z), 0.01); refresh(); }, screenOf: id => { const c = creatureById(id), v = worldOf(c.x, c.z).setY(0.45).project(camera), r = canvas.getBoundingClientRect(); return { x: r.left + (v.x + 1) / 2 * r.width, y: r.top + (1 - v.y) / 2 * r.height }; }, playCard: id => playCard(id), inspectCard: id => inspectCard(id), armAttack: on => armAttack(on), lens: () => ({ ...LENS, prof: camProfile(), framed: !!CAM.framed, fov: camera.fov, view: camera.view && { ...camera.view } }), camDist: () => camera.position.distanceTo(controls.target), setFp: on => setFp(on), fp: () => ({ on: fpOn(), yaw: FP.yaw, look: (y, p) => { FP.yaw = y ?? FP.yaw; FP.pitch = p ?? FP.pitch; }, fov: camera.fov, ceiling: !!ceiling?.visible, rig: FP.rig.visible }), stepKey: (f, r) => stepKey(f, r), turnKey: d => turnKey(d),
     mood: () => ({ ...MOOD, music: SFX.musicWant }), musicMood: () => musicMood(), film: () => filmPass.enabled, setSneak: on => setSneak(on), remapKey: k => remapKey(k), prefs: () => prefs, toastCount: () => document.getElementById('toast').children.length,
-    freshState: (k, chars) => freshState(k, chars), enterPlay: st => enterPlay(st, 'play', true), refresh: () => refresh(), heroes: () => heroes, toast: m => toast(m), itemModelOk: () => Object.keys(ITEMS).every(k => !!itemModel(k)) },
+    freshState: (k, chars, map) => freshState(k, chars, map), enterPlay: st => enterPlay(st, 'play', true), refresh: () => refresh(), heroes: () => heroes, toast: m => toast(m), itemModelOk: () => Object.keys(ITEMS).every(k => !!itemModel(k)) },
   wanderers() { const m = spawnWanderers(6, 13); if (m && exploring() === false) startCombat(); refresh(); return m && m.map(c => c.type); },
 };
 showBackdrop('crypt');
