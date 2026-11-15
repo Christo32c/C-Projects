@@ -383,7 +383,7 @@ EFF_NAMES = f"Effects!$B$2:$B${len(STATUS) + 1}"
 
 def creator_sheet(title, intro):
     w = wb.create_sheet(title)
-    w.column_dimensions['A'].width = 34
+    w.column_dimensions['A'].width = 46
     for c in DCOLS: w.column_dimensions[c].width = 22
     w.column_dimensions[get_column_letter(2 + DESIGNS)].width = 70
     note(w, 1, title, italic=False, bold=True, size=14)
