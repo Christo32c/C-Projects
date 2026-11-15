@@ -659,7 +659,9 @@
   .forge .chips { display: flex; flex-wrap: wrap; gap: 5px; }
   .forge .chip2 { padding: 3px 9px; border-radius: 12px; border: 1px solid var(--line); background: #ffffff08; font-size: 12px; cursor: pointer; color: var(--ink); }
   .forge .chip2[aria-pressed="true"] { border-color: var(--brass); color: var(--brass); }
-  .forge .actions { display: flex; gap: 6px; flex-wrap: wrap; } .forge .actions .btn { flex: 1 1 auto; }
+  .forge .fact { position: sticky; bottom: -16px; z-index: 2; display: flex; gap: 6px; flex-wrap: wrap; margin: 4px -16px -16px; padding: 10px 16px 14px;
+                 background: var(--panel); border-top: 1px solid var(--line); box-shadow: 0 -8px 16px #0006; }
+  .forge .fact .btn { flex: 1 1 auto; }
   .forge .px { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: start; }
   .forge canvas.pxc { width: 192px; height: 192px; image-rendering: pixelated; border: 1px solid var(--line); border-radius: 6px; cursor: crosshair; touch-action: none;
        background: repeating-conic-gradient(#2a221b 0 25%, #1c1611 0 50%) 0 0 / 24px 24px; }
@@ -8800,12 +8802,6 @@ function renderForge() {
     <h2>Spell Forge</h2>
     <div class="chips">${FORGED.map(x => `<button class="chip2" data-fa="load" data-id="${x.id}" aria-pressed="${x.id === f.id}">${esc(x.icon || '✦')} ${esc(x.name)}</button>`).join('')}<button class="chip2" data-fa="new">+ New spell</button></div>
     <div class="top"><div class="fprev"></div><div class="summary"></div></div>
-    <div class="actions">
-      <button class="btn primary" data-fa="cast">✦ Cast at the dummy</button>
-      <button class="btn" data-fa="save">${f.id ? 'Save changes' : 'Save spell'}</button>
-      ${f.id ? (FORGE.confirmDel ? `<button class="btn" data-fa="delYes" style="color:#ff8a7a">Really delete?</button>` : `<button class="btn" data-fa="del">Delete</button>`) : ''}
-      <button class="btn" data-fa="done">Done</button>
-    </div>
     <h3>The spell</h3>
     ${frow('Name', `<input type="text" data-f="name" maxlength="32" value="${esc(f.name)}">`)}
     ${frow('Icon and colour', `<input type="text" data-f="icon" maxlength="2" value="${esc(f.icon)}" style="width:48px;flex:none;text-align:center"><input type="color" data-f="color" value="${f.color}"><span class="hint">The glyph shows when there is no picture.</span>`)}
@@ -8855,6 +8851,12 @@ function renderForge() {
     ${fx.particle === 'image' && !(f.art !== 'glyph' && (f.img || f.art === 'pixel')) ? '<p class="hint">Upload a picture or draw pixel art above to use it as particles.</p>' : ''}
     ${frow('Extras', `<label class="hint"><input type="checkbox" data-f="fx.light" ${fx.light ? 'checked' : ''}> flash of light</label><label class="hint"><input type="checkbox" data-f="fx.shake" ${fx.shake ? 'checked' : ''}> shake</label>`)}
     ${frow('Sound', fsel('fx.sound', fx.sound, FX_SOUND))}`}
+    <div class="fact">
+      <button class="btn primary" data-fa="cast">✦ Cast at the dummy</button>
+      <button class="btn" data-fa="save">${f.id ? 'Save changes' : 'Save spell'}</button>
+      ${f.id ? (FORGE.confirmDel ? `<button class="btn" data-fa="delYes" style="color:#ff8a7a">Really delete?</button>` : `<button class="btn" data-fa="del">Delete</button>`) : ''}
+      <button class="btn" data-fa="done">Done</button>
+    </div>
 `;
   renderForgePreview(); drawPixels();
 }
