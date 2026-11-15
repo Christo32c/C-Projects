@@ -8460,7 +8460,7 @@ loadForged();
 
 
 /* --- animations written in JavaScript: the spell's code gets an `fx` toolkit and calls fx.hit() when the spell should land --- */
-const FX_LIMITS = { particles: 6000, seconds: 10, hitBy: 6 };
+const FX_LIMITS = { particles: 6000, seconds: 10, hitBy: 8, frames: 20 };
 function runCodeFx(sp, from, to, tiles) {
   const f0 = sp.fx, P = fxPal(f0), keep = P.spr && !f0.tint;
   let hitRes, landed = false, budget = FX_LIMITS.particles;
@@ -8513,6 +8513,19 @@ function runCodeFx(sp, from, to, tiles) {
     add: (a, b) => ({ x: a.x + b.x, y: a.y + b.y, z: a.z + b.z }),
     scale: (a, k) => ({ x: a.x * k, y: a.y * k, z: a.z * k }),
     distance: (a, b) => Math.hypot(b.x - a.x, b.y - a.y, b.z - a.z),
+    // your own Three.js code: the library, the board's scene, your hero, the target square, and a per-frame hook
+    THREE, scene, caster: hero, tileSize: 1,
+    target: { x: Math.floor(to.x + W / 2), z: Math.floor(to.z + H / 2) },
+    tileToWorld: t => worldOf(t.x, t.z),
+    worldToTile: v => ({ x: Math.floor(v.x + W / 2), z: Math.floor(v.z + H / 2) }),
+    frame: fn => new Promise(res => {
+      let t = 0;
+      fxList.push({ update(dt) {
+        t += dt; let more;
+        try { more = fn(dt, t); } catch (e) { report(e); res(); return false; }
+        if (more === false || t >= FX_LIMITS.frames) { res(); return false; } return true;
+      } });
+    }),
     travel: kind => fxTravel({ ...f0, travel: kind || 'orb' }, P, from, to),
     impact: kind => fxImpact({ ...f0, impact: kind || 'sparks' }, P, to, tiles),
   };
@@ -8639,6 +8652,36 @@ await fx.wait(0.5);
 fx.hit();
 fx.light('#ffffff', 40, 0.3, fx.to);
 fx.burst(120, () => { const d = fx.direction(); return { at: fx.to, vel: [d.x * 5, d.y * 5, d.z * 5], life: .35, size: [.12, .01] }; });` },
+  threeClass: { name: 'Your own Three.js code: a class with update(dt)', code:
+`// Bring your own Three.js code. fx.THREE is the Three.js library, fx.scene the board's scene,
+// fx.caster your hero, fx.target the target square {x, z}, and fx.tileToWorld / fx.worldToTile
+// convert squares and positions (one square = 1 unit). fx.frame(fn) calls fn(dt) every frame
+// until it returns false (20 s at most).
+//
+// You can paste a whole library above this point (a file that defines a class or a create… function)
+// and drive it the same way. This template defines a tiny class of its own so it runs as it is.
+class Pulse {
+  constructor(scene, THREE, at) {
+    this.mesh = new THREE.Mesh(
+      new THREE.TorusGeometry(0.5, 0.05, 8, 48),
+      new THREE.MeshBasicMaterial({ color: fx.color, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+    this.mesh.rotation.x = -Math.PI / 2;
+    this.mesh.position.set(at.x, at.y + 0.05, at.z);
+    scene.add(this.mesh);
+    this.t = 0;
+  }
+  update(dt) {                       // return false when finished
+    this.t += dt;
+    this.mesh.scale.setScalar(1 + this.t * 4);
+    this.mesh.material.opacity = Math.max(0, 1 - this.t);
+    return this.t < 1;
+  }
+  dispose() { this.mesh.removeFromParent(); this.mesh.geometry.dispose(); this.mesh.material.dispose(); }
+}
+const pulse = new Pulse(fx.scene, fx.THREE, fx.center);
+fx.hit();
+await fx.frame(dt => pulse.update(dt));
+pulse.dispose();` },
   confetti: { name: 'Picture Confetti: throws your card picture', code:
 `// Best with a picture or pixel art: set "Particles" to "Your card picture".
 fx.hit();
@@ -8670,11 +8713,15 @@ function showGuide() {
     ['await fx.every(sec, (t, k, dt) => …)', 'Runs your function every frame for sec seconds. t is time so far, k goes 0 → 1.'],
     ['await fx.move(a, b, {time, arc, ease}, p => …)', 'Moves a point from a to b, calling you with its position each frame. ease: "in" or "out".'],
     ['await fx.wait(sec)', 'Pause.'],
-    ['fx.hit()', 'The spell lands now: damage, healing and effects. If you never call it, it lands when your code ends (or after 6 s).'],
+    ['fx.hit()', 'The spell lands now: damage, healing and effects. If you never call it, it lands when your code ends (or after 8 s).'],
     ['fx.light(color, strength, sec, at)', 'A flash of light.'],
     ['fx.shake(amount)', 'Shake the camera (0 to 0.6).'],
     ['fx.travel(kind), fx.impact(kind)', 'The forge\'s built-in styles: orb, arc, beam, rain, none / sparks, explosion, cloud, pillar, ring, swirl, shards.'],
     ['fx.random(a, b), fx.direction()', 'A random number, and a random direction of length 1.'],
+    ['fx.THREE, fx.scene', 'The Three.js library and the board\'s scene, for your own meshes, lights and classes. Remove what you add when you are done.'],
+    ['fx.caster, fx.target', 'Your hero (a Three.js object) and the target square {x, z}.'],
+    ['fx.tileToWorld(t), fx.worldToTile(v)', 'Convert a square {x, z} to a position, and back. One square is 1 unit.'],
+    ['await fx.frame(dt => …)', 'Calls you every frame with the frame time until you return false (20 s at most). Use it to run update(dt) on your own objects.'],
     ['fx.mix(a, b, k), fx.add(a, b), fx.scale(a, k), fx.distance(a, b)', 'Point arithmetic.'],
   ];
   const opts = [
@@ -8835,7 +8882,7 @@ function renderForge() {
     <div class="chips">${[['settings', 'Settings'], ['code', 'Code (JavaScript)']].map(([k, l]) => `<button class="chip2" data-fa="fxmode" data-k="${k}" aria-pressed="${(fx.mode || 'settings') === k}">${l}</button>`).join('')}<button class="chip2" data-fa="guide">? Build guide</button></div>
     ${fx.mode === 'code' ? `
     <div class="codebar"><select id="fxLib">${Object.entries(FX_LIBRARY).map(([k, a]) => `<option value="${k}" ${FORGE.lib === k ? 'selected' : ''}>${esc(a.name)}</option>`).join('')}</select><button class="btn small" data-fa="libload">Load from library</button><button class="btn small" data-fa="fromsettings">From my settings</button></div>
-    <textarea class="code" data-f="fx.code" spellcheck="false" maxlength="12000" aria-label="Animation code">${esc(fx.code || '')}</textarea>
+    <textarea class="code" data-f="fx.code" spellcheck="false" maxlength="80000" aria-label="Animation code">${esc(fx.code || '')}</textarea>
     <div class="codemsg">${FORGE.err ? `<div class="codeerr">${esc(FORGE.err)}</div>` : '<span class="hint">Runs when you cast. Call <code>fx.hit()</code> when the spell should land. The colours, size, speed and amount below reach your code as fx.color, fx.size, fx.speed and fx.amount.</span>'}</div>
     ${frow('Colours', `<input type="color" data-f="fx.color" value="${fx.color}"><span class="hint">and</span><input type="color" data-f="fx.color2" value="${fx.color2}">`)}
     ${frow(`Size <b>${(+fx.size).toFixed(1)}×</b>`, `<input type="range" data-f="fx.size" min="0.4" max="2.5" step="0.1" value="${fx.size}">`)}

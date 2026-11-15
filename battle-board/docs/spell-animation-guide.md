@@ -15,7 +15,7 @@ fx.hit();                                                                   // t
 fx.burst(40, () => ({ at: fx.to, vel: fx.direction(), life: .5 }));        // and sparks fly out
 ```
 
-**`fx.hit()` is the moment the spell lands.** Damage, healing and effects are rolled then, and the game waits for it before the next turn. Call it once, at the moment your animation "connects". If you never call it, the spell lands when your code finishes, or after 6 seconds at the latest. Anything you start after `fx.hit()` keeps playing while the game carries on.
+**`fx.hit()` is the moment the spell lands.** Damage, healing and effects are rolled then, and the game waits for it before the next turn. Call it once, at the moment your animation "connects". If you never call it, the spell lands when your code finishes, or after 8 seconds at the latest. Anything you start after `fx.hit()` keeps playing while the game carries on.
 
 ## Where things are
 
@@ -151,10 +151,69 @@ Tick **tint** to colour the picture with `fx.color`.
 
 **From my settings** writes out what the Settings mode would do (`fx.travel(…)`, `fx.hit()`, `fx.impact(…)`) so you can start from that.
 
+## Bringing your own Three.js code
+
+The `fx` toolkit is the quick way in. For anything it can't do (your own meshes, shaders, sprites, lights, or a whole effect class you wrote elsewhere) the code box also gets the real thing:
+
+| Name | What it is |
+|---|---|
+| `fx.THREE` | The Three.js library the game uses. The game loads it as a module, so `window.THREE` is **not** set; use `fx.THREE`. |
+| `fx.scene` | The board's scene. Add your objects to it, and remove them when you are done. |
+| `fx.caster` | Your hero, a Three.js object (`fx.caster.getWorldPosition(v)` works). |
+| `fx.target` | The target square, `{ x, z }`. |
+| `fx.tileSize` | 1: one square is one unit. |
+| `fx.tileToWorld(t)`, `fx.worldToTile(v)` | A square `{ x, z }` to a position on the board's surface (a `THREE.Vector3`), and back. |
+| `await fx.frame(dt => …)` | Calls you every frame with the frame time in seconds, until you return `false` (20 s at most). This is where you call your own `update(dt)`. |
+
+The library entry **Your own Three.js code** is a small worked example: a class with a constructor, `update(dt)` and `dispose()`, driven by `fx.frame`.
+
+### Pasting a whole file
+
+You can paste an entire script file into the box (the limit is 80,000 characters), then drive it underneath. Files written for a plain `<script>` tag work if they wrap themselves in a function and attach to `window`, like `(function (root) { … root.createX = createX; })(window)`. Files with `import` or `export` lines do not work in the box: remove those lines first.
+
+Three things to change in an effect written for its own game loop:
+
+1. **Give it `fx.THREE` and `fx.scene`** instead of a global `THREE` and your own scene.
+2. **Drive its `update(dt)` from `fx.frame`.** Nothing else calls it.
+3. **Call `fx.hit()` at its moment of impact.** If it has an `onImpact` callback, point that at `fx.hit`.
+
+Effects that charge over several turns don't fit a forge cast, which happens all at once. Set the charge to one turn and release it after a short `fx.wait`.
+
+### Example: a Starfall class
+
+This drives a `StarfallSpell` class from a `starfallSpell.global.js` file (one with `createStarfall(THREE)`, `cast(caster, tile)`, `advanceTurn()`, `update(dt)`, an `onImpact` option and a `finished` promise). Paste the whole of that file into the box first, then this underneath. The file is also in `docs/examples/starfall-forge-adapter.js`.
+
+```js
+// ---- Starfall in the Spell Forge: paste the whole of starfallSpell.global.js above this line ----
+const make = typeof createStarfall === 'function' ? createStarfall : window.createStarfall;
+const { StarfallSpell } = make(fx.THREE);
+const spell = new StarfallSpell(fx.scene, {
+  tileSize: 1,
+  diameter: 9,                                  // 9 squares across = the forge's 20 ft radius
+  chargeTurns: 1,                               // a forge cast happens in one go
+  groundY: fx.tileToWorld(fx.target).y,
+  tileToWorld: t => fx.tileToWorld(t),
+  worldToTile: v => fx.worldToTile(v),
+  onImpact: () => fx.hit(),                     // damage lands when the stars do
+  onShake: k => fx.shake(k * 0.4),
+});
+spell.timeScale = fx.speed;
+const done = spell.cast(fx.caster, fx.target);
+const running = fx.frame(dt => { spell.update(dt); return !['done', 'cancelled'].includes(spell.state); });
+await fx.wait(0.9);                             // show the runes for a moment
+spell.advanceTurn();                            // ...then release the star rain
+await done;
+await running;
+spell.dispose();
+```
+
+Set the forge's **Shape** to **An area** with a **20 ft radius** so the squares that take damage match the 9-square circle the stars fall on.
+
 ## Limits and errors
 
 - At most **6000 particles** per cast, and at most **10 seconds** for one `fx.every` or `fx.move`.
-- The spell **always lands** within 6 seconds, even if the code never calls `fx.hit()` or gets stuck waiting.
+- At most **20 seconds** for one `fx.frame`.
+- The spell **always lands** within 8 seconds, even if the code never calls `fx.hit()` or gets stuck waiting.
 - If your code throws an error, the message appears under the code box (and as a toast in a dungeon), and the spell still lands with no animation.
 - Lower quality settings make fewer particles from `fx.burst`; single `fx.particle` calls are not reduced.
 
