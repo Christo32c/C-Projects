@@ -114,6 +114,28 @@ The **Settings** button holds combat speed (normal, fast or instant monster turn
 
 Settings has the view, the film look, and one volume for music and ambience. The film look is off at Low quality.
 
+## The Hero Builder
+
+When you create a hero, press **Open the Hero Builder**; to change an existing hero later, press **Restyle** on the hero list. The figure stands in the Training Yard and you can drag the view to walk round it.
+
+- **Base:** Human, Elf, Dwarf, Orc, Halfling or Horned. A base sets a starting body and face; everything can be changed after. Bases are looks only; your kit and scores decide how you fight.
+- **Body:** height, build and head size, and skin colour (ten tones, or any colour).
+- **Face:** eyes (round, narrow, wide or glowing, any colour), brows, nose, mouth, ears, beard (stubble to braided), tusks, horns, a scar and face paint. The camera moves in close for the face and hair.
+- **Hair:** eight styles and any colour.
+- **Outfit:** a hat (hood, pointed hat, bandana, circlet, horned helm), a cloak (short, long, tattered), a pack and a scarf. Armour, shields and weapons still come from what is equipped, and a helm or crown you wear replaces the hat.
+- **Colours:** the main colour, cloak, trim, trousers and boots.
+- **Surprise me** rolls a random look; **Undo** steps back. **Keep this look** saves it.
+
+## The Monster Forge
+
+Choose **Monster Forge** on the title screen to make monsters and other characters (villains, guards, villagers who stand still).
+
+- **The look:** either **a figure** built like a hero (open it in the Hero Builder for the face, hair, outfit and colours, then choose what it holds, its armour and its helm), or one of the game's sixteen monsters, recoloured and resized.
+- **How it fights:** walks up and hits, keeps away and shoots (arrows or magic bolts), or stands still and never attacks. HP, Defence and whether it blocks or dodges, speed, attack bonus, damage dice and type, reach or range, the word the log uses ("bites", "cleaves"), an effect its hits can cause, four saves, XP, and whether it is a boss with a title.
+- **The threat panel** says how it would do against a fresh level 1 Spellblade: who hits whom how often, how long the fight lasts, how much damage it deals before it falls, which of the game's monsters it is closest to, and a suggested XP.
+- **Fight it** starts a fight with it in the Training Yard (your forge hero can't die there); **Reset the fight** puts everyone back.
+- **Save** keeps it in this browser and gives it a map letter. It then appears under **Your monsters** in the dungeon creator's palette, so you can paint it into any dungeon. A dungeon file shared with someone who doesn't have the monster shows plain floor where it stood.
+
 ## The Spell Forge
 
 Choose **Spell Forge** on the title screen to invent spells. It opens in the Training Yard, beside the dummy, with the forge panel on the right (under the board on a phone).
