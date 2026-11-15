@@ -63,6 +63,7 @@ console.log('Spell Forge');
 const shots = arg('--shots');
 const shot = async n => { if (shots) await page.screenshot({ path: path.join(shots, n + '.png'), timeout: 0, animations: 'disabled' }); };
 const D = (fn, a) => page.evaluate(fn, a);
+const press = sel => D(sel => document.querySelector(sel).click(), sel);   // the panel's buttons (Playwright's stability wait never settles on them under the fixed-step clock)
 const F = (p, v) => D(([p, v]) => battleBoard.dev.forgeSet(p, v), [p, v]);
 await page.setViewportSize({ width: 1280, height: 800 });
 const dummyHp = () => D(() => battleBoard.dev.state.creatures.find(c => c.type === 'dummy').hp);
@@ -78,7 +79,7 @@ await check('the title screen has a Spell Forge, and it opens beside the trainin
 
 await check('cast the default spell at the dummy: an orb flies and the spell attack resolves', async () => {
   const e0 = errCount(), log0 = await D(() => battleBoard.dev.state.log.length);
-  await page.click('[data-fa="cast"]'); await wait(0.5); await shot('forge-cast-orb');
+  await press('[data-fa="cast"]'); await wait(0.5); await shot('forge-cast-orb');
   await wait(2);
   const n = await D(() => battleBoard.dev.state.log.length), t = await logTail();
   assert(n > log0 && /Starfall/.test(t), 'no log: ' + t);
@@ -90,7 +91,7 @@ await check('restyle it: a fireball-style area spell with a Dex save, then cast 
   await F('name', 'Sunburst'); await F('shape', 'area'); await F('radius', 10); await F('land', 'save'); await F('save', 'dex'); await F('dn', 4); await F('ds', 6); await F('dtype', 'fire');
   await F('fx.preset', 'fireball'); await F('fx.color', '#ffe066'); await F('fx.size', 1.8); await F('eff', 'burning'); await F('erounds', 2);
   const sp = await D(() => { const s = battleBoard.dev.state; return null; });
-  await page.click('[data-fa="cast"]'); await wait(1.4); await shot('forge-cast-burst');
+  await press('[data-fa="cast"]'); await wait(1.4); await shot('forge-cast-burst');
   await wait(2);
   const t = await logTail(), desc = await D(() => document.querySelector('#forgePanel .fprev .cx').textContent);
   assert(/Sunburst/.test(t) && /4d6 fire/.test(desc), JSON.stringify({ t, desc }));
@@ -105,7 +106,7 @@ await check('pixel art: paint on the grid, and it becomes the card art and the p
   await page.mouse.move(cv.x + 10, cv.y + 10); await page.mouse.down(); await page.mouse.move(cv.x + 60, cv.y + 12); await page.mouse.up();
   await F('fx.particle', 'image'); await F('fx.preset', 'healword'); await F('fx.impact', 'swirl');
   const r = await D(() => ({ img: (battleBoard.dev.forge().d.img || '').slice(0, 22), cardImg: !!document.querySelector('#forgePanel .fprev .art img.px'), sprite: !!battleBoard.dev.forge().d.fx }));
-  await page.click('[data-fa="cast"]'); await wait(1.2); await shot('forge-pixel'); await wait(2);
+  await press('[data-fa="cast"]'); await wait(1.2); await shot('forge-pixel'); await wait(2);
   assert(r.img.startsWith('data:image/png') && r.cardImg, JSON.stringify(r));
   noNewErrors(e0); return 'pixel sprite cast';
 });
@@ -122,9 +123,9 @@ await check('upload a picture for the card', async () => {
 });
 
 await check('save it; a level-1 Spellblade can learn it outside the forge', async () => {
-  await page.click('[data-fa="save"]'); await wait(0.5);
+  await press('[data-fa="save"]'); await wait(0.5);
   const ids = await D(() => battleBoard.dev.forged());
-  await page.click('[data-fa="done"]'); await wait(1.5);
+  await press('[data-fa="done"]'); await wait(1.5);
   const r = await D(id => {
     const B = battleBoard.dev, c = B.applyKit(B.newCharacter(), 'spellblade'); c.name = 'Learner'; B.enterPlay(B.freshState('crypt', [c]));
     return { known: B.knownSpells().includes('c_' + id), forging: document.body.classList.contains('forging'), draft: B.knownSpells().includes('c_draft') };
