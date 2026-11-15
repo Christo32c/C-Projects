@@ -5,7 +5,7 @@ a damage breakdown and how your stats change it. The numbers are live formulas t
     node <render script> cards/                            (one PNG per card, named s-<spell>, t-<tech>, <action>, atk-<kit>)
     python3 tools/build_spells_actions.py catalog.json cards/ docs/
 """
-import io, json, os, sys
+import io, json, os, re, sys
 from openpyxl import Workbook
 from openpyxl.comments import Comment
 from openpyxl.drawing.image import Image as XLImage
@@ -119,6 +119,8 @@ inputs = [
     ('Target Defence', 10, 'TargetDef', 'Giant Rat 7, Skeleton 9, Goblin 11, Spider 11, Grave Warden 14. See the monsters workbook.'),
     ('Target save bonus', 1, 'TargetSave', 'Most monsters have -2 to +3 on a save.'),
     ('Trap and secret DC', 13, 'SearchDC', 'Every trap, secret door and hidden cache in the built-in dungeons is DC 13.'),
+    ('Your Defence', 18, 'YourDef', 'Shown on your character sheet. Chain mail 16 + shield 2 for a starting Spellblade. Used by the Monster creator.'),
+    ('Your maximum HP', 12, 'YourHP', 'Shown on your character sheet. Used by the Monster creator.'),
 ]
 r0 = 13
 for i, h in enumerate(['Choice', 'Value', '', 'Notes'], start=1):
@@ -212,9 +214,11 @@ wsS = wb.create_sheet('Spells')
 H = ['Card', 'Spell', 'Learned at level', 'Base mana', 'Mana for you', 'Range for you (ft)', 'Area', 'Targets', 'How it lands', 'Dice', 'Sides', 'Damage type',
      'Average per target', 'Most per target', 'Chance it lands (your hero)', 'Expected per target', 'Effect', 'Effect rounds for you', 'Effect chance', 'How your stats change it', 'Description']
 header(wsS, 1, H, [17, 18, 9, 8, 8, 10, 14, 10, 18, 6, 6, 10, 10, 10, 11, 11, 13, 9, 9, 50, 60])
+SROW = {}
 r = 2
 for k in ORDER:
     sp = SPELLS[k]
+    SROW[k] = r
     dmg = sp.get('damage'); heal = sp.get('heal'); st = sp.get('status')
     how = 'Spell attack vs Defence' if sp.get('attack') else (f"{sp['save'].upper()} save vs your DC" if sp.get('save') else 'Automatic')
     tgt = {'enemy': 'An enemy', 'ally': 'A friend', 'area': 'Everyone in the area'}.get(sp.get('target'), sp.get('target', ''))
@@ -367,6 +371,223 @@ for rr in range(2, wsE.max_row + 1):
     wsE.cell(row=rr, column=1).font = Font(name='Segoe UI Symbol', size=14); wsE.cell(row=rr, column=1).alignment = CENTER
     wsE.cell(row=rr, column=5).number_format = NUM
 note(wsE, wsE.max_row + 2, 'Damage and healing over time happen at the start of the bearer\'s turn; durations count down at the end of it. Every effect clears when the fight ends.')
+
+
+# ============================================================ shared helpers for the two creators
+DESIGNS = 4
+DCOLS = [get_column_letter(2 + i) for i in range(DESIGNS)]   # B..E
+EFF_LIST = f"=Effects!$B$2:$B${len(STATUS) + 1}"
+EFF_AVG = f"Effects!$E$2:$E${len(STATUS) + 1}"
+EFF_NAMES = f"Effects!$B$2:$B${len(STATUS) + 1}"
+
+
+def creator_sheet(title, intro):
+    w = wb.create_sheet(title)
+    w.column_dimensions['A'].width = 34
+    for c in DCOLS: w.column_dimensions[c].width = 22
+    w.column_dimensions[get_column_letter(2 + DESIGNS)].width = 70
+    note(w, 1, title, italic=False, bold=True, size=14)
+    note(w, 2, intro)
+    return w
+
+
+def block(w, row, title, rows, kind):
+    """rows: (label, [design values or formula template with {c}], note, fmt, validation)"""
+    heads = [title] + [f'Design {i + 1}' for i in range(DESIGNS)] + ['Notes']
+    for i, h in enumerate(heads, start=1):
+        c = w.cell(row=row, column=i, value=h); c.font = Font(name=FONT, bold=True, color='FFFFFF', size=10); c.fill = HEAD; c.border = BORDER; c.alignment = CENTER
+    at = {}
+    for j, (key, label, vals, nt, fmtc, dv) in enumerate(rows):
+        r = row + 1 + j; at[key] = r
+        w.cell(row=r, column=1, value=label).font = Font(name=FONT, size=10, bold=kind == 'out')
+        w.cell(row=r, column=2 + DESIGNS, value=nt).font = Font(name=FONT, size=9, italic=True, color='5A4A3A')
+        for i, col in enumerate(DCOLS):
+            cell = w[f'{col}{r}']
+            if kind == 'in':
+                v = vals[i] if i < len(vals) else None
+                cell.value = v; cell.fill = INPUT; cell.font = BLUE
+            else:
+                cell.value = re.sub(r'\{(\w+)\}', lambda mm: f'{col}{at_all[mm.group(1)]}' if mm.group(1) in at_all else mm.group(0), vals) if vals else ''
+                cell.font = Font(name=FONT, size=10)
+            if fmtc: cell.number_format = fmtc
+            cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True); cell.border = BORDER
+        w.cell(row=r, column=1).border = BORDER; w.cell(row=r, column=2 + DESIGNS).border = BORDER
+        w.cell(row=r, column=2 + DESIGNS).alignment = Alignment(wrap_text=True, vertical='center')
+        if dv:
+            v = DataValidation(type='list', formula1=dv, allow_blank=True); w.add_data_validation(v); v.add(f'{DCOLS[0]}{r}:{DCOLS[-1]}{r}')
+        at_all[key] = r
+    return at
+
+
+# ============================================================ Spell creator
+at_all = {}
+wsC = creator_sheet('Spell creator', 'Design your own spell in a yellow column. The numbers below follow your hero (the "Your hero" sheet) and are compared with the game\'s own spells.')
+note(wsC, 3, 'Design 1 is an example. Leave a column\'s name empty to ignore it. The last row writes the spell as a line you could add to the game\'s SPELLS table.')
+EFFECTS = '"' + ','.join(['None'] + [S['name'] for S in STATUS.values()]) + '"'
+spell_in = [
+    ('name', 'Name', ['Thunderclap'], 'Any name.', None, None),
+    ('lvl', 'Learned at level', [2], 'The game\'s spells unlock at levels 1 to 4.', None, None),
+    ('mana', 'Mana cost', [3], 'Fire Bolt 2, Poison Cloud 4, Fireball 7.', None, None),
+    ('range', 'Range (ft)', [30], 'Fire Bolt 60, Bless 30, Fireball 150. The game counts in 5 ft squares.', None, None),
+    ('lands', 'How it lands', ['Save'], 'Spell attack: roll against Defence. Save: the target rolls against your DC. Automatic: no roll.', None, '"Spell attack,Save,Automatic"'),
+    ('save', 'Save ability', ['CON'], 'Only for "Save".', None, '"STR,DEX,CON,WIS"'),
+    ('who', 'Who it affects', ['Enemies'], '', None, '"Enemies,Friends"'),
+    ('shape', 'Shape', ['Area'], 'Single: one creature. Area: everyone in the area.', None, '"Single,Area"'),
+    ('size', 'Area size (ft radius or length)', [10], 'Information only. Bless and Poison Cloud are 10 ft, Fireball 20 ft.', None, None),
+    ('ntarg', 'Targets you expect to catch', [2], 'For an area. 2 is a fair guess for a 10 ft radius in the built-in dungeons.', None, None),
+    ('dn', 'Damage dice (count)', [2], 'Leave 0 for no damage.', None, None),
+    ('ds', 'Damage dice (sides)', [8], '4, 6, 8, 10 or 12.', None, None),
+    ('dtype', 'Damage type', ['thunder'], 'fire, cold, poison, necrotic, radiant, thunder…', None, None),
+    ('half', 'Half damage on a save?', ['Yes'], 'Fireball, the walls and Poison Cloud do half on a save.', None, '"Yes,No"'),
+    ('hn', 'Healing dice (count)', [0], 'Healing adds your casting modifier, like Healing Word.', None, None),
+    ('hs', 'Healing dice (sides)', [4], '', None, None),
+    ('eff', 'Effect it applies', ['Stunned'], 'Pick from the game\'s effects (see the Effects sheet), or None.', None, EFFECTS),
+    ('erounds', 'Effect rounds', [1], 'Most effects last 2 to 4 rounds.', None, None),
+    ('echance', 'Effect chance when it lands', [0.25], 'Fire Bolt sets targets burning 35% of the time; most effects always apply.', '0%', None),
+]
+r0 = 5
+at_in = block(wsC, r0, 'Your design', spell_in, 'in')
+o0 = r0 + len(spell_in) + 2
+G = lambda f: f'=IF({{name}}="","",{f})'
+spell_out = [
+    ('p', 'Chance it lands (per target)', G('IF({lands}="Spell attack",SpellHitP,IF({lands}="Save",1-MIN(1,MAX(0,(21-(SpellDC-TargetSave))/20)),1))'), 'Spell attack: your spell attack vs "Target Defence". Save: the target\'s save bonus vs your DC.', '0%', None),
+    ('mana2', 'Mana for you', G('MAX(1,{mana}-T_efficient)'), 'Efficient Casting takes 1 off.', None, None),
+    ('range2', 'Range for you (ft)', G('{range}+20*T_spellSniper'), 'Spell Sniper adds 20 ft.', None, None),
+    ('avg', 'Average damage per target', G('IF({dn}>0,{dn}*({ds}+1)/2+3*T_mastery,0)'), 'Dice × (sides + 1) ÷ 2, +3 with Elemental Mastery.', NUM, None),
+    ('exp', 'Expected damage per target', G('IF({lands}="Spell attack",{p}*{avg}+0.05*{dn}*({ds}+1)/2,IF(AND({lands}="Save",{half}="Yes"),{p}*{avg}+(1-{p})*INT({avg}/2),{p}*{avg}))'), 'Weighs the average by the chance it lands (criticals on spell attacks; half on a save if ticked).', NUM, None),
+    ('targ', 'Targets', G('IF({shape}="Area",{ntarg},1)'), '', None, None),
+    ('dot', 'Effect damage per target (over its rounds)', G('IFERROR(INDEX(' + EFF_AVG + ',MATCH({eff},' + EFF_NAMES + ',0))*1,0)*({erounds}+T_lingering)*{echance}*{p}'), 'Burning, bleeding and poison deal damage each round. Lingering Magic adds a round.', NUM, None),
+    ('heal', 'Average healing per target', G('IF({hn}>0,{hn}*({hs}+1)/2+MAX(0,CastMod)+4*T_healer,0)'), 'Healing dice + your casting modifier, +4 with Healer.', NUM, None),
+    ('total', 'Expected value per cast (damage + healing)', G('({exp}+{dot}+{heal})*{targ}'), 'Everything the spell is worth in hit points, for all its targets.', NUM, None),
+    ('per', 'Value per mana', G('IF({mana2}>0,{total}/{mana2},0)'), '', '0.00', None),
+    ('bench', 'The game\'s spells: value per mana', G('IF({heal}>0,HealBench,IF({exp}+{dot}>0,DmgBench,""))'), 'Average of the game\'s damaging spells (or Healing Word for healing), worked out in the table below.', '0.00', None),
+    ('suggest', 'Suggested mana cost', G('IF({bench}="","see below",MAX(1,ROUND({total}/{bench}+IF({eff}="None",0,IF({eff}="",0,1)),0)))'), 'What the game\'s own spells would charge for this much damage or healing, +1 for a control effect.', None, None),
+    ('verdict', 'Verdict', G('IF({bench}="","Effect only: compare with the effect spells below",IF({per}>{bench}*1.3,"Strong for its cost",IF({per}<{bench}*0.75,"Weak for its cost","About right")))'), 'Strong: more than 30% above the game\'s spells. Weak: more than 25% below.', None, None),
+    ('line', 'As a line for the game\'s SPELLS table', G('LOWER(SUBSTITUTE({name}," ",""))&": { name: \'"&{name}&"\', cost: "&{mana}&", unlock: "&{lvl}&", shape: \'"&IF({shape}="Area","sphere\', size: "&MAX(1,ROUND({size}/5,0))&", target: \'","single\', target: \'")&IF({who}="Friends","ally",IF({shape}="Area","area","enemy"))&"\', range: "&ROUND({range}/5,0)&IF({lands}="Spell attack",", attack: true",IF({lands}="Save",", save: \'"&LOWER({save})&"\'",""))&IF({dn}>0,", damage: ["&{dn}&", "&{ds}&"], dmgType: \'"&{dtype}&"\'","")&IF({hn}>0,", heal: ["&{hn}&", "&{hs}&"]","")&IF(OR({eff}="None",{eff}=""),"",", status: [\'"&LOWER({eff})&"\', "&{erounds}&", "&{echance}&"]")&", desc: \'\' },"'),
+     'The effect key is a guess from its name (the game uses keys like burning, stunned, hexed). Add a colour and an icon too.', None, None),
+]
+at_all.update(at_in)
+at_out = block(wsC, o0, 'Worked out', spell_out, 'out')
+wsC.row_dimensions[at_out['line']].height = 90
+# benchmarks
+b0 = o0 + len(spell_out) + 3
+note(wsC, b0 - 1, 'The game\'s spells, for comparison (expected per cast uses your hero, and the "targets you expect" of Design 1 for areas)', italic=False, bold=True)
+heads = ['Spell', 'Level', 'Mana for you', 'Expected per target', 'Targets', 'Effect damage', 'Expected per cast', 'Value per mana']
+for i, h in enumerate(heads, start=1):
+    c = wsC.cell(row=b0, column=i, value=h); c.font = Font(name=FONT, bold=True, color='FFFFFF', size=10); c.fill = HEAD; c.border = BORDER; c.alignment = CENTER
+for col in 'FGH': wsC.column_dimensions[col].width = max(wsC.column_dimensions[col].width or 0, 14)
+r = b0 + 1; dmg_rows = []; heal_row = None
+for k in ORDER:
+    sp = SPELLS[k]
+    if not (sp.get('damage') or sp.get('heal')): continue
+    sr = SROW[k]; area = sp.get('shape') != 'single'
+    st = sp.get('status')
+    dotf = f'IFERROR(INDEX({EFF_AVG},MATCH(Spells!$Q${sr},{EFF_NAMES},0))*1,0)*Spells!$R${sr}*Spells!$S${sr}*Spells!$O${sr}' if st else '0'
+    wsC.append([sp['name'], sp['unlock'], f'=Spells!$E${sr}', f'=Spells!$P${sr}', f'=$B${at_in["ntarg"]}' if area else 1, '=' + dotf, f'=(D{r}+F{r})*E{r}', f'=G{r}/C{r}'])
+    for c in range(1, 9): cc = wsC.cell(row=r, column=c); cc.border = BORDER; cc.font = Font(name=FONT, size=10); cc.number_format = '0.00' if c >= 4 else 'General'
+    if sp.get('heal'): heal_row = r
+    else: dmg_rows.append(r)
+    r += 1
+rb = r + 1
+wsC.cell(row=rb, column=1, value='Damaging spells: average value per mana').font = Font(name=FONT, bold=True, size=10)
+wsC.cell(row=rb, column=8, value='=AVERAGE(' + ','.join(f'H{x}' for x in dmg_rows) + ')').number_format = '0.00'
+wsC.cell(row=rb + 1, column=1, value='Healing Word: value per mana').font = Font(name=FONT, bold=True, size=10)
+wsC.cell(row=rb + 1, column=8, value=f'=H{heal_row}').number_format = '0.00'
+name('DmgBench', f"'Spell creator'!$H${rb}"); name('HealBench', f"'Spell creator'!$H${rb + 1}")
+e0 = rb + 4
+note(wsC, e0 - 1, 'Spells that only apply an effect (no damage or healing): judge a new one by these', italic=False, bold=True)
+for i, h in enumerate(['Spell', 'Level', 'Mana', 'Effect', 'Rounds', 'How it lands'], start=1):
+    c = wsC.cell(row=e0, column=i, value=h); c.font = Font(name=FONT, bold=True, color='FFFFFF', size=10); c.fill = HEAD; c.border = BORDER
+r = e0 + 1
+for k in ORDER:
+    sp = SPELLS[k]
+    if sp.get('damage') or sp.get('heal'): continue
+    st = sp.get('status')
+    wsC.append([sp['name'], sp['unlock'], sp['cost'], STATUS[st[0]]['name'] if st else ('Restrained' if k == 'vines' else ''), st[1] if st else sp.get('duration', ''),
+                'Spell attack' if sp.get('attack') else (sp['save'].upper() + ' save') if sp.get('save') else 'Automatic'])
+    for c in range(1, 7): cc = wsC.cell(row=r, column=c); cc.border = BORDER; cc.font = Font(name=FONT, size=10)
+    r += 1
+wsC.freeze_panes = 'B5'
+
+# ============================================================ Monster creator
+at_all = {}
+wsM = creator_sheet('Monster creator', 'Design your own monster in a yellow column. The numbers show how it fights your hero (the "Your hero" sheet) and how it compares with the game\'s monsters.')
+note(wsM, 3, 'Design 1 is an example. Your hero\'s Defence and HP are set on "Your hero". The last row writes the monster as a line for the game\'s MONSTERS table.')
+mon_in = [
+    ('name', 'Name', ['Crypt Ghoul'], 'Any name.', None, None),
+    ('hp', 'Hit points', [24], 'Rat 7, Skeleton 13, Giant Spider 26, Grave Warden 45, Lich 110.', None, None),
+    ('ac', 'Defence', [11], 'Rat 7, Skeleton 9, Goblin 11, Lich 14. Low Defence means heroes rarely miss.', None, None),
+    ('guard', 'Defends by', ['Armour'], 'Armour: misses read "Blocked". Dodging: misses read "Dodged".', None, '"Armour,Dodging"'),
+    ('speed', 'Speed (ft)', [30], 'Most monsters move 30 ft; wolves 40, zombies 20.', None, None),
+    ('ai', 'Behaviour', ['Melee'], 'Melee walks up and hits; Ranged keeps its distance and shoots; None never acts (dummies, props).', None, '"Melee,Ranged,None"'),
+    ('atk', 'Attack bonus', [5], 'Common monsters +3 to +5, bosses +5 to +7.', '+0;-0;0', None),
+    ('dn', 'Damage dice (count)', [2], '', None, None),
+    ('ds', 'Damage dice (sides)', [6], '', None, None),
+    ('db', 'Damage bonus', [2], 'Added once per hit.', None, None),
+    ('dtype', 'Damage type', ['necrotic'], '', None, None),
+    ('reach', 'Reach or range (ft)', [5], 'Melee 5 ft. Archers 80 ft, the Lich 70 ft.', None, None),
+    ('eff', 'On-hit effect', ['Weakened'], 'Pick from the game\'s effects, or None.', None, EFFECTS),
+    ('erounds', 'Effect rounds', [2], '', None, None),
+    ('echance', 'Effect chance per hit', [0.4], '', '0%', None),
+    ('sstr', 'Strength save bonus', [1], 'Used against Vine Growth.', '+0;-0;0', None),
+    ('sdex', 'Dexterity save bonus', [1], 'Used against Fireball and the walls.', '+0;-0;0', None),
+    ('scon', 'Constitution save bonus', [2], 'Used against Enfeeble and Poison Cloud.', '+0;-0;0', None),
+    ('swis', 'Wisdom save bonus', [0], 'Used against Hold Monster.', '+0;-0;0', None),
+    ('boss', 'Boss?', ['No'], 'Bosses get a health bar and can\'t be stunned twice in a row.', None, '"Yes,No"'),
+    ('xp', 'XP it gives (leave empty to use the suggestion)', [None], '', None, None),
+]
+r0 = 5
+at_in = block(wsM, r0, 'Your design', mon_in, 'in')
+at_all.update(at_in)
+o0 = r0 + len(mon_in) + 2
+hitp = lambda ac: f'MIN(0.95,MAX(0.05,(21-({ac}-WpnAtk))/20))'
+mon_out = [
+    ('youhit', 'Your chance to hit it', G(hitp('{ac}')), 'Your weapon attack (from "Your hero") against its Defence.', '0%', None),
+    ('youdpr', 'Your expected damage per turn', G('{youhit}*WHitAvg+CritP*WDiceAvg'), 'With the weapon picked on "Your hero".', NUM, None),
+    ('youturns', 'Your turns to bring it down', G('{hp}/{youdpr}'), 'Alone, with your weapon.', NUM, None),
+    ('ithit', 'Its chance to hit you', G('IF({ai}="None",0,MIN(0.95,MAX(0.05,(21-(YourDef-{atk}))/20)))'), 'Its attack bonus against "Your Defence".', '0%', None),
+    ('itavg', 'Its average hit', G('{dn}*({ds}+1)/2+{db}'), '', NUM, None),
+    ('itdot', 'Its effect damage per hit', G('IFERROR(INDEX(' + EFF_AVG + ',MATCH({eff},' + EFF_NAMES + ',0))*1,0)*{erounds}*{echance}'), 'Bleeding, poison and burning tick each round.', NUM, None),
+    ('itdpr', 'Its expected damage per turn', G('{ithit}*({itavg}+{itdot})'), '', NUM, None),
+    ('itturns', 'Its turns to bring you down', G('IF({itdpr}=0,"never",YourHP/{itdpr})'), '', NUM, None),
+    ('threat', 'Threat: damage it deals you before it falls', G('{youturns}*{itdpr}'), 'Your turns to kill it × its damage per turn. Compare with your HP.', NUM, None),
+    ('share', 'Threat as a share of your HP', G('{threat}/YourHP'), 'Over 100%: it beats your hero one-on-one, on average.', '0%', None),
+    ('rank', 'Higher threat than how many of the game\'s monsters', G('COUNTIF(ThreatList,"<"&{threat})&" of "&COUNT(ThreatList)'), 'From the table below.', None, None),
+    ('xpsug', 'Suggested XP', G('MAX(10,ROUND({threat}*XPperThreat/5,0)*5)'), 'Threat × the game\'s typical XP per point of threat (below), rounded to 5.', None, None),
+    ('xpuse', 'XP it gives', G('IF({xp}="",{xpsug},{xp})'), '', None, None),
+    ('fb', 'Chance it fails a save against your spells (DEX)', G('1-MIN(1,MAX(0,(21-(SpellDC-{sdex}))/20))'), 'Fireball, Wall of Fire, Wall of Ice.', '0%', None),
+    ('fc', 'Chance it fails a save (CON)', G('1-MIN(1,MAX(0,(21-(SpellDC-{scon}))/20))'), 'Enfeeble, Poison Cloud.', '0%', None),
+    ('fw', 'Chance it fails a save (WIS)', G('1-MIN(1,MAX(0,(21-(SpellDC-{swis}))/20))'), 'Hold Monster.', '0%', None),
+    ('line', 'As a line for the game\'s MONSTERS table', G('LOWER(SUBSTITUTE({name}," ",""))&": { name: \'"&{name}&"\', hp: "&{hp}&", ac: "&{ac}&", guard: \'"&IF({guard}="Dodging","dodge","armor")&"\', xp: "&{xpuse}&", speed: "&ROUND({speed}/5,0)&", ai: \'"&LOWER({ai})&"\', atk: "&{atk}&", dmg: ["&{dn}&", "&{ds}&", "&{db}&"], dmgType: \'"&{dtype}&"\', range: "&MAX(1,ROUND({reach}/5,0))&", saves: { str: "&{sstr}&", dex: "&{sdex}&", con: "&{scon}&", wis: "&{swis}&" }"&IF(OR({eff}="None",{eff}=""),"",", onHit: { status: \'"&LOWER({eff})&"\', rounds: "&{erounds}&", chance: "&{echance}&" }")&IF({boss}="Yes",", boss: true","")&" },"'),
+     'A new monster also needs a model in the game; until then it can borrow one.', None, None),
+]
+at_out = block(wsM, o0, 'Worked out', mon_out, 'out')
+wsM.row_dimensions[at_out['line']].height = 100
+# the game's monsters
+b0 = o0 + len(mon_out) + 3
+note(wsM, b0 - 1, 'The game\'s monsters against your hero', italic=False, bold=True)
+heads = ['Monster', 'HP', 'Defence', 'Attack', 'Average hit', 'Effect per hit', 'XP', 'Your hit chance', 'Your turns to kill', 'Its damage per turn', 'Threat', 'XP per threat']
+for i, h in enumerate(heads, start=1):
+    c = wsM.cell(row=b0, column=i, value=h); c.font = Font(name=FONT, bold=True, color='FFFFFF', size=10); c.fill = HEAD; c.border = BORDER; c.alignment = CENTER
+for col in 'FGHIJKL': wsM.column_dimensions[col].width = max(wsM.column_dimensions[col].width or 0, 13)
+MON = D['MONSTERS']
+r = b0 + 1; first = r
+for k in sorted((k for k, m in MON.items() if not m.get('object') and m.get('ai') != 'none'), key=lambda k: (MON[k].get('boss', False), MON[k]['hp'])):
+    m = MON[k]; dn, ds, db = m['dmg']; on = m.get('onHit')
+    eff = f'IFERROR(INDEX({EFF_AVG},MATCH("{STATUS[on["status"]]["name"]}",{EFF_NAMES},0))*1,0)*{on["rounds"]}*{on.get("chance", 1)}' if on else '0'
+    wsM.append([m['name'] + (' (boss)' if m.get('boss') else ''), m['hp'], m['ac'], m['atk'], dn * (ds + 1) / 2 + db, '=' + eff, m['xp'],
+                '=' + hitp(f'C{r}'), f'=B{r}/(H{r}*WHitAvg+CritP*WDiceAvg)', f'=MIN(0.95,MAX(0.05,(21-(YourDef-D{r}))/20))*(E{r}+F{r})', f'=I{r}*J{r}', f'=IF(K{r}>0,G{r}/K{r},"")'])
+    for c in range(1, 13):
+        cc = wsM.cell(row=r, column=c); cc.border = BORDER; cc.font = Font(name=FONT, size=10)
+        cc.number_format = '0%' if c == 8 else ('0.0' if c in (5, 6, 9, 10, 11, 12) else 'General')
+    r += 1
+last = r - 1
+name('ThreatList', f"'Monster creator'!$K${first}:$K${last}")
+wsM.cell(row=r + 1, column=1, value='Typical XP per point of threat (median)').font = Font(name=FONT, bold=True, size=10)
+wsM.cell(row=r + 1, column=12, value=f'=MEDIAN(L{first}:L{last})').number_format = '0.0'
+name('XPperThreat', f"'Monster creator'!$L${r + 1}")
+note(wsM, r + 3, 'Threat assumes you fight it alone with your weapon and it attacks every turn. Bosses also summon, bless or change phase; those are not counted.')
+wsM.freeze_panes = 'B5'
 
 out = os.path.join(out_dir, 'spells-and-actions.xlsx')
 wb.save(out)
