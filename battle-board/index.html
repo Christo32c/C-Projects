@@ -8675,18 +8675,19 @@ function mforgePlace() {
   }
   if (!best) return;
   state.creatures.push({ id: 900, type: 'x_draft', x: best.x, z: best.z, hp: MONSTERS.x_draft.hp, alive: true, aware: false, restrained: false });
-  rebuildCreatures();
+  rebuildCreatures(); mforgeFace();
   hero.rotation.y = Math.atan2(best.x - state.pos.x, best.z - state.pos.z);
   CAM.hold = performance.now() + 1e9; CAM.anim = null;
   const mid = worldOf(state.pos.x, state.pos.z).lerp(worldOf(best.x, best.z), 0.6); mid.y += 0.5 * Math.max(1, +MF.d.scale || 1);
   CAM.focus = { position: mid.clone().setY(mid.y - CHEST) };
   camPlace(mid, Math.atan2(best.x - state.pos.x, best.z - state.pos.z) + 0.9, 0.35, 4.2 + Math.max(0, (+MF.d.scale || 1) - 1) * 2.5); controls.update(); refresh();
 }
+const mforgeFace = () => { const c = state.creatures.find(c => c.type === 'x_draft'), v = c && views.get(c.id); if (v) v.g.rotation.y = Math.atan2(state.pos.x - c.x, state.pos.z - c.z); };
 function mforgeRefresh() {   // the look or the stats changed: rebuild the figure in place
   registerMonster('x_draft', MF.d);
   const c = state.creatures.find(c => c.type === 'x_draft');
   if (c && !state.combat) { c.hp = MONSTERS.x_draft.hp; c.alive = true; c.status = []; }
-  rebuildCreatures(); refresh();
+  rebuildCreatures(); mforgeFace(); refresh();
   const s = $('monPanel').querySelector('.threatbox'); if (s) s.innerHTML = monsterThreatHtml();
 }
 function monsterThreatHtml() {
