@@ -8736,9 +8736,13 @@ function forgeStand() {
 }
 function forgeCast() {
   if (busy || anim) return;
-  const sp = forgeRegister(), dm = state.creatures.find(c => c.type === 'dummy' && c.alive);
+  const sp = forgeRegister(), dm = state.creatures.find(c => c.type === 'dummy');
   if (sp.target === 'ally') return cast('c_draft', state.pos.x, state.pos.z);
-  if (!dm) return toast('The dummy is still getting back up. Try again in a moment.');
+  if (!dm) return toast('There is no dummy to aim at.');
+  if (!dm.alive || dm.hp < MONSTERS.dummy.hp / 2) {   // in the forge the dummy is always standing, and fresh
+    dm.alive = true; dm.hp = MONSTERS.dummy.hp; dm.restrained = false; dm.status = [];
+    addLog('sys', 'The training dummy is propped back up.'); refresh();
+  }
   if (cheb(state.pos, dm) > sp.range) forgeStand();
   cast('c_draft', dm.x, dm.z);
 }
