@@ -1,0 +1,329 @@
+{
+ "format": "rigstudio",
+ "version": 1,
+ "name": "puppet",
+ "bones": [
+  {
+   "name": "root",
+   "parent": null,
+   "x": 0,
+   "y": 0,
+   "rotation": 0,
+   "length": 0
+  },
+  {
+   "name": "hip",
+   "parent": "root",
+   "x": 0,
+   "y": -72,
+   "rotation": -1.5708,
+   "length": 78
+  },
+  {
+   "name": "head",
+   "parent": "hip",
+   "x": 78,
+   "y": 0,
+   "rotation": 0,
+   "length": 62
+  },
+  {
+   "name": "arm_upper_l",
+   "parent": "hip",
+   "x": 72,
+   "y": -38,
+   "rotation": 3.14159,
+   "length": 42
+  },
+  {
+   "name": "arm_lower_l",
+   "parent": "arm_upper_l",
+   "x": 42,
+   "y": 0,
+   "rotation": 0,
+   "length": 42
+  },
+  {
+   "name": "leg_l",
+   "parent": "hip",
+   "x": 0,
+   "y": -15,
+   "rotation": 3.14159,
+   "length": 70
+  },
+  {
+   "name": "arm_upper_r",
+   "parent": "hip",
+   "x": 72,
+   "y": 38,
+   "rotation": 3.14159,
+   "length": 42
+  },
+  {
+   "name": "arm_lower_r",
+   "parent": "arm_upper_r",
+   "x": 42,
+   "y": 0,
+   "rotation": 0,
+   "length": 42
+  },
+  {
+   "name": "hand_r",
+   "parent": "arm_lower_r",
+   "x": 40,
+   "y": 0,
+   "rotation": 0,
+   "length": 10
+  },
+  {
+   "name": "leg_r",
+   "parent": "hip",
+   "x": 0,
+   "y": 15,
+   "rotation": 3.14159,
+   "length": 70
+  }
+ ],
+ "slots": [
+  {
+   "name": "arm_upper_l",
+   "bone": "arm_upper_l",
+   "attachment": "arm_upper",
+   "attachments": {
+    "arm_upper": {
+     "type": "region",
+     "image": "puppet_parts/arm_upper.png",
+     "x": 21,
+     "y": 0,
+     "rotation": -1.5708,
+     "scaleX": 1,
+     "scaleY": 1,
+     "width": 22,
+     "height": 50
+    }
+   }
+  },
+  {
+   "name": "arm_lower_l",
+   "bone": "arm_lower_l",
+   "attachment": "arm_lower",
+   "attachments": {
+    "arm_lower": {
+     "type": "region",
+     "image": "puppet_parts/arm_lower.png",
+     "x": 20,
+     "y": 0,
+     "rotation": -1.5708,
+     "scaleX": 1,
+     "scaleY": 1,
+     "width": 20,
+     "height": 48
+    }
+   }
+  },
+  {
+   "name": "leg_l",
+   "bone": "leg_l",
+   "attachment": "leg",
+   "attachments": {
+    "leg": {
+     "type": "region",
+     "image": "puppet_parts/leg.png",
+     "x": 35,
+     "y": 0,
+     "rotation": -1.5708,
+     "scaleX": 1,
+     "scaleY": 1,
+     "width": 26,
+     "height": 76
+    }
+   }
+  },
+  {
+   "name": "leg_r",
+   "bone": "leg_r",
+   "attachment": "leg",
+   "attachments": {
+    "leg": {
+     "type": "region",
+     "image": "puppet_parts/leg.png",
+     "x": 35,
+     "y": 0,
+     "rotation": -1.5708,
+     "scaleX": 1,
+     "scaleY": 1,
+     "width": 26,
+     "height": 76
+    }
+   }
+  },
+  {
+   "name": "torso",
+   "bone": "hip",
+   "attachment": "torso",
+   "attachments": {
+    "torso": {
+     "type": "region",
+     "image": "puppet_parts/torso.png",
+     "x": 38,
+     "y": 0,
+     "rotation": 1.5708,
+     "scaleX": 1,
+     "scaleY": 1,
+     "width": 60,
+     "height": 84
+    }
+   }
+  },
+  {
+   "name": "head",
+   "bone": "head",
+   "attachment": "head",
+   "attachments": {
+    "head": {
+     "type": "region",
+     "image": "puppet_parts/head.png",
+     "x": 30,
+     "y": 0,
+     "rotation": 1.5708,
+     "scaleX": 1,
+     "scaleY": 1,
+     "width": 66,
+     "height": 66
+    }
+   }
+  },
+  {
+   "name": "hat",
+   "bone": "head",
+   "attachment": "top_hat",
+   "attachments": {
+    "top_hat": {
+     "type": "region",
+     "image": "puppet_parts/top_hat.png",
+     "x": 72,
+     "y": 0,
+     "rotation": 1.5708,
+     "scaleX": 1,
+     "scaleY": 1,
+     "width": 76,
+     "height": 48
+    },
+    "straw_hat": {
+     "type": "region",
+     "image": "puppet_parts/straw_hat.png",
+     "x": 62,
+     "y": 0,
+     "rotation": 1.5708,
+     "scaleX": 1,
+     "scaleY": 1,
+     "width": 96,
+     "height": 34
+    }
+   }
+  },
+  {
+   "name": "weapon",
+   "bone": "hand_r",
+   "attachment": "sword",
+   "attachments": {
+    "sword": {
+     "type": "region",
+     "image": "puppet_parts/sword.png",
+     "x": 0,
+     "y": -38,
+     "rotation": 0,
+     "scaleX": 1,
+     "scaleY": 1,
+     "width": 26,
+     "height": 104
+    },
+    "axe": {
+     "type": "region",
+     "image": "puppet_parts/axe.png",
+     "x": 0,
+     "y": -38,
+     "rotation": 0,
+     "scaleX": 1,
+     "scaleY": 1,
+     "width": 50,
+     "height": 104
+    }
+   }
+  },
+  {
+   "name": "arm_upper_r",
+   "bone": "arm_upper_r",
+   "attachment": "arm_upper",
+   "attachments": {
+    "arm_upper": {
+     "type": "region",
+     "image": "puppet_parts/arm_upper.png",
+     "x": 21,
+     "y": 0,
+     "rotation": -1.5708,
+     "scaleX": 1,
+     "scaleY": 1,
+     "width": 22,
+     "height": 50
+    }
+   }
+  },
+  {
+   "name": "arm_lower_r",
+   "bone": "arm_lower_r",
+   "attachment": "arm_lower",
+   "attachments": {
+    "arm_lower": {
+     "type": "region",
+     "image": "puppet_parts/arm_lower.png",
+     "x": 20,
+     "y": 0,
+     "rotation": -1.5708,
+     "scaleX": 1,
+     "scaleY": 1,
+     "width": 20,
+     "height": 48
+    }
+   }
+  }
+ ],
+ "skins": {
+  "swordsman": {
+   "arm_upper_l": "arm_upper",
+   "arm_lower_l": "arm_lower",
+   "leg_l": "leg",
+   "leg_r": "leg",
+   "torso": "torso",
+   "head": "head",
+   "hat": "top_hat",
+   "weapon": "sword",
+   "arm_upper_r": "arm_upper",
+   "arm_lower_r": "arm_lower"
+  },
+  "woodcutter": {
+   "arm_upper_l": "arm_upper",
+   "arm_lower_l": "arm_lower",
+   "leg_l": "leg",
+   "leg_r": "leg",
+   "torso": "torso",
+   "head": "head",
+   "hat": "straw_hat",
+   "weapon": "axe",
+   "arm_upper_r": "arm_upper",
+   "arm_lower_r": "arm_lower"
+  },
+  "unarmed": {
+   "arm_upper_l": "arm_upper",
+   "arm_lower_l": "arm_lower",
+   "leg_l": "leg",
+   "leg_r": "leg",
+   "torso": "torso",
+   "head": "head",
+   "hat": "",
+   "weapon": "",
+   "arm_upper_r": "arm_upper",
+   "arm_lower_r": "arm_lower"
+  }
+ }
+}
