@@ -659,7 +659,7 @@
   .forge .chips { display: flex; flex-wrap: wrap; gap: 5px; }
   .forge .chip2 { padding: 3px 9px; border-radius: 12px; border: 1px solid var(--line); background: #ffffff08; font-size: 12px; cursor: pointer; color: var(--ink); }
   .forge .chip2[aria-pressed="true"] { border-color: var(--brass); color: var(--brass); }
-  .forge .actions { display: flex; gap: 6px; flex-wrap: wrap; position: sticky; bottom: -16px; margin: 0 -16px -16px; padding: 10px 16px 16px; background: linear-gradient(transparent, var(--panel) 30%); }
+  .forge .actions { display: flex; gap: 6px; flex-wrap: wrap; } .forge .actions .btn { flex: 1 1 auto; }
   .forge .px { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: start; }
   .forge canvas.pxc { width: 192px; height: 192px; image-rendering: pixelated; border: 1px solid var(--line); border-radius: 6px; cursor: crosshair; touch-action: none;
        background: repeating-conic-gradient(#2a221b 0 25%, #1c1611 0 50%) 0 0 / 24px 24px; }
@@ -8517,7 +8517,7 @@ function pixelUrl(px) {
   px.forEach((c, i) => { if (c) { g.fillStyle = c; g.fillRect(i % PX, (i / PX) | 0, 1, 1); } });
   return cv.toDataURL('image/png');
 }
-// how strong it is next to the game's own spells (about 4.3 hit points of value per mana)
+// how strong it is next to the game's own spells: about 3 hit points of value per mana for one target (Fire Bolt, Ray of Frost), 4.5 for areas (Poison Cloud, Fireball)
 function forgeValue(sp) {
   const area = sp.shape !== 'single', targets = area ? Math.max(1.5, Math.min(4, sp.size * 0.8 + 0.5)) : 1;
   const avg = sp.damage ? sp.damage[0] * (sp.damage[1] + 1) / 2 : 0, land = sp.attack ? 0.7 : sp.save ? 0.55 : 1;
@@ -8526,13 +8526,14 @@ function forgeValue(sp) {
   const DOT = { burning: 3.5, bleeding: 2.5, poisoned: 2.5, regen: 3.5 }, CTRL = { stunned: 6, restrained: 3, weakened: 3, chilled: 2, hexed: 3, blessed: 3, shielded: 3, hasted: 3, empowered: 3 };
   const eff = sp.status ? ((DOT[sp.status[0]] || 0) * sp.status[1] + (CTRL[sp.status[0]] || 1.5) * Math.min(2, sp.status[1] / 2)) * sp.status[2] * land : 0;
   const total = (dmg + heal + eff) * targets;
-  return { avg, heal, total, targets, fair: Math.max(1, Math.round(total / 4.3)) };
+  const bench = area ? 4.5 : 3.1;
+  return { avg, heal, total, targets, bench, fair: Math.max(1, Math.round(total / bench)) };
 }
 const fsel = (f, cur, opts) => `<select data-f="${f}">${opts.map(([k, l]) => `<option value="${k}" ${String(cur) === String(k) ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
 const frow = (label, html) => `<div class="frow"><span>${label}</span><div class="pair">${html}</div></div>`;
 function forgeSummary() {
   const sp = SPELLS.c_draft, v = forgeValue(sp), cost = Math.max(1, sp.cost);
-  const per = v.total / cost, cls = per > 4.3 * 1.35 ? 'hot' : per < 4.3 * 0.7 ? 'cold' : 'good';
+  const per = v.total / cost, cls = per > v.bench * 1.35 ? 'hot' : per < v.bench * 0.7 ? 'cold' : 'good';
   const word = { hot: 'Strong for its cost', cold: 'Weak for its cost', good: 'About right' }[cls];
   return `${sp.damage ? `<span>Average <b>${v.avg.toFixed(1)}</b> ${esc(sp.dmgType)} per target</span>` : ''}${sp.heal ? `<span>Heals about <b>${v.heal.toFixed(0)}</b></span>` : ''}
     <span>Worth about <b>${v.total.toFixed(1)}</b> HP a cast${v.targets > 1 ? ` (${v.targets.toFixed(1)} targets)` : ''}</span>
@@ -8551,6 +8552,12 @@ function renderForge() {
     <h2>Spell Forge</h2>
     <div class="chips">${FORGED.map(x => `<button class="chip2" data-fa="load" data-id="${x.id}" aria-pressed="${x.id === f.id}">${esc(x.icon || '✦')} ${esc(x.name)}</button>`).join('')}<button class="chip2" data-fa="new">+ New spell</button></div>
     <div class="top"><div class="fprev"></div><div class="summary"></div></div>
+    <div class="actions">
+      <button class="btn primary" data-fa="cast">✦ Cast at the dummy</button>
+      <button class="btn" data-fa="save">${f.id ? 'Save changes' : 'Save spell'}</button>
+      ${f.id ? (FORGE.confirmDel ? `<button class="btn" data-fa="delYes" style="color:#ff8a7a">Really delete?</button>` : `<button class="btn" data-fa="del">Delete</button>`) : ''}
+      <button class="btn" data-fa="done">Done</button>
+    </div>
     <h3>The spell</h3>
     ${frow('Name', `<input type="text" data-f="name" maxlength="32" value="${esc(f.name)}">`)}
     ${frow('Icon and colour', `<input type="text" data-f="icon" maxlength="2" value="${esc(f.icon)}" style="width:48px;flex:none;text-align:center"><input type="color" data-f="color" value="${f.color}"><span class="hint">The glyph shows when there is no picture.</span>`)}
@@ -8589,12 +8596,7 @@ function renderForge() {
     ${frow('Extras', `<label class="hint"><input type="checkbox" data-f="fx.light" ${fx.light ? 'checked' : ''}> flash of light</label><label class="hint"><input type="checkbox" data-f="fx.shake" ${fx.shake ? 'checked' : ''}> shake</label>`)}
     ${frow('Sound', fsel('fx.sound', fx.sound, FX_SOUND))}
 
-    <div class="actions">
-      <button class="btn primary" data-fa="cast">✦ Cast at the dummy</button>
-      <button class="btn" data-fa="save">${f.id ? 'Save changes' : 'Save spell'}</button>
-      ${f.id ? (FORGE.confirmDel ? `<button class="btn" data-fa="delYes" style="color:#ff8a7a">Really delete?</button>` : `<button class="btn" data-fa="del">Delete</button>`) : ''}
-      <button class="btn" data-fa="done">Done</button>
-    </div>`;
+`;
   renderForgePreview(); drawPixels();
 }
 function forgeSet(path, val) {
