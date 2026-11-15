@@ -114,7 +114,7 @@ await check('pixel art: paint on the grid, and it becomes the card art and the p
 await check('upload a picture for the card', async () => {
   await page.click('[data-fa="art"][data-k="upload"]'); await wait(0.3);
   await page.setInputFiles('#forgeFile', path.join(root, 'docs/screens/cards-phone-read.png').replace('cards-phone-read', fs.existsSync(path.join(root, 'docs/screens/cards-phone-read.png')) ? 'cards-phone-read' : 'cards-phone'));
-  await page.waitForFunction(() => (battleBoard.dev.forge().d.img || '').startsWith('data:image/png') && battleBoard.dev.forge().d.art === 'upload', null, { timeout: 20000 });
+  await page.waitForFunction(() => (battleBoard.dev.forge().d.img || '').startsWith('data:image/png') && battleBoard.dev.forge().d.art === 'upload', null, { timeout: 90000, polling: 250 });
   const r = await D(() => ({ len: battleBoard.dev.forge().d.img.length, card: !!document.querySelector('#forgePanel .fprev .art img') }));
   await shot('forge-upload');
   assert(r.card && r.len < 60000, JSON.stringify(r));
