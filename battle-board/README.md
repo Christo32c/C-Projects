@@ -22,15 +22,19 @@ The game opens on a title screen with the dungeon slowly turning behind it.
 
 Heroes and dungeons are saved in the browser's local storage. A save from before the roster existed becomes your first hero. **Export a backup** on the hero screen saves every hero, expedition and dungeon to one file; **Import a backup** loads it on any device. The game warns you once if browser storage is nearly full.
 
-### Kits
+### Classes
 
-| Kit | Gear | Magic (cast with) |
-|---|---|---|
-| Spellblade | longsword, shield, chain shirt, shortbow | every spell (Intelligence) |
-| Warden | splint mail, mace and shield, a greatsword for two hands | support only: Bless, Healing Word, Arcane Ward, Elemental Weapon, Haste, Regeneration, Hold Monster (Wisdom) |
-| Ranger | shortbow, 20 venom arrows, leather, two daggers | frost and nature: Ray of Frost, Vine Growth, Healing Word, Enfeeble, Poison Cloud, Regeneration, Wall of Ice (Wisdom) |
+| Class | Gear | Magic (cast with) | Signature move |
+|---|---|---|---|
+| Sorcerer | two daggers, no armour, two mana potions | the widest spellbook: Fire Bolt, Ray of Frost, Hex, Arcane Ward, Enfeeble, Poison Cloud, Haste, Wall of Fire, Wall of Ice, **Hellpit**, Fireball, Hold Monster (Charisma) | **Hellpit** |
+| Ranger | shortbow, 20 venom arrows, leather, two daggers | frost and nature: Ray of Frost, Vine Growth, Healing Word, Enfeeble, Poison Cloud, Regeneration, Wall of Ice (Wisdom) | **Tri-Shot** |
+| Warrior | longsword, shield, chain mail, a greatsword for two hands | none | **Steel Cyclone** |
 
-Hired companions get a random kit.
+- **Hellpit** (Sorcerer spell, level 3, 5 mana, 60 ft): the floor splits into a pit of hellfire. Everything within 10 ft takes 4d6 fire (half on a Dex save) and anything that fails burns for 2 rounds. **Once in a hundred casts a hell hound claws its way out** and fights for you for 3 rounds: at the start of each round it leaps at the nearest enemy and bites (+6 to hit, 2d6+3 fire, often setting it alight), then it crumbles to ash. Monsters ignore it. It also leaves when the fight ends.
+- **Tri-Shot** (Ranger technique, level 1, ready again after 3 turns): three arrows in a fan, one each at up to three enemies you can see in range (the nearest first, so a lone target takes all three). Each is a full attack, rolled separately, and each spends an arrow.
+- **Steel Cyclone** (Warrior technique, level 1, ready again after 4 turns): spin on your heel with your blade out, making a full attack, rolled separately, against every enemy next to you.
+
+Heroes made as a Spellblade become Sorcerers, and Wardens become Warriors; they keep their gear and scores. Hired companions get a random class.
 
 ### Hitting and missing
 
@@ -40,21 +44,23 @@ Weak monsters have low Defence, so missing one is bad luck, not the norm. Bosses
 
 | Level-1 hero | Giant Rat | Skeleton | Goblin | Grave Warden (boss) |
 |---|---|---|---|---|
-| Spellblade | 90% | 80% | 70% | 55% |
-| Warden | 95% | 90% | 80% | 65% |
+| Warrior | 95% | 90% | 80% | 65% |
 | Ranger (bow) | 95% | 90% | 80% | 65% |
+| Sorcerer (Fire Bolt) | 95% | 85% | 75% | 60% |
 
 ### Techniques
 
-Wardens and Rangers have **martial training** (Warden: +2 to hit and +2 damage with melee weapons; Ranger: +2 to hit and +1 damage with bows) and **techniques**: weapon skills that cost no mana. Each is ready again after a few of your own turns, and all are ready at the start of every fight. Most are armed first and ride on your next attack; Esc cancels.
+Warriors and Rangers have **martial training** (Warrior: +2 to hit and +2 damage with melee weapons; Ranger: +2 to hit and +1 damage with bows) and **techniques**: weapon skills that cost no mana. Each is ready again after a few of your own turns, and all are ready at the start of every fight. Most are armed first and ride on your next attack; Esc cancels.
 
 | Technique | Who | Level | Cooldown | What it does |
 |---|---|---|---|---|
-| Cleave | Warden | 1 | 2 turns | Your next melee attack also hits every other enemy next to you for the weapon's dice |
-| Shield Bash | Warden | 1 | 3 turns | 1d4 + Strength, and the target loses its next turn. Needs a shield |
-| Second Wind | Warden | 1 | once a fight | No action: regain 1d10 + your level |
-| Rending Strike | Warden 2, Spellblade 2 | 2 | 2 turns | An extra weapon die, and the target bleeds for 3 rounds |
-| Stand Fast | Warden | 3 | 4 turns | Action: +4 Defence for 2 rounds. Needs a shield |
+| Steel Cyclone | Warrior | 1 | 4 turns | Action: a full attack against every enemy next to you |
+| Cleave | Warrior | 1 | 2 turns | Your next melee attack also hits every other enemy next to you for the weapon's dice |
+| Shield Bash | Warrior | 1 | 3 turns | 1d4 + Strength, and the target loses its next turn. Needs a shield |
+| Second Wind | Warrior | 1 | once a fight | No action: regain 1d10 + your level |
+| Rending Strike | Warrior | 2 | 2 turns | An extra weapon die, and the target bleeds for 3 rounds |
+| Stand Fast | Warrior | 3 | 4 turns | Action: +4 Defence for 2 rounds. Needs a shield |
+| Tri-Shot | Ranger | 1 | 3 turns | Action: three arrows, one each at up to three enemies in range |
 | Aimed Shot | Ranger | 1 | 2 turns | Roll twice and keep the better, with an extra weapon die |
 | Tumble | Ranger | 1 | 3 turns | No action, in a fight: 20 ft of extra movement |
 | Volley | Ranger | 2 | 3 turns | Extra arrows at up to two enemies within 10 ft of the target |
@@ -132,7 +138,7 @@ Choose **Monster Forge** on the title screen to make monsters and other characte
 
 - **The look:** either **a figure** built like a hero (open it in the Hero Builder for the face, hair, outfit and colours, then choose what it holds, its armour and its helm), or one of the game's sixteen monsters, recoloured and resized.
 - **How it fights:** walks up and hits, keeps away and shoots (arrows or magic bolts), or stands still and never attacks. HP, Defence and whether it blocks or dodges, speed, attack bonus, damage dice and type, reach or range, the word the log uses ("bites", "cleaves"), an effect its hits can cause, four saves, XP, and whether it is a boss with a title.
-- **The threat panel** says how it would do against a fresh level 1 Spellblade: who hits whom how often, how long the fight lasts, how much damage it deals before it falls, which of the game's monsters it is closest to, and a suggested XP.
+- **The threat panel** says how it would do against a fresh level 1 Warrior: who hits whom how often, how long the fight lasts, how much damage it deals before it falls, which of the game's monsters it is closest to, and a suggested XP.
 - **Fight it** starts a fight with it in the Training Yard (your forge hero can't die there); **Reset the fight** puts everyone back.
 - **Save** keeps it in this browser and gives it a map letter. It then appears under **Your monsters** in the dungeon creator's palette, so you can paint it into any dungeon. A dungeon file shared with someone who doesn't have the monster shows plain floor where it stood.
 
