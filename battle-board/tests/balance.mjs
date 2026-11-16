@@ -73,13 +73,13 @@ const cat = await D(() => battleBoard.catalog ? null : null);
 
 await check('weak monsters are easy to hit; bosses are not', async () => {
   const out = [];
-  for (const kit of ['spellblade', 'warden', 'ranger']) {
+  for (const kit of ['sorcerer', 'warrior', 'ranger']) {
     await enter('crypt', [kit]); await wait(0.5);
     const r = await D(() => { const B = battleBoard.dev, s = B.state, by = t => s.creatures.find(c => c.type === t); return { rat: B.hitChance(by('rat').id), sk: B.hitChance(by('skeleton').id), boss: B.hitChance(by('warden').id), d: B.derived() }; });
     out.push(`${kit} rat ${Math.round(r.rat * 100)}% skeleton ${Math.round(r.sk * 100)}% boss ${Math.round(r.boss * 100)}%`);
     assert(r.rat >= 0.8 && r.sk >= 0.7, `${kit} misses weak monsters too often: ${JSON.stringify(r)}`);
     assert(r.boss <= 0.65 && r.boss >= 0.35, `${kit} vs the boss: ${r.boss}`);
-    if (kit !== 'spellblade') assert(r.d.trained, kit + ' has no martial training');
+    if (kit !== 'sorcerer') assert(r.d.trained, kit + ' has no martial training');
   }
   return out.join(' · ');
 });
@@ -92,10 +92,10 @@ await check('every monster defends with armour or by dodging', async () => {
   return rows.length + ' monsters';
 });
 
-await check('warden: Cleave, Shield Bash and Second Wind at level 1; they sit on the hotbar', async () => {
+await check('warrior: Steel Cyclone, Cleave, Shield Bash and Second Wind at level 1; they sit on the hotbar', async () => {
   await enter('crypt', ['warden']); await wait(0.5);
   const r = await D(() => ({ t: battleBoard.dev.knownTechs(), hb: battleBoard.dev.hotbar(), n: document.querySelectorAll('#spellbar [data-tech]').length }));
-  assert(['cleave', 'bash', 'wind'].every(k => r.t.includes(k)) && r.hb.includes('t:cleave') && r.n === 3, JSON.stringify(r));
+  assert(['cyclone', 'cleave', 'bash', 'wind'].every(k => r.t.includes(k)) && r.hb.includes('t:cyclone') && r.n === 4, JSON.stringify(r));
   return r.t.join(', ');
 });
 

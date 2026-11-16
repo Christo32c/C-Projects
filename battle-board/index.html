@@ -8537,8 +8537,8 @@ const summonViews = new Map();
 function houndModel() {
   const g = new THREE.Group(), pivot = new THREE.Group(); g.add(pivot);
   MODELS.wolf(pivot);
-  const char = new THREE.Color('#2a0c08');
-  pivot.traverse(o => { if (o.isMesh && o.material?.color && !o.material.isMeshBasicMaterial) { o.material = o.material.clone(); o.material.color.lerp(char, 0.75); o.material.emissive = new THREE.Color('#ff3a0a'); o.material.emissiveIntensity = 0.35; } });
+  const char = new THREE.Color('#140806');
+  pivot.traverse(o => { if (o.isMesh && o.material?.color && !o.material.isMeshBasicMaterial) { o.material = o.material.clone(); o.material.color.lerp(char, 0.9); o.material.emissive = new THREE.Color('#ff3a0a'); o.material.emissiveIntensity = 0.12; } });
   for (const sd of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 6), new THREE.MeshBasicMaterial({ color: hdrColor('#ffd36a', 5) })); e.position.set(sd * 0.05, 0.42, 0.33); e.userData.noShadow = true; pivot.add(e); }
   pivot.scale.setScalar(1.15);
   return { g, pivot };
