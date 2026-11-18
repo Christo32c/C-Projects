@@ -34,6 +34,25 @@ Heroes and dungeons are saved in the browser's local storage. A save from before
 - **Tri-Shot** (Ranger technique, level 1, ready again after 3 turns): three arrows in a fan, one each at up to three enemies you can see in range (the nearest first, so a lone target takes all three). Each is a full attack, rolled separately, and each spends an arrow.
 - **Steel Cyclone** (Warrior technique, level 1, ready again after 4 turns): spin on your heel with your blade out, making a full attack, rolled separately, against every enemy next to you.
 
+**Starting spells and skills.** When you create a hero you choose what they know at level 1: a **Sorcerer picks 3 spells**, a **Ranger 1 spell and 2 skills**, a **Warrior 3 skills**. The rest of the level 1 list opens up at level 3, and bigger spells and skills arrive as you level, as before.
+
+| Level 1 option | Class | Shape | What it does |
+|---|---|---|---|
+| **Earth Shot** | Sorcerer | 15 ft cone | A shotgun of rocks: 3d6 bludgeoning next to you, 2d6 at 10 ft, 1d6 at 15 ft (Dex save for half). 2 mana |
+| **Frost Fan** | Sorcerer | 15 ft cone | 2d6 cold (Con half); those who fail are chilled for 2 rounds. 2 mana |
+| **Thunderclap** | Sorcerer | all around you | 2d6 thunder to everything next to you (Con half). Goes off as soon as you pick it. 2 mana |
+| Fire Bolt, Ray of Frost, Hex, Arcane Ward | Sorcerer | one target | as before |
+| **Thorn Spray** | Ranger (spell) | 15 ft cone | 2d6 piercing (Dex half); half of those who fail bleed for 2 rounds. 2 mana |
+| Ray of Frost, Vine Growth, Healing Word | Ranger (spell) | | as before |
+| **Scatter Shot** | Ranger (skill) | 20 ft cone | A fistful of arrows: 2d6 + Dexterity piercing (Dex half). No mana, one arrow, ready again after 3 turns |
+| Tri-Shot, Aimed Shot, Tumble | Ranger (skill) | | as above |
+| **Earthshaker** | Warrior (skill) | 15 ft cone | A shockwave of broken stone: 2d6 + Strength bludgeoning (Dex half). No mana, ready again after 3 turns |
+| Steel Cyclone, Cleave, Shield Bash, Second Wind | Warrior (skill) | | as above |
+
+Cones point wherever you aim: pick the card, then any square in the direction you want. Earthshaker and Scatter Shot use your Strength or Dexterity for their save DC (8 + proficiency + the ability) and damage.
+
+**An easier start to the Descent.** On the first floor of the Lich's Descent, monsters have -2 to hit and -2 damage (the wolf rider -2 to hit and -4 damage); on the second, -1 and -1 (the chief -1 and -2). A goblin now deals a level 1 Sorcerer about half the damage a turn it used to, so a lone hero can get through with care.
+
 Heroes made as a Spellblade become Sorcerers, and Wardens become Warriors; they keep their gear and scores. Hired companions get a random class.
 
 ### Hitting and missing
