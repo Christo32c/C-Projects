@@ -4372,8 +4372,9 @@ function hireCompanion() {
   c.name = HIRELINGS.find(n => !taken.has(n)) || `Sellsword ${heroes.length + 1}`;
   c.color = ['#8f3f3f', '#3f8f5a', '#7a5a9a', '#9a7a3a', '#3a6a8a', '#8a5a3a'][Math.floor(Math.random() * 6)];
   c.skin = SKIN_TONES[Math.floor(Math.random() * SKIN_TONES.length)]; c.hair = HAIR_COLORS[Math.floor(Math.random() * HAIR_COLORS.length)];
-  for (const [k] of ABILITIES) c.abilities[k] = roll4d6();
-  applyKit(c, Object.keys(KITS)[Math.floor(Math.random() * 3)]);
+  const kit = Object.keys(KITS)[Math.floor(Math.random() * 3)];
+  for (const [k] of ABILITIES) c.abilities[k] = KITS[kit].scores[k] + 1;   // the class's suggested scores, so a hired Sorcerer can actually cast
+  applyKit(c, kit); c.picks = [...START_DEFAULT[kit]];
   const h = { id: uid(), char: c, run: null, updated: Date.now() - 1000 };
   heroes.push(h); saveHeroes();
   return h;
@@ -9292,7 +9293,7 @@ function castCustom(key, x, z, tiles, finish) {
       if (dice) {
         const own = sp.falloff ? roll(Math.max(1, sp.damage[0] - (cheb(c, state.pos) - 1)), sp.damage[1]) : dice;   // closer means more stones
         const base = crit ? sum(own) + sum(roll(sp.damage[0], sp.damage[1])) : sum(own);
-        let dmg = base + boost; if (half) dmg = Math.floor(dmg / 2);
+        let dmg = base + boost; if (half) dmg = Math.max(1, Math.floor(dmg / 2));
         if (hasSt(c, 'hexed')) dmg += rollFor(c, 6);
         addLog('spell', `<b>${sp.name}</b> ${half ? 'still catches' : 'hits'} ${name} for <b>${dmg}</b> ${sp.dmgType || ''}${crit ? ' (critical!)' : ''}${half ? ' (half)' : ''}. ${txt}`);
         damageCreature(c, dmg, sp.dmgType === 'cold' ? 'cold' : 'dmg');
