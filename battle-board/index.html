@@ -724,6 +724,19 @@
     body.mforging #monPanel { border-left: 0; border-top: 1px solid var(--brass); }
     body.mforging #playBar { display: none !important; }
   }
+
+  /* ---- starting skills on the new hero screen ---- */
+  .pickhead { margin: 10px 0 4px; font-size: 13px; color: var(--muted); } .pickhead b { color: var(--brass); }
+  .pickrow { display: grid; grid-template-columns: 34px minmax(0, 1fr) 20px; gap: 10px; align-items: center; width: 100%; text-align: left; padding: 7px 10px; margin: 0 0 5px;
+             border-radius: 9px; border: 1px solid var(--line); background: #ffffff06; color: var(--ink); cursor: pointer; }
+  .pickrow .pi { width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; font-size: 18px; color: #fff;
+                 background: radial-gradient(circle, color-mix(in srgb, var(--c) 70%, #000), #120d0a); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 50%, transparent); }
+  .pickrow .pt b { font-family: var(--display); font-size: 15px; } .pickrow .pt small { display: block; color: var(--muted); font-size: 11.5px; }
+  .pickrow .pd { display: block; font-size: 12px; color: #cfc3aa; margin-top: 2px; }
+  .pickrow .aoe { margin-left: 6px; padding: 0 5px; border-radius: 4px; font-size: 9.5px; font-weight: 800; letter-spacing: .08em; background: var(--c); color: #1a120b; vertical-align: 2px; }
+  .pickrow .pc { color: var(--brass); font-weight: 800; }
+  .pickrow.on { border-color: var(--brass); background: color-mix(in srgb, var(--brass) 10%, transparent); }
+  .pickrow:disabled { opacity: .45; cursor: not-allowed; }
 </style>
 <script type="importmap">
 { "imports": {
@@ -4419,7 +4432,8 @@ function clearStatuses() {
 }
 // monster numbers with their statuses folded in
 const acOf = c => MONSTERS[c.type].ac + (hasSt(c, 'shielded') ? 4 : 0) + (hasSt(c, 'hasted') ? 2 : 0) - (hasSt(c, 'chilled') ? 1 : 0);
-const atkOf = c => (MONSTERS[c.type].atk || 0) + (hasSt(c, 'blessed') ? 2 : 0) - (hasSt(c, 'poisoned') ? 2 : 0);
+const easeOf = c => { const E = MAP?.ease; if (!E || MONSTERS[c.type].custom) return { atk: 0, dmg: 0 }; return MONSTERS[c.type].boss ? E.boss : E; };
+const atkOf = c => (MONSTERS[c.type].atk || 0) + easeOf(c).atk + (hasSt(c, 'blessed') ? 2 : 0) - (hasSt(c, 'poisoned') ? 2 : 0);
 const speedOf = c => { const s = MONSTERS[c.type].speed + (hasSt(c, 'hasted') ? 3 : 0); return hasSt(c, 'chilled') ? Math.floor(s / 2) : s; };
 const saveOf = (c, ab) => (MONSTERS[c.type].saves?.[ab] ?? 0) + (hasSt(c, 'blessed') ? 2 : 0);
 function rollFor(t, sides = 6, n = 1) { return sum(roll(n, sides)); }
@@ -4483,9 +4497,9 @@ function restoreMp(c, n, why) {
   return c.mp - before;
 }
 // spells you know grow with your level; free casting (Training Yard) shows them all
-const costOf = (sp, c = state.char) => freeCast() ? 0 : Math.max(1, sp.cost - (hasT(c, 'efficient') ? 1 : 0));
+const costOf = (sp, c = state.char) => freeCast() || sp.martial ? 0 : Math.max(1, sp.cost - (hasT(c, 'efficient') ? 1 : 0));
 const rangeOf = (sp, c = state.char) => sp.range + (hasT(c, 'spellSniper') ? 4 : 0);
-const knownSpells = (c = state.char) => Object.keys(SPELLS).filter(k => (k !== 'c_draft' || ui.forge) && (freeCast() || ((SPELLS[k].unlock || 1) <= c.level && (!kitSpells(c) || kitSpells(c).includes(k) || (SPELLS[k].custom && (!SPELLS[k].kits?.length || SPELLS[k].kits.includes(c.kit)))))));
+const knownSpells = (c = state.char) => Object.keys(SPELLS).filter(k => (k !== 'c_draft' || ui.forge) && (freeCast() || ((SPELLS[k].unlock || 1) <= c.level && !unpicked(c, 's:' + k, SPELLS[k].unlock) && (!kitSpells(c) || kitSpells(c).includes(k) || (SPELLS[k].custom && (!SPELLS[k].kits?.length || SPELLS[k].kits.includes(c.kit)))))));
 
 /* ================================================================== *
  * INITIATIVE — everyone in the fight rolls d20 + Dex; turns go highest first
@@ -4669,6 +4683,24 @@ const NEW_SPELLS = {
                area: 'one friend', desc: 'Time runs fast around a friend: +15 ft movement and +2 AC for 3 rounds.' },
   regen:     { name: 'Regeneration', cost: 4, unlock: 3, shape: 'single', target: 'ally', range: 6, color: '#7ff0a0', icon: '❦', status: ['regen', 4, 1],
                area: 'one friend', desc: 'Living green light knits flesh: the target heals 1d6 at the start of each of its turns for 4 rounds.' },
+  earthshot: { name: 'Earth Shot', cost: 2, unlock: 1, shape: 'cone', size: 3, target: 'area', range: 3, color: '#c8a070', icon: '⛰', save: 'dex', half: true, damage: [3, 6], falloff: true, dmgType: 'bludgeoning',
+               generic: true, sound: 'firewall', fx: { travel: 'spray', impact: 'rocks', color: '#c8a070', color2: '#5a4030', size: 1.2, speed: 1.3, amount: 1.2, light: false, shake: true },
+               area: '15 ft cone', desc: 'Rip stones out of the floor and blast them out in a 15 ft cone, like a shotgun: 3d6 bludgeoning next to you, 2d6 at 10 ft, 1d6 at 15 ft. A Dex save halves it.' },
+  frostfan:  { name: 'Frost Fan', cost: 2, unlock: 1, shape: 'cone', size: 3, target: 'area', range: 3, color: '#9fe4ff', icon: '❅', save: 'con', half: true, damage: [2, 6], dmgType: 'cold', status: ['chilled', 2, 1],
+               generic: true, sound: 'icewall', fx: { travel: 'spray', impact: 'shards', color: '#cfefff', color2: '#3a7aff', size: 1, speed: 1.2, amount: 1.1, light: true, shake: false },
+               area: '15 ft cone', desc: 'A fan of freezing air: 2d6 cold to everything in a 15 ft cone, and anything that fails a Con save is chilled for 2 rounds (half movement, -1 Defence). The save halves the damage.' },
+  thunderclap: { name: 'Thunderclap', cost: 2, unlock: 1, shape: 'burst', size: 1, target: 'area', range: 0, color: '#d0c8ff', icon: '◎', save: 'con', half: true, damage: [2, 6], dmgType: 'thunder',
+               generic: true, sound: 'fireball', fx: { travel: 'none', impact: 'ring', color: '#e8e0ff', color2: '#6a5aff', size: 1.2, speed: 1.4, amount: 1.4, light: true, shake: true },
+               area: 'all around you', desc: 'Clap your hands and the air cracks: 2d6 thunder to every creature next to you, half on a Con save. For when they get too close.' },
+  thornspray: { name: 'Thorn Spray', cost: 2, unlock: 1, shape: 'cone', size: 3, target: 'area', range: 3, color: '#8fdc5a', icon: '✵', save: 'dex', half: true, damage: [2, 6], dmgType: 'piercing', status: ['bleeding', 2, 0.5],
+               generic: true, sound: 'firewall', fx: { travel: 'spray', impact: 'sparks', color: '#b8f07a', color2: '#2a5a1a', size: 0.9, speed: 1.3, amount: 1.2, light: false, shake: false },
+               area: '15 ft cone', desc: 'A burst of hard thorns in a 15 ft cone: 2d6 piercing (half on a Dex save), and half the creatures that fail start bleeding for 2 rounds.' },
+  earthshaker: { name: 'Earthshaker', cost: 0, unlock: 1, shape: 'cone', size: 3, target: 'area', range: 3, color: '#d8b070', icon: '⇶', save: 'dex', half: true, damage: [2, 6], dmgType: 'bludgeoning',
+               martial: 'str', cd: 3, needs: 'melee', generic: true, sound: 'fireball', fx: { travel: 'spray', impact: 'rocks', color: '#d8b070', color2: '#5a4030', size: 1.3, speed: 1.1, amount: 1.4, light: false, shake: true },
+               area: '15 ft cone', desc: 'Slam your weapon into the floor: a shockwave of broken stone rolls out in a 15 ft cone. 2d6 + Strength bludgeoning to everything in it, half on a Dex save. No mana; ready again after 3 turns.' },
+  scattershot: { name: 'Scatter Shot', cost: 0, unlock: 1, shape: 'cone', size: 4, target: 'area', range: 4, color: '#ffd36a', icon: '⋰', save: 'dex', half: true, damage: [2, 6], dmgType: 'piercing',
+               martial: 'dex', cd: 3, needs: 'ranged', generic: true, sound: 'firewall', fx: { travel: 'spray', impact: 'sparks', color: '#ffe0a0', color2: '#a06a2a', size: 0.8, speed: 1.6, amount: 1.3, light: false, shake: false },
+               area: '20 ft cone', desc: 'A fistful of arrows loosed at once, spraying a 20 ft cone: 2d6 + Dexterity piercing to everything in it, half on a Dex save. Spends one arrow. No mana; ready again after 3 turns.' },
   hellpit:   { name: 'Hellpit', cost: 5, unlock: 3, shape: 'sphere', size: 2, target: 'area', range: 12, color: '#ff3a1a', icon: '♨', save: 'dex', half: true, damage: [4, 6], dmgType: 'fire', status: ['burning', 2, 1],
                generic: true, sound: 'fireball', summon: { chance: 0.01, rounds: 3 },
                fx: { travel: 'none', impact: 'hellpit', color: '#ff4a1a', color2: '#5a0800', size: 1.2, speed: 1, amount: 1.3, light: true, shake: true },
@@ -4682,7 +4714,7 @@ Object.assign(SPELLS.firewall, { cost: 5, unlock: 3, icon: '▲', target: 'area'
 Object.assign(SPELLS.icewall, { cost: 5, unlock: 3, icon: '❄', target: 'area' });
 Object.assign(SPELLS.vines, { cost: 3, unlock: 1, icon: '❦', target: 'area' });
 // spellbook order: cheap first
-const SPELL_ORDER = ['firebolt', 'frostray', 'hex', 'bless', 'healword', 'ward', 'vines', 'enfeeble', 'empower', 'poison', 'haste', 'firewall', 'icewall', 'regen', 'hellpit', 'fireball', 'hold'];
+const SPELL_ORDER = ['earthshaker', 'scattershot', 'earthshot', 'frostfan', 'thunderclap', 'thornspray', 'firebolt', 'frostray', 'hex', 'bless', 'healword', 'ward', 'vines', 'enfeeble', 'empower', 'poison', 'haste', 'firewall', 'icewall', 'regen', 'hellpit', 'fireball', 'hold'];
 { const re = {}; for (const k of SPELL_ORDER) re[k] = SPELLS[k]; for (const k of Object.keys(SPELLS)) delete SPELLS[k]; Object.assign(SPELLS, re); }
 
 const memberAt = (x, z) => state.party.findIndex(m => m.pos.x === x && m.pos.z === z);
@@ -5357,7 +5389,7 @@ async function creatureAttack(c) {
   const rollTxt = `<span class="r">d20${disadv ? ` (disadv. ${r.join(', ')})` : ''} ${nat} ${fmt(ak)} = ${total} vs AC ${d.ac}</span>`;
   if (hit) {
     const dice = roll(m.dmg[0] * (crit ? 2 : 1), m.dmg[1]);
-    let dmg = sum(dice) + m.dmg[2];
+    let dmg = Math.max(1, sum(dice) + m.dmg[2] + easeOf(c).dmg);
     if (hasSt(c, 'weakened')) dmg = Math.max(1, Math.floor(dmg / 2));
     if (hasSt(state.char, 'hexed')) dmg += rollFor(c, 6);
     heroFlash = 1; shakeCam(m.boss ? 0.2 : 0.08);
@@ -5482,6 +5514,21 @@ function templateTiles(key, x, z) {
   const sp = SPELLS[key], out = [];
   const open = (tx, tz) => !isWall(tileAt(tx, tz)) && tx >= 0 && tz >= 0 && tx < W && tz < H;
   if (sp.shape === 'single') return { tiles: open(x, z) ? [{ x, z }] : [] };
+  if (sp.shape === 'cone') {   // from your square toward the one you point at, widening as it goes
+    const dx = x - state.pos.x, dz = z - state.pos.z, len = Math.hypot(dx, dz);
+    if (!len) return { tiles: [] };
+    const ux = dx / len, uz = dz / len;
+    for (let tz = -sp.size; tz <= sp.size; tz++) for (let tx = -sp.size; tx <= sp.size; tx++) {
+      const d = Math.hypot(tx, tz); if (!d || d > sp.size + 0.5 || (tx * ux + tz * uz) / d < 0.76) continue;
+      const X = state.pos.x + tx, Z = state.pos.z + tz;
+      if (open(X, Z) && los(state.pos.x, state.pos.z, X, Z)) out.push({ x: X, z: Z });
+    }
+    return { tiles: out };
+  }
+  if (sp.shape === 'burst') {
+    for (let tz = -sp.size; tz <= sp.size; tz++) for (let tx = -sp.size; tx <= sp.size; tx++) if ((tx || tz) && open(state.pos.x + tx, state.pos.z + tz)) out.push({ x: state.pos.x + tx, z: state.pos.z + tz });
+    return { tiles: out };
+  }
   if (sp.shape === 'sphere' || sp.shape === 'square') {
     for (let dz = -sp.size; dz <= sp.size; dz++) for (let dx = -sp.size; dx <= sp.size; dx++)
       if ((sp.shape === 'square' || dx * dx + dz * dz <= sp.size * sp.size + 1) && open(x + dx, z + dz)) out.push({ x: x + dx, z: z + dz });
@@ -5519,6 +5566,8 @@ function selectSpell(key) {
   if (busy || anim || state.over) return;
   if (ui.spell === key) return cancelSpell();
   const sp = SPELLS[key];
+  if (sp.martial) { const why = martialBlock(key); if (why) return toast(why); }
+  if (sp.shape === 'burst') { if (!freeCast() && !state.turn.action) return toast('That uses your action, and it is already spent.'); if (!freeCast() && (state.char.mp ?? 0) < costOf(sp)) return toast(`${sp.name} costs ${costOf(sp)} mana. You have ${state.char.mp}.`); return cast(key, state.pos.x, state.pos.z); }
   if (!freeCast()) {
     if (!state.turn.action) return toast('Casting a spell uses your action, and it is already spent.');
     if ((state.char.mp ?? 0) < costOf(sp)) return toast(`${sp.name} costs ${costOf(sp)} mana. You have ${state.char.mp}.`);
@@ -5534,7 +5583,7 @@ function previewSpell(t) {
   for (const o of overlays) if (o) o.visible = false;
   ui.aim = t;
   if (!t) { hoverBox.visible = false; return; }
-  const sp = SPELLS[ui.spell], inRange = cheb(state.pos, t) <= rangeOf(sp);
+  const sp = SPELLS[ui.spell], inRange = sp.shape === 'cone' || sp.shape === 'burst' || cheb(state.pos, t) <= rangeOf(sp);
   const { tiles } = templateTiles(ui.spell, t.x, t.z);
   for (const tl of tiles) {
     const o = overlays[tl.z * W + tl.x]; if (!o || !state.explored[tl.z * W + tl.x]) continue;
@@ -5544,8 +5593,10 @@ function previewSpell(t) {
 }
 
 function cast(key, x, z) {
+  if (busy || anim) return;
   const sp = SPELLS[key];
-  if (cheb(state.pos, { x, z }) > rangeOf(sp)) return toast(`Out of range. ${sp.name} reaches ${rangeOf(sp) * 5} ft.`);
+  if (sp.shape !== 'cone' && sp.shape !== 'burst' && cheb(state.pos, { x, z }) > rangeOf(sp)) return toast(`Out of range. ${sp.name} reaches ${rangeOf(sp) * 5} ft.`);
+  if (sp.martial) { const why = martialBlock(key); if (why) return toast(why); }
   const { tiles, axis } = templateTiles(key, x, z);
   if (!tiles.length) return toast('There is no open ground there.');
   const why = spellTargetError(sp, x, z); if (why) return toast(why);
@@ -5553,6 +5604,10 @@ function cast(key, x, z) {
     if (!state.turn.action) return toast('Casting a spell uses your action, and it is already spent.');
     if ((state.char.mp ?? 0) < costOf(sp)) return toast(`${sp.name} costs ${costOf(sp)} mana. You have ${state.char.mp}.`);
     state.char.mp -= costOf(sp); state.turn.action = false;
+  }
+  if (sp.martial) {
+    (state.char.cd ||= {})[key] = sp.cd;
+    const ak = state.char.equipped.ammo; if (sp.needs === 'ranged' && ak && invEntry(ak)) { removeOne(ak); if (!invEntry(ak)) state.char.equipped.ammo = null; }
   }
   ui.spell = null; ui.aim = null; $('aim').hidden = true; clearPath();
   busy = true; faceAt = worldOf(x, z); castT = key === 'fireball' ? 1.3 : 1.0;
@@ -6554,8 +6609,9 @@ const SCREENS = {
           <div class="row"><span class="label" style="width:36px">Skin</span>${swatches(SKIN_TONES, d.skin, 'hSkin')}</div>
           <div class="row"><span class="label" style="width:36px">Hair</span>${swatches(HAIR_COLORS, d.hair, 'hHair')}</div>
         </div>
-        <div class="field"><span>Kit</span>${seg('hKit', KIT_ALIAS[d.kit] || d.kit || 'sorcerer', Object.entries(KITS).map(([k, K]) => [k, K.cls]))}
+        <div class="field"><span>Class</span>${seg('hKit', KIT_ALIAS[d.kit] || d.kit || 'sorcerer', Object.entries(KITS).map(([k, K]) => [k, K.cls]))}
           <p class="muted fnote">${esc(KITS[KIT_ALIAS[d.kit] || d.kit || 'sorcerer'].blurb)}</p></div>
+        ${startPickHtml(d)}
         <div class="field"><span>Ability scores</span>
           <div class="row between"><span class="muted">${buy ? `Point buy: <b style="color:var(--ink)">${left}</b> of 27 points left. Humans get +1 to every score.` : 'Rolled 4d6, dropping the lowest die.'}</span>
             <span class="row">${buy ? '' : '<button class="btn small" data-act="pointBuy">Use point buy</button>'}<button class="btn small" data-act="rollScores">${buy ? 'Roll 4d6 instead' : 'Roll again'}</button></span></div>
@@ -6627,7 +6683,7 @@ const SCREENS = {
 };
 
 function draftHero() {
-  return { name: '', color: '#3f6f8f', skin: SKIN_TONES[1], hair: HAIR_COLORS[1], model: 'adventurer', kit: 'sorcerer',
+  return { name: '', color: '#3f6f8f', skin: SKIN_TONES[1], hair: HAIR_COLORS[1], model: 'adventurer', kit: 'sorcerer', picks: [...START_DEFAULT.sorcerer],
            base: { ...KITS.sorcerer.scores }, rolled: null };
 }
 function charFromDraft(d) {
@@ -6636,6 +6692,7 @@ function charFromDraft(d) {
   if (d.look) { c.look = clone(d.look); c.species = d.species || LOOK_BASES[d.look.base]?.name || c.species; }
   for (const [k] of ABILITIES) c.abilities[k] = d.rolled ? d.rolled[k] : d.base[k] + 1;
   applyKit(c, d.kit);
+  if (d.picks) c.picks = [...d.picks];
   return c;
 }
 const roll4d6 = () => { const r = roll(4, 6).sort((a, b) => a - b); return r[1] + r[2] + r[3]; };
@@ -6687,7 +6744,14 @@ $('screen').addEventListener('click', e => {
     case 'openBuilder': return openBuilder({ draft: scr.draft });
     case 'restyle': return openBuilder({ heroId: id });
     case 'hModel': scr.draft.model = k; break;
-    case 'hKit': scr.draft.kit = k; if (!scr.draft.rolled) scr.draft.base = { ...KITS[k].scores }; break;
+    case 'hKit': scr.draft.kit = k; scr.draft.picks = [...START_DEFAULT[k]]; if (!scr.draft.rolled) scr.draft.base = { ...KITS[k].scores }; break;
+    case 'hPick': {
+      const d = scr.draft, kit = KIT_ALIAS[d.kit] || d.kit, opts = startOptions(kit), kind = opts.find(o => o[0] === k)?.[1], P = START_PICKS[kit];
+      d.picks ||= [...START_DEFAULT[kit]];
+      if (d.picks.includes(k)) d.picks = d.picks.filter(x => x !== k);
+      else if (kind && d.picks.filter(id => opts.find(o => o[0] === id)?.[1] === kind).length < P[kind]) d.picks.push(k);
+      break;
+    }
     case 'exportAll': exportAll(); return;
     case 'hSkin': scr.draft.skin = k; break;
     case 'hHair': scr.draft.hair = k; break;
@@ -6695,6 +6759,9 @@ $('screen').addEventListener('click', e => {
     case 'rollScores': scr.draft.rolled = Object.fromEntries(ABILITIES.map(([a]) => [a, roll4d6()])); break;
     case 'pointBuy': scr.draft.rolled = null; break;
     case 'createHero': {
+      { const d = scr.draft, kit = KIT_ALIAS[d.kit] || d.kit, opts = startOptions(kit), P = START_PICKS[kit], picks = d.picks || START_DEFAULT[kit];
+        const short = ['spells', 'techs'].map(kind => [kind, P[kind] - picks.filter(id => opts.find(o => o[0] === id)?.[1] === kind).length]).find(([, n]) => n > 0);
+        if (short) return toast(`Choose ${short[1]} more ${short[0] === 'spells' ? 'spell' : 'skill'}${short[1] > 1 ? 's' : ''} first.`); }
       const nh = { id: uid(), char: charFromDraft(scr.draft), run: null, updated: Date.now() };
       heroes.push(nh); saveHeroes();
       return showScreen('pick', { hero: nh.id, map: 'crypt', fresh: false });
@@ -6703,7 +6770,7 @@ $('screen').addEventListener('click', e => {
       const hero = heroById(scr.hero), key = scr.map, members = [hero, ...(scr.companions || []).map(heroById).filter(Boolean)].slice(0, PARTY_MAX);
       const chars = members.map(m => {
         let c = m.char;
-        if (scr.fresh) { const fresh = newCharacter(); for (const f of ['name', 'color', 'skin', 'hair', 'model', 'abilities', 'species', 'cls', 'kit', 'look']) if (c[f] !== undefined) fresh[f] = clone(c[f]); c = applyKit(fresh, fresh.kit); }
+        if (scr.fresh) { const fresh = newCharacter(); for (const f of ['name', 'color', 'skin', 'hair', 'model', 'abilities', 'species', 'cls', 'kit', 'look', 'picks']) if (c[f] !== undefined) fresh[f] = clone(c[f]); c = applyKit(fresh, fresh.kit); }
         c = clone(c); c.hp = maxHpOf(c); c.curseSteps = 0; return c;
       });
       hero.run = freshState(key, chars); hero.run.partyMode = scr.pmode || 'all';
@@ -7560,15 +7627,15 @@ const KITS = {
   sorcerer: { cls: 'Sorcerer', cast: 'cha', scores: { str: 8, dex: 13, con: 14, int: 10, wis: 10, cha: 15 },
     blurb: 'A Sorcerer burns, freezes and curses from a distance with magic drawn from Charisma: the widest spellbook, the deepest mana, and the Hellpit. Light on armour, so stay behind the steel.',
     inventory: [['dagger', 2], ['potion', 2], ['manaPotion', 2], ['rope', 1], ['torch', 3], ['rations', 5]],
-    equipped: { weapon: 'dagger' }, spells: ['firebolt', 'frostray', 'hex', 'ward', 'enfeeble', 'poison', 'haste', 'firewall', 'icewall', 'hellpit', 'fireball', 'hold'] },
+    equipped: { weapon: 'dagger' }, spells: ['earthshot', 'frostfan', 'thunderclap', 'firebolt', 'frostray', 'hex', 'ward', 'enfeeble', 'poison', 'haste', 'firewall', 'icewall', 'hellpit', 'fireball', 'hold'] },
   ranger: { cls: 'Ranger', cast: 'wis', scores: { str: 10, dex: 15, con: 13, int: 8, wis: 14, cha: 10 },
     blurb: 'A Ranger fights from range with a shortbow and venom arrows, wears leather, and casts frost and nature magic with Wisdom. Tri-Shot looses three arrows at once.',
     inventory: [['shortbow', 1], ['arrowVenom', 20], ['dagger', 2], ['leather', 1], ['potion', 2], ['rope', 1], ['torch', 3], ['rations', 5]],
-    equipped: { weapon: 'shortbow', armor: 'leather', ammo: 'arrowVenom' }, spells: ['frostray', 'vines', 'healword', 'enfeeble', 'poison', 'regen', 'icewall'] },
+    equipped: { weapon: 'shortbow', armor: 'leather', ammo: 'arrowVenom' }, spells: ['scattershot', 'thornspray', 'frostray', 'vines', 'healword', 'enfeeble', 'poison', 'regen', 'icewall'] },
   warrior: { cls: 'Warrior', cast: 'wis', scores: { str: 15, dex: 12, con: 14, int: 8, wis: 10, cha: 10 },
     blurb: 'A Warrior wades in with longsword and shield in chain mail, a greatsword on the back for when the shield comes off. No spells: only steel, weapon techniques and the Steel Cyclone.',
     inventory: [['longsword', 1], ['greatsword', 1], ['chain', 1], ['shield', 1], ['potion', 3], ['rope', 1], ['torch', 3], ['rations', 5]],
-    equipped: { weapon: 'longsword', armor: 'chain', shield: 'shield' }, spells: [] },
+    equipped: { weapon: 'longsword', armor: 'chain', shield: 'shield' }, spells: ['earthshaker'] },
 };
 // the old classes became the new ones: saved heroes and old tests still work
 const KIT_ALIAS = { spellblade: 'sorcerer', warden: 'warrior' };
@@ -8145,7 +8212,7 @@ const TECHS = {
              onHit(c) { if (c.alive) addStatus(c, 'stunned', 1); } },
 };
 const KIT_TECHS = { warrior: ['cyclone', 'cleave', 'bash', 'wind', 'rend', 'guard'], ranger: ['trishot', 'aimed', 'tumble', 'volley', 'pin'], sorcerer: [] };
-const knownTechs = (c = state.char) => (KIT_TECHS[KIT_ALIAS[c.kit] || c.kit] || []).filter(k => TECHS[k].unlock <= c.level || freeCast());
+const knownTechs = (c = state.char) => (KIT_TECHS[KIT_ALIAS[c.kit] || c.kit] || []).filter(k => freeCast() || (TECHS[k].unlock <= c.level && !unpicked(c, 't:' + k, TECHS[k].unlock)));
 // why a technique can't be used right now (or '' if it can)
 function techBlock(k, c = state.char) {
   const T = TECHS[k], w = c.equipped.weapon ? ITEMS[c.equipped.weapon] : null;
@@ -8158,6 +8225,14 @@ function techBlock(k, c = state.char) {
   if (k === 'trishot' && !techFoes('trishot').length) return 'No enemy in range that you can see.';
   if (T.needs === 'fight' && c.fight?.wind) return 'Already used this fight.';
   if ((!T.self || T.action) && !exploring() && !state.turn.action) return 'Your action is spent.';
+  return '';
+}
+function martialBlock(k, c = state.char) {
+  const sp = SPELLS[k], w = c.equipped.weapon ? ITEMS[c.equipped.weapon] : null;
+  if ((c.cd?.[k] || 0) > 0) return `Ready in ${c.cd[k]} turn${c.cd[k] > 1 ? 's' : ''}.`;
+  if (sp.needs === 'melee' && (!w || w.ranged)) return 'Needs a melee weapon in hand.';
+  if (sp.needs === 'ranged' && !w?.ranged) return 'Needs a bow in hand.';
+  if (!exploring() && !state.turn.action) return 'Your action is spent.';
   return '';
 }
 const techReady = (k, quiet) => { const why = knownTechs().includes(k) ? techBlock(k) : 'You do not know that technique.'; if (why && !quiet) toast(why); return !why; };
@@ -8210,6 +8285,11 @@ function cardInfo(id, c, s) {
       type: `Attack · ${w.ranged ? w.range * 5 + ' ft' : 'melee'}`, gem: fmt(d.atk), gemCls: 'atk',
       text: `<b>${fmt(d.atk)}</b> to hit, <b>${dice}</b> ${w.dmgType || ''} damage.${tech ? ` Carries <b>${tech.name}</b>.` : ''} Drag it onto an enemy, or tap it, then tap one.`,
       off: busy || !!why, why, armed: !!ui.atk || !!ui.tech, key: '' };
+  }
+  if (id.startsWith('s:') && SPELLS[id.slice(2)]?.martial) {
+    const k = id.slice(2), sp = SPELLS[k], cd = c.cd?.[k] || 0, why = !s.heroTurn ? 'Not your turn.' : martialBlock(k, c);
+    return { kind: 'tech', name: sp.name, icon: sp.icon, color: sp.color, type: `Technique · ${sp.area} · ${sp.cd}-turn cooldown`, gem: cd || '', gemCls: 'cd',
+      cool: cd ? cd / sp.cd : 0, text: esc(sp.desc), off: busy || !!why, why, armed: ui.spell === k, key };
   }
   if (id.startsWith('s:')) {
     const k = id.slice(2), sp = SPELLS[k], cost = costOf(sp, c), short = !freeCast() && (c.mp ?? 0) < cost;
@@ -8619,6 +8699,36 @@ async function summonsAct() {
     if (state.over) return;
   }
 }
+
+/* --- starting skills: at level 1 each class picks from its list. Casters take 3 spells; the Ranger 1 spell and 2 skills; the Warrior 3 skills.
+       What you don't pick at level 1 opens up at level 3. Higher-level spells and skills arrive as you level, as before. --- */
+const START_PICKS = { sorcerer: { spells: 3, techs: 0 }, ranger: { spells: 1, techs: 2 }, warrior: { spells: 0, techs: 3 } };
+const START_DEFAULT = { sorcerer: ['s:earthshot', 's:firebolt', 's:frostfan'], ranger: ['s:thornspray', 't:trishot', 's:scattershot'], warrior: ['t:cyclone', 's:earthshaker', 't:wind'] };
+const PICKS_OPEN_AT = 3;
+// the level 1 choices for a class: [id, kind] where kind is 'spells' or 'techs' (cones that need no mana count as skills)
+function startOptions(kit) {
+  kit = KIT_ALIAS[kit] || kit;
+  const sp = (KITS[kit]?.spells || []).filter(k => SPELLS[k] && (SPELLS[k].unlock || 1) <= 1).map(k => ['s:' + k, SPELLS[k].martial ? 'techs' : 'spells']);
+  const te = (KIT_TECHS[kit] || []).filter(k => TECHS[k].unlock <= 1).map(k => ['t:' + k, 'techs']);
+  return [...sp, ...te];
+}
+// is a level 1 spell or skill locked because it wasn't chosen?
+const unpicked = (c, id, unlock) => !!c?.picks && (unlock || 1) <= 1 && c.level < PICKS_OPEN_AT && !c.picks.includes(id);
+function startPickHtml(d) {
+  const kit = KIT_ALIAS[d.kit] || d.kit || 'sorcerer', P = START_PICKS[kit], opts = startOptions(kit), picks = d.picks || [];
+  const count = kind => picks.filter(id => opts.find(o => o[0] === id)?.[1] === kind).length;
+  const row = ([id, kind]) => {
+    const isS = id.startsWith('s:'), it = isS ? SPELLS[id.slice(2)] : TECHS[id.slice(2)], on = picks.includes(id), full = !on && count(kind) >= P[kind];
+    const aoe = isS && it.shape && it.shape !== 'single';
+    const tag = isS ? (it.martial ? `Skill · ${it.area}` : `Spell · ${it.cost} mana · ${it.area}`) : `Skill · ${it.cd ? it.cd + '-turn cooldown' : 'once a fight'}`;
+    return `<button class="pickrow ${on ? 'on' : ''}" data-act="hPick" data-k="${id}" ${full ? 'disabled' : ''} style="--c:${it.color}" aria-pressed="${on}">
+      <span class="pi">${it.icon || '✦'}</span><span class="pt"><b>${esc(it.name)}</b>${aoe ? '<span class="aoe">AREA</span>' : ''}<small>${esc(tag)}</small><span class="pd">${esc((it.desc || '').replace(/<[^>]+>/g, ''))}</span></span><span class="pc">${on ? '✓' : ''}</span></button>`;
+  };
+  const group = (kind, label) => P[kind] ? `<div class="pickhead">${label} <b>${count(kind)} of ${P[kind]}</b></div>${opts.filter(o => o[1] === kind).map(row).join('')}` : '';
+  return `<div class="field"><span>Starting ${P.spells && P.techs ? 'spells and skills' : P.spells ? 'spells' : 'skills'}</span>
+    <p class="muted fnote">Choose what your ${esc(KITS[kit].cls)} knows at level 1. The rest of the level 1 list opens up at level ${PICKS_OPEN_AT}; bigger spells and skills come as you level.</p>
+    ${group('spells', 'Spells')}${group('techs', 'Skills')}</div>`;
+}
 /* ================================================================== *
  * THE HERO BUILDER: start from a base, then change the body, face, hair, outfit and colours, with the figure turning in front of you.
  * Used when creating a hero, and to restyle one later. The Monster Forge uses the same figure for humanoid monsters and characters.
@@ -9005,8 +9115,8 @@ function spritePool(url, pixel) {
   if (pixel) { tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; }
   p = new Particles(1500, false, tex); SPRITES.set(url + (pixel ? '#px' : ''), p); return p;
 }
-const FX_TRAVEL = [['orb', 'Orb (a glowing shot)'], ['arc', 'Arc (lobbed, curving)'], ['beam', 'Beam (instant streak)'], ['rain', 'Rain (falls from above)'], ['none', 'None (appears on the target)']];
-const FX_IMPACT = [['hellpit', 'Hellpit'], ['sparks', 'Sparks'], ['explosion', 'Explosion'], ['cloud', 'Cloud'], ['pillar', 'Pillar of light'], ['ring', 'Ring'], ['swirl', 'Swirl'], ['shards', 'Shards']];
+const FX_TRAVEL = [['spray', 'Spray (a blast from the hand)'], ['orb', 'Orb (a glowing shot)'], ['arc', 'Arc (lobbed, curving)'], ['beam', 'Beam (instant streak)'], ['rain', 'Rain (falls from above)'], ['none', 'None (appears on the target)']];
+const FX_IMPACT = [['hellpit', 'Hellpit'], ['rocks', 'Rocks'], ['sparks', 'Sparks'], ['explosion', 'Explosion'], ['cloud', 'Cloud'], ['pillar', 'Pillar of light'], ['ring', 'Ring'], ['swirl', 'Swirl'], ['shards', 'Shards']];
 const FX_SOUND = [['whoosh', 'Whoosh'], ['fireball', 'Roar'], ['firewall', 'Crackle'], ['icewall', 'Chimes']];
 const FX_PRESETS = {
   firebolt: { label: 'Fire Bolt', travel: 'orb', impact: 'sparks', color: '#ff8a3a', color2: '#ff3a0a', size: 1, speed: 1, amount: 1, light: true, shake: false, sound: 'whoosh' },
@@ -9031,9 +9141,19 @@ function fxPal(fx) {
            c0: keep ? [1, 1, 1] : hdr(fx.color, spr ? 1.3 : 5), c1: keep ? [1, 1, 1] : hdr(fx.color2 || fx.color, 1),
            s: (spr ? 2.8 : 1) * (fx.size || 1), n: fx.amount || 1, v: fx.speed || 1 };
 }
-function fxTravel(fx, P, from, to) {
+function fxTravel(fx, P, from, to, tiles) {
   const d = from.distanceTo(to), v = Math.max(0.25, P.v);
   if (fx.travel === 'none') return waitT(0.15);
+  if (fx.travel === 'spray') {   // a blast out of the hand toward every square of the area
+    const pts = tiles?.length ? tiles.map(t => worldOf(t.x, t.z).add(new THREE.Vector3(0, 0.25, 0))) : [to];
+    const rocky = fx.impact === 'rocks', dur = 0.28 / v;
+    burst(rocky && !P.spr ? P.haze : P.sys, (rocky ? 70 : 110) * P.n, () => {
+      const q = pts[Math.floor(Math.random() * pts.length)], tx = q.x + rnd(-.4, .4), ty = q.y + rnd(-.1, .5), tz = q.z + rnd(-.4, .4);
+      return { p: [from.x, from.y, from.z], v: [(tx - from.x) / dur, (ty - from.y) / dur, (tz - from.z) / dur], life: dur * rnd(1, 1.15), s: rocky ? [.12 * P.s, .09 * P.s] : [.1 * P.s, .03],
+               c0: rocky && !P.spr ? hdr(fx.color, 0.9) : P.c0, c1: rocky && !P.spr ? hdr(fx.color2 || fx.color, 0.6) : P.c1, a: 1, fi: .02 };
+    });
+    return waitT(dur * 0.9);
+  }
   if (fx.travel === 'beam') {
     burst(P.sys, Math.min(260, 40 + d * 22) * P.n, () => { const k = Math.random(), p = from.clone().lerp(to, k);
       return { p: [p.x + rnd(-.03, .03), p.y + rnd(-.03, .03), p.z + rnd(-.03, .03)], v: [rnd(-.15, .15), rnd(-.1, .2), rnd(-.15, .15)], life: rnd(.18, .45) / Math.sqrt(v), s: [.09 * P.s, .01], c0: P.c0, c1: P.c1, a: 1, fi: .02 }; });
@@ -9097,6 +9217,10 @@ function fxImpact(fx, P, to, tiles) {
     case 'shards':
       burst(P.sys, 70 * n, () => { const q = rp(), d = rndDir(); return { p: [q.x, q.y + .2, q.z], v: [d.x * 3 * v, Math.abs(d.y) * 4 * v + 1, d.z * 3 * v], life: rnd(.7, 1.2), s: [.11 * P.s, .05 * P.s], c0: P.c0, c1: P.c1, a: 1, g: -9, bounce: true }; });
       break;
+    case 'rocks':   // stones that bounce and roll, and a puff of dust
+      burst(P.spr ? P.sys : P.haze, 60 * n, () => { const q = rp(), d = rndDir(); return { p: [q.x, q.y + .2, q.z], v: [d.x * 2.5 * v, Math.abs(d.y) * 3 * v + .5, d.z * 2.5 * v], life: rnd(.8, 1.3), s: [.11 * P.s, .09 * P.s], c0: P.spr ? P.c0 : hdr(fx.color, 0.85), c1: P.spr ? P.c1 : hdr(fx.color2 || fx.color, 0.6), a: 1, g: -9, bounce: true }; });
+      burst(P.haze, 25 * n, () => { const q = rp(); return { p: [q.x, q.y + .15, q.z], v: [rnd(-.4, .4), rnd(.2, .7), rnd(-.4, .4)], life: rnd(1, 1.6), s: [.3 * P.s, .9 * P.s], c0: hdr('#8a7a64', 0.8), c1: hdr('#4a3f34', 0.5), a: .45, turb: 1 }; });
+      break;
     case 'hellpit': {   // the floor tears open: a black scorch, a ring of fire at the rim, flames and smoke pouring up
       const rr = Math.max(0.6, R);
       fadeDecal(addDecal(TEX.scorch, center.x, center.y - 0.08, center.z, rr * 2.4, rr * 2.4), 0.95, 0.15, 12, 3);
@@ -9119,18 +9243,20 @@ function fxImpact(fx, P, to, tiles) {
 function spellFx(sp, from, to, tiles) {
   if (sp.fx?.mode === 'code' && sp.fx.code?.trim()) return runCodeFx(sp, from, to, tiles);
   const fx = sp.fx || { travel: 'orb', impact: 'sparks', color: sp.color, color2: sp.color }, P = fxPal(fx);
-  return fxTravel(fx, P, from, to).then(() => { fxImpact(fx, P, to, tiles); return waitT(fx.impact === 'pillar' || fx.impact === 'swirl' ? 0.3 : 0.08); });
+  return fxTravel(fx, P, from, to, tiles).then(() => { fxImpact(fx, P, to, tiles); return waitT(fx.impact === 'pillar' || fx.impact === 'swirl' ? 0.3 : 0.08); });
 }
 
 /* --- what a forged spell does --- */
 function castCustom(key, x, z, tiles, finish) {
-  const sp = SPELLS[key], d = derived(), boost = hasT(state.char, 'mastery') ? 3 : 0, sr = sp.status ? sp.status[1] + (hasT(state.char, 'lingering') ? 1 : 0) : 0;
+  const sp = SPELLS[key], d = derived(), am = sp.martial ? mod(state.char.abilities[sp.martial]) : 0, boost = sp.martial ? am : hasT(state.char, 'mastery') ? 3 : 0, sr = sp.status ? sp.status[1] + (hasT(state.char, 'lingering') ? 1 : 0) : 0;
+  const DC = sp.martial ? 8 + d.prof + am : d.spellDc;
   const single = sp.shape === 'single', friends = sp.target === 'ally', from = above(hero, 0.95);
   const provoke = c => { if (MONSTERS[c.type].ai !== 'none' && !c.aware) { const was = exploring(); c.aware = true; if (was) startCombat(true); } };
   const inTiles = p => tiles.some(t => t.x === p.x && t.z === p.z);
   let to;
   if (single && !friends) to = creatureTop(creatureAt(x, z)).add(new THREE.Vector3(0, -0.25, 0));
   else if (single) { const i = memberAt(x, z), m = state.party[i]; to = (i === state.active ? hero.position : (allyViews.get(m.id)?.g.position || worldOf(x, z))).clone().add(new THREE.Vector3(0, 0.8, 0)); }
+  else if (tiles.length && (sp.shape === 'cone' || sp.shape === 'burst')) { to = tiles.reduce((a, t) => a.add(worldOf(t.x, t.z)), new THREE.Vector3()).multiplyScalar(1 / tiles.length); to.y += 0.3; if (sp.shape === 'burst') to = hero.position.clone().add(new THREE.Vector3(0, 0.3, 0)); }
   else to = worldOf(x, z).add(new THREE.Vector3(0, 0.3, 0));
   spellFx(sp, from, to, single ? null : tiles).then(() => {
     if (friends) {
@@ -9157,14 +9283,15 @@ function castCustom(key, x, z, tiles, finish) {
         const r = roll(1, 20)[0], total = r + d.spellAtk; crit = r === 20; landed = crit || (r !== 1 && total >= acOf(c));
         txt = `<span class="r">spell attack d20 ${r} ${fmt(d.spellAtk)} = ${total} vs AC ${acOf(c)}</span>`;
       } else if (sp.save) {
-        const r = roll(1, 20)[0], b = saveOf(c, sp.save), saved = r + b >= d.spellDc;
-        txt = `<span class="r">${sp.save.toUpperCase()} save d20 ${r}${fmt(b)} = ${r + b} vs DC ${d.spellDc}: ${saved ? 'success' : 'fail'}</span>`;
+        const r = roll(1, 20)[0], b = saveOf(c, sp.save), saved = r + b >= DC;
+        txt = `<span class="r">${sp.save.toUpperCase()} save d20 ${r}${fmt(b)} = ${r + b} vs DC ${DC}: ${saved ? 'success' : 'fail'}</span>`;
         if (saved) { landed = false; half = !!sp.half && !!dice; }
       }
       provoke(c);
       if (!landed && !half) { floatText(sp.attack ? 'Miss' : 'Resisted', creatureTop(c), 'miss'); addLog('spell', `${sp.name} ${sp.attack ? 'misses' : 'is resisted by'} ${name}. ${txt}`); continue; }
       if (dice) {
-        const base = crit ? sum(dice) + sum(roll(sp.damage[0], sp.damage[1])) : sum(dice);
+        const own = sp.falloff ? roll(Math.max(1, sp.damage[0] - (cheb(c, state.pos) - 1)), sp.damage[1]) : dice;   // closer means more stones
+        const base = crit ? sum(own) + sum(roll(sp.damage[0], sp.damage[1])) : sum(own);
         let dmg = base + boost; if (half) dmg = Math.floor(dmg / 2);
         if (hasSt(c, 'hexed')) dmg += rollFor(c, 6);
         addLog('spell', `<b>${sp.name}</b> ${half ? 'still catches' : 'hits'} ${name} for <b>${dmg}</b> ${sp.dmgType || ''}${crit ? ' (critical!)' : ''}${half ? ' (half)' : ''}. ${txt}`);
@@ -9181,9 +9308,9 @@ function castCustom(key, x, z, tiles, finish) {
 /* --- saved spells --- */
 let FORGED = store.get(SPELL_KEY, []);
 function forgeToSpell(f) {
-  const area = f.shape === 'area', friends = f.target === 'ally', art = f.art !== 'glyph' && f.img;
+  const area = f.shape !== 'single', friends = f.target === 'ally', art = f.art !== 'glyph' && f.img;
   const sp = { name: cleanTxt(f.name, 32) || 'Unnamed spell', icon: cleanTxt(f.icon, 2) || '✦', color: f.color, cost: Math.max(0, Math.min(15, Math.round(+f.cost || 0))), unlock: Math.max(1, Math.min(5, Math.round(+f.level || 1))),
-    shape: area ? 'sphere' : 'single', size: Math.max(1, Math.min(4, Math.round((+f.radius || 10) / 5))), target: friends ? 'ally' : (area ? 'area' : 'enemy'), range: Math.max(1, Math.min(40, Math.round((+f.range || 30) / 5))),
+    shape: f.shape === 'cone' ? 'cone' : f.shape === 'burst' ? 'burst' : area ? 'sphere' : 'single', size: f.shape === 'cone' ? 3 : f.shape === 'burst' ? 1 : Math.max(1, Math.min(4, Math.round((+f.radius || 10) / 5))), target: friends ? 'ally' : (area ? 'area' : 'enemy'), range: Math.max(1, Math.min(40, Math.round((+f.range || 30) / 5))),
     attack: !friends && f.land === 'attack', save: !friends && f.land === 'save' ? f.save : undefined, half: !!f.half,
     damage: !friends && +f.dn > 0 ? [Math.min(12, Math.round(+f.dn)), +f.ds] : undefined, dmgType: f.dtype, heal: friends && +f.hn > 0 ? [Math.min(12, Math.round(+f.hn)), +f.hs] : undefined,
     status: f.eff && f.eff !== 'none' && STATUS[f.eff] ? [f.eff, Math.max(1, Math.min(6, Math.round(+f.erounds || 1))), Math.max(0.05, Math.min(1, (+f.echance || 100) / 100))] : undefined,
@@ -9206,6 +9333,9 @@ function loadForged() {
   for (const f of FORGED) SPELLS['c_' + f.id] = forgeToSpell(f);
 }
 loadForged();
+// the first floors of the Descent go easier on a lone hero: monsters there hit less often and less hard
+if (MAPS.descent1) MAPS.descent1.ease = { atk: -2, dmg: -2, boss: { atk: -2, dmg: -4 } };
+if (MAPS.descent2) MAPS.descent2.ease = { atk: -1, dmg: -1, boss: { atk: -1, dmg: -2 } };
 
 
 /* --- animations written in JavaScript: the spell's code gets an `fx` toolkit and calls fx.hit() when the spell should land --- */
@@ -9608,7 +9738,7 @@ function renderForge() {
     ${frow('Level and mana', `<input type="number" data-f="level" min="1" max="5" value="${f.level}"><input type="number" data-f="cost" min="0" max="15" value="${f.cost}"><span class="hint">level · mana</span>`)}
     ${frow('Range', fsel('range', f.range, [5, 10, 15, 20, 30, 40, 60, 80, 90, 120, 150].map(v => [v, v + ' ft'])))}
     ${frow('Aimed at', fsel('target', f.target, [['enemy', 'Enemies'], ['ally', 'Friends (or yourself)']]))}
-    ${frow('Shape', fsel('shape', f.shape, [['single', 'One target'], ['area', 'An area']]) + (f.shape === 'area' ? fsel('radius', f.radius, [[5, '5 ft radius'], [10, '10 ft radius'], [15, '15 ft radius'], [20, '20 ft radius']]) : ''))}
+    ${frow('Shape', fsel('shape', f.shape, [['single', 'One target'], ['area', 'An area'], ['cone', 'A cone (15 ft)'], ['burst', 'All around you']]) + (f.shape === 'area' ? fsel('radius', f.radius, [[5, '5 ft radius'], [10, '10 ft radius'], [15, '15 ft radius'], [20, '20 ft radius']]) : ''))}
     ${friends ? frow('Healing', `<input type="number" data-f="hn" min="0" max="12" value="${f.hn}">${fsel('hs', f.hs, [4, 6, 8, 10, 12].map(v => [v, 'd' + v]))}<span class="hint">0 for none</span>`) : `
       ${frow('How it lands', fsel('land', f.land, [['attack', 'Spell attack vs Defence'], ['save', 'The target saves'], ['auto', 'Always hits']]))}
       ${f.land === 'save' ? frow('Save', fsel('save', f.save, [['str', 'Strength'], ['dex', 'Dexterity'], ['con', 'Constitution'], ['wis', 'Wisdom']]) + `<label class="hint"><input type="checkbox" data-f="half" ${f.half ? 'checked' : ''}> half on a save</label>`) : ''}
@@ -9851,7 +9981,7 @@ window.battleBoard = {
     applyKit: (c, k) => applyKit(c, k), newCharacter: () => newCharacter(), preparedSpells: () => preparedSpells(), togglePrepared: k => togglePrepared(k), openMerchant: () => openMerchant(() => {}),
     openSettings: () => openSettings(), reachProblems: m => reachProblems(m), oddsText: id => oddsText(creatureById(id)), bossPhase: id => bossPhase(creatureById(id)), damage: (id, n) => damageCreature(creatureById(id), n, 'dmg'),
     passiveOf: c => passiveOf(c), respec: () => respec(state.char), undoGrowth: () => undoGrowth(), spendPoint: k => spendPoint(k), lightTorch: () => lightTorch(), giveItem: (k, i) => giveItem(k, i),
-    exploreStatusTick: () => exploreStatusTick(), knownTechs: () => knownTechs(), useTech: k => useTech(k), attack: id => attack(creatureById(id)), derived: () => { const d = derived(); return { atk: d.atk, dmgMod: d.dmgMod, ac: d.ac, guard: d.guard, trained: d.trained }; }, hitChance: id => hitChance(derived().atk, acOf(creatureById(id))), hotbar: () => hotbarOf(), openHotbar: () => openHotbar(), hand: () => handIds(), spawn: (type, x, z, aware) => { const id = Math.max(0, ...state.creatures.map(c => c.id)) + 1; state.creatures.push({ id, type, x, z, hp: MONSTERS[type].hp, alive: true, aware: !!aware, restrained: false }); rebuildCreatures(); computeVisibility(); applyFog(); refresh(); return id; }, cast: (k, x, z) => cast(k, x, z), idle2: () => !busy && !anim, forceHound: on => { ui.forceHound = !!on; }, summons: () => clone(state.summons || []), kits: () => Object.keys(KITS), openMonsterForge: (id, d) => openMonsterForge(id, d), closeMonsterForge: () => closeMonsterForge(), mforge: () => MF, mforgeSet: (p, v) => { mforgeSet(p, v); mforgeRefresh(); renderMonsterForge(); }, mforgeSave: () => mforgeSave(), mforgeFight: () => mforgeFight(), mforgeReset: () => mforgeReset(), forgedMonsters: () => FORGED_MON.map(m => ({ id: m.id, ch: m.ch, name: m.name })), monsters: () => Object.keys(MONSTERS), creatureChars: () => ({ ...CREATURE_CHARS }), tools: () => TOOLS.filter(t => t.g === 'Your monsters').map(t => ({ id: t.id, ch: t.ch, label: t.label })), openBuilder: o => openBuilder(o), closeBuilder: k => closeBuilder(k), builderSet: (f, v) => { builderSet(f, v); renderBuilder(); }, builderRandom: () => { builderRandom(); renderBuilder(); }, builderCam: w => builderCam(w), look: () => clone(state.char.look || null), openForge: id => openForge(id), closeForge: () => closeForge(), forge: () => FORGE, forgeSet: (p, v) => { forgeSet(p, v); renderForge(); }, forgeCast: () => forgeCast(), fxLibrary: () => Object.keys(FX_LIBRARY), idle: () => !busy && !anim, showGuide: () => showGuide(), forgeSave: () => forgeSave(), forged: () => FORGED.map(f => f.id), knownSpells: () => knownSpells(), pixelsChanged: () => pixelsChanged(), showCard: id => { const i = cardInfo(id, state.char, { ex: true, t: { action: true, move: 6 }, actOk: true, heroTurn: true, n: -1 }); i.off = false; i.armed = false; const z = $('cardZoom'); z.innerHTML = `<div class="card k-${i.kind} big" style="--c:${i.color}">${cardHtml({ ...i, key: '' })}</div>`; z.hidden = false; return { name: i.name, type: i.type }; }, allIds: () => ({ spells: Object.keys(SPELLS).map(k => 's:' + k), techs: Object.keys(TECHS).map(k => 't:' + k), acts: Object.keys(HOT_ACTIONS) }), stand: (x, z, lookId) => { state.pos.x = x; state.pos.z = z; placeHero(); computeVisibility(); applyFog(); const c = creatureById(lookId); CAM.hold = 0; camShot(hero, worldOf(c.x, c.z), 0.01); refresh(); }, screenOf: id => { const c = creatureById(id), v = worldOf(c.x, c.z).setY(0.45).project(camera), r = canvas.getBoundingClientRect(); return { x: r.left + (v.x + 1) / 2 * r.width, y: r.top + (1 - v.y) / 2 * r.height }; }, playCard: id => playCard(id), inspectCard: id => inspectCard(id), armAttack: on => armAttack(on), lens: () => ({ ...LENS, prof: camProfile(), framed: !!CAM.framed, fov: camera.fov, view: camera.view && { ...camera.view } }), camDist: () => camera.position.distanceTo(controls.target), setFp: on => setFp(on), fp: () => ({ on: fpOn(), yaw: FP.yaw, look: (y, p) => { FP.yaw = y ?? FP.yaw; FP.pitch = p ?? FP.pitch; }, fov: camera.fov, ceiling: !!ceiling?.visible, rig: FP.rig.visible }), stepKey: (f, r) => stepKey(f, r), turnKey: d => turnKey(d),
+    exploreStatusTick: () => exploreStatusTick(), knownTechs: () => knownTechs(), useTech: k => useTech(k), attack: id => attack(creatureById(id)), derived: () => { const d = derived(); return { atk: d.atk, dmgMod: d.dmgMod, ac: d.ac, guard: d.guard, trained: d.trained }; }, hitChance: id => hitChance(derived().atk, acOf(creatureById(id))), hotbar: () => hotbarOf(), openHotbar: () => openHotbar(), hand: () => handIds(), foeAtk: id => atkOf(creatureById(id)), selectSpell: k => selectSpell(k), setLevel: n => { state.char.level = n; refresh(); }, knownTechs2: () => knownTechs(), startOptions: k => startOptions(k), ease: () => MAP.ease || null, spawn: (type, x, z, aware) => { const id = Math.max(0, ...state.creatures.map(c => c.id)) + 1; state.creatures.push({ id, type, x, z, hp: MONSTERS[type].hp, alive: true, aware: !!aware, restrained: false }); rebuildCreatures(); computeVisibility(); applyFog(); refresh(); return id; }, cast: (k, x, z) => cast(k, x, z), idle2: () => !busy && !anim, forceHound: on => { ui.forceHound = !!on; }, summons: () => clone(state.summons || []), kits: () => Object.keys(KITS), openMonsterForge: (id, d) => openMonsterForge(id, d), closeMonsterForge: () => closeMonsterForge(), mforge: () => MF, mforgeSet: (p, v) => { mforgeSet(p, v); mforgeRefresh(); renderMonsterForge(); }, mforgeSave: () => mforgeSave(), mforgeFight: () => mforgeFight(), mforgeReset: () => mforgeReset(), forgedMonsters: () => FORGED_MON.map(m => ({ id: m.id, ch: m.ch, name: m.name })), monsters: () => Object.keys(MONSTERS), creatureChars: () => ({ ...CREATURE_CHARS }), tools: () => TOOLS.filter(t => t.g === 'Your monsters').map(t => ({ id: t.id, ch: t.ch, label: t.label })), openBuilder: o => openBuilder(o), closeBuilder: k => closeBuilder(k), builderSet: (f, v) => { builderSet(f, v); renderBuilder(); }, builderRandom: () => { builderRandom(); renderBuilder(); }, builderCam: w => builderCam(w), look: () => clone(state.char.look || null), openForge: id => openForge(id), closeForge: () => closeForge(), forge: () => FORGE, forgeSet: (p, v) => { forgeSet(p, v); renderForge(); }, forgeCast: () => forgeCast(), fxLibrary: () => Object.keys(FX_LIBRARY), idle: () => !busy && !anim, showGuide: () => showGuide(), forgeSave: () => forgeSave(), forged: () => FORGED.map(f => f.id), knownSpells: () => knownSpells(), pixelsChanged: () => pixelsChanged(), showCard: id => { const i = cardInfo(id, state.char, { ex: true, t: { action: true, move: 6 }, actOk: true, heroTurn: true, n: -1 }); i.off = false; i.armed = false; const z = $('cardZoom'); z.innerHTML = `<div class="card k-${i.kind} big" style="--c:${i.color}">${cardHtml({ ...i, key: '' })}</div>`; z.hidden = false; return { name: i.name, type: i.type }; }, allIds: () => ({ spells: Object.keys(SPELLS).map(k => 's:' + k), techs: Object.keys(TECHS).map(k => 't:' + k), acts: Object.keys(HOT_ACTIONS) }), stand: (x, z, lookId) => { state.pos.x = x; state.pos.z = z; placeHero(); computeVisibility(); applyFog(); const c = creatureById(lookId); CAM.hold = 0; camShot(hero, worldOf(c.x, c.z), 0.01); refresh(); }, screenOf: id => { const c = creatureById(id), v = worldOf(c.x, c.z).setY(0.45).project(camera), r = canvas.getBoundingClientRect(); return { x: r.left + (v.x + 1) / 2 * r.width, y: r.top + (1 - v.y) / 2 * r.height }; }, playCard: id => playCard(id), inspectCard: id => inspectCard(id), armAttack: on => armAttack(on), lens: () => ({ ...LENS, prof: camProfile(), framed: !!CAM.framed, fov: camera.fov, view: camera.view && { ...camera.view } }), camDist: () => camera.position.distanceTo(controls.target), setFp: on => setFp(on), fp: () => ({ on: fpOn(), yaw: FP.yaw, look: (y, p) => { FP.yaw = y ?? FP.yaw; FP.pitch = p ?? FP.pitch; }, fov: camera.fov, ceiling: !!ceiling?.visible, rig: FP.rig.visible }), stepKey: (f, r) => stepKey(f, r), turnKey: d => turnKey(d),
     mood: () => ({ ...MOOD, music: SFX.musicWant }), musicMood: () => musicMood(), film: () => filmPass.enabled, setSneak: on => setSneak(on), remapKey: k => remapKey(k), prefs: () => prefs, toastCount: () => document.getElementById('toast').children.length,
     freshState: (k, chars, map) => freshState(k, chars, map), enterPlay: st => enterPlay(st, 'play', true), refresh: () => refresh(), heroes: () => heroes, toast: m => toast(m), itemModelOk: () => Object.keys(ITEMS).every(k => !!itemModel(k)) },
   wanderers() { const m = spawnWanderers(6, 13); if (m && exploring() === false) startCombat(); refresh(); return m && m.map(c => c.type); },
