@@ -1944,7 +1944,7 @@ function applyFog() {
     const m = tileMeshes[i];
     if (m && shown) for (const [mm, base] of m.userData.dim) mm.color.copy(base).multiplyScalar(lit || !MAP.fog ? 1 : 0.32);
   }
-  for (const c of state.creatures) { const v = views.get(c.id); if (v) v.g.visible = !!state.explored[c.z * W + c.x] && (!c.alive || !!vis[c.z * W + c.x]); }
+  for (const c of state.creatures) { const v = views.get(c.id); if (v) v.g.visible = !v.broken && !!state.explored[c.z * W + c.x] && (!c.alive || !!vis[c.z * W + c.x]); }
 }
 
 /* ================================================================== *
@@ -2399,6 +2399,7 @@ function animateHuman(dt, t) {
   if (H.two) { r = { sx: -0.55, sz: 0.38, ex: -0.95 }; l = { sx: -0.55, sz: -0.38, ex: -0.95 }; mountX = 1.35; }
   if (H.bow) { r = { sx: -1.25, sz: 0.45, ex: -1.7 }; l = { sx: -1.45, sz: 0.05, ex: 0 }; bowX = 1.45; }
   if (castT > 0) { r = { sx: -2.5, sz: -0.4, ex: -0.3 }; l = { sx: -2.5, sz: 0.4, ex: -0.3 }; }
+  if (HS.wind > 0 && !H.bow) { r.sx -= HS.wind * 2.3; r.ex += HS.wind * 0.6; if (H.two) { l.sx -= HS.wind * 2.3; l.ex += HS.wind * 0.6; } }
   if (lunge > 0) {
     const s = Math.sin(Math.PI * lunge);
     if (H.bow) r.ex += s * 0.9;
@@ -2420,7 +2421,8 @@ function animateHuman(dt, t) {
 }
 
 /* --- creatures --- */
-const views = new Map();   // creature id → { g, pivot, ring, bar, mats, ... }
+const views = new Map();
+const lootBoxes = new Map();   // creature id -> the floating box its loot was left in   // creature id → { g, pivot, ring, bar, mats, ... }
 const MODELS = {
   dummy(p) {
     const straw = mat('#c9a65a'), wood = mat('#6b4a2b');
@@ -2562,11 +2564,14 @@ function buildCreature(c) {
   views.set(c.id, v);
   g.position.copy(worldOf(c.x, c.z));
   if ((!c.alive && !m.object) || c.dormant) pivot.rotation.x = -1.35;
+  if (!c.alive && !m.object && !c.dormant) { v.broken = true; g.visible = false; if (c.loot && !c.looted) lootBoxFor(c); }
   if (!c.alive && m.object) { pivot.visible = false; objDebris(v, m); }
   if (c.dormant) g.traverse(o => { o.userData.kind = 'deco'; });   // just bones, as far as anyone can tell
   return v;
 }
 function rebuildCreatures() {
+  for (const b of lootBoxes.values()) b.g.removeFromParent();
+  lootBoxes.clear();
   for (const v of views.values()) { v.g.traverse(o => { if (o.isMesh) o.material.dispose?.(); }); v.g.removeFromParent(); v.bar.remove(); }
   views.clear();
   for (const c of state.creatures) buildCreature(c);
@@ -4008,7 +4013,9 @@ const exploring = () => !state.creatures.some(c => c.alive && c.aware && MONSTER
 const heroBudget = () => exploring() ? 40 : state.turn.move;
 let reach = null;
 
-let anim = null, lunge = 0, faceAt = null, heroFlash = 0;
+let anim = null, lunge = 0, faceAt = null, heroFlash = 0, hitStopT = 0, heroRecoil = 0;
+const HS = { off: 0, lift: 0, tilt: 0, wind: 0 }, heroRecoilDir = new THREE.Vector3();
+const hitStop = s => { if (!reduceMotion) hitStopT = Math.max(hitStopT, s); };
 const lungeDir = new THREE.Vector3();
 function moveTo(x, z, then) {
   const i = z * W + x, path = pathFrom(reach, x, z);
@@ -5189,7 +5196,8 @@ const creatureTop = c => { const v = views.get(c.id); return v.g.position.clone(
 
 function damageCreature(c, dmg, cls) {
   const v = views.get(c.id), m = MONSTERS[c.type];
-  c.hp = Math.max(0, c.hp - dmg); v.shake = 1; v.flash = 1;
+  c.hp = Math.max(0, c.hp - dmg); v.shake = 1; v.flash = 1; c.lastHit = cls; c.lastDmg = dmg;
+  if (!m.object) { v.recoil = 1; (v.recoilDir ||= new THREE.Vector3()).subVectors(worldOf(c.x, c.z), worldOf(state.pos.x, state.pos.z)).setY(0); if (v.recoilDir.lengthSq() < 1e-6) v.recoilDir.set(0, 0, 1); v.recoilDir.normalize(); }
   if (m.boss && c.hp > 0 && c.hp <= m.hp / 2 && !c.phased && PHASES[c.type] && playing()) { c.phased = true; after(0.5, () => bossPhase(c)); }
   floatText(`-${dmg}`, creatureTop(c).add(new THREE.Vector3(0, Math.random() * 0.2, 0)), cls);
   if (c.dormant) rise(c, false);
@@ -5208,7 +5216,8 @@ function killCreature(c) {
   if (m.boss) { toast(`${nm} falls!`); shakeCam(0.3); }
   c.loot = rollLoot(c.type);
   if (m.object) smashProp(c);
-  else if (c.loot) addLog('', `Its remains can be searched: click the body when you're next to it.`);
+  else if (c.loot) addLog('', `It leaves a glowing loot box behind: walk up and click it.`);
+  if (!m.object) { const v = views.get(c.id), boom = c.lastHit === 'crit' || m.boss || (c.lastDmg || 0) >= m.hp * 0.6 || Math.random() < 0.3; after(0.12, () => breakCreature(c, boom)); }
   if (m.xp) gainXp(m.xp);
   if (!m.object && m.ai !== 'none') siphonOnKill(m);
   views.get(c.id).bar.hidden = true;
@@ -5252,12 +5261,11 @@ function attack(c) {
   }
   state.turn.action = false; faceAt = worldOf(c.x, c.z);
   lungeDir.subVectors(worldOf(c.x, c.z), worldOf(state.pos.x, state.pos.z)).setY(0).normalize();
-  if (!w.ranged) lunge = 1;
   const tag = n === 2 ? ` (${adv ? 'adv.' : 'disadv.'} ${r.join(', ')})` : '';
   const rollTxt = `<span class="r">d20${tag} ${nat} ${fmt(d.atk)} = ${total} vs AC ${tac}</span>`;
   if (w.ranged) SFX.bow(); else SFX.swing();
   const resolve = () => {
-    if (hit) { SFX.hit(); if (c.type === 'skeleton' || c.type === 'warden') SFX.clank(); }
+    if (hit) { SFX.hit(); if (c.type === 'skeleton' || c.type === 'warden') SFX.clank(); hitStop(crit ? 0.16 : 0.08); shakeCam(crit ? 0.24 : 0.12); }
     if (!hit) {
       const why = nat === 1 ? 'A wild swing' : m.guard === 'dodge' ? `${foeName(m, true)} twists out of the way` : m.object ? 'The blow skids off' : `The blow glances off ${foeName(m)}'s ${c.type === 'skeleton' ? 'bones' : c.type === 'spider' || c.type === 'spiderQueen' ? 'shell' : 'armour'}`;
       addLog('', `<b>${tech ? tech.name : w.name}</b> misses. ${why}. ${rollTxt}`);
@@ -5288,17 +5296,17 @@ function attack(c) {
     refresh(); save();
   };
   if (w.ranged) shootProjectile(above(hero, 0.5), creatureTop(c).add(new THREE.Vector3(0, -0.3, 0)), ammo ? `arrow:${ammo.color}` : 'arrow').then(resolve);
-  else resolve();
+  else { busy = true; runStrike(HS).then(() => { busy = false; lunge = 1; resolve(); }); }
 }
 
 function openLoot(c) {
   if (!c || !c.loot) return;
   const L = c.loot, m = MONSTERS[c.type];
-  const body = () => `<p class="muted">You search what's left of ${foeName(m)}.</p><ul class="lootlist">
+  const body = () => `<p class="muted">You open the box ${foeName(m)} left behind.</p><ul class="lootlist">
     ${L.items.map((k, n) => `<li><span><b style="color:${RARITY[rarityOf(k)].color}">${ITEMS[k].name}</b>${rarityTag(k)}<br><span class="muted">${ITEMS[k].note}</span></span><button class="btn small" data-take="${n}">Take</button></li>`).join('')}
     ${L.gold ? `<li><span><b>${L.gold} gp</b></span><button class="btn small" data-take="gold">Take</button></li>` : ''}
     ${!L.items.length && !L.gold ? '<li><span class="muted">Nothing left.</span></li>' : ''}</ul>`;
-  showModal(`${m.name} remains`, body(), [{ label: 'Take all', primary: true, fn: () => takeLoot(c, 'all') }, { label: 'Leave it' }]);
+  showModal(`Loot: ${m.name}`, body(), [{ label: 'Take all', primary: true, fn: () => takeLoot(c, 'all') }, { label: 'Leave it' }]);
   $('mBody').onclick = e => {
     const b = e.target.closest('[data-take]'); if (!b) return;
     takeLoot(c, b.dataset.take);
@@ -5378,7 +5386,7 @@ async function creatureAttack(c) {
   v.lungeDir.subVectors(worldOf(state.pos.x, state.pos.z), worldOf(c.x, c.z)).setY(0).normalize();
   if (m.ai === 'ranged') (m.proj === 'bolt' ? SFX.bolt() : SFX.bow()); else SFX.swing();
   if (m.ai === 'ranged') await shootProjectile(creatureTop(c).add(new THREE.Vector3(0, -0.35, 0)), above(hero, 0.5), m.proj || 'arrow');
-  else { v.lunge = 1; await sleep(0.14); }
+  else { v.strike ||= { off: 0, lift: 0, tilt: 0, wind: 0 }; await runStrike(v.strike, m.boss ? 1.25 : 1); }
   const dist = cheb(c, state.pos), disadv = c.restrained || (m.ai === 'ranged' && dist <= 1);
   const ak = atkOf(c) - (hasT(state.char, 'dread') ? 1 : 0) - (hasT(state.char, 'bulwark') && state.char.equipped.shield ? 1 : 0), r = roll(disadv ? 2 : 1, 20), nat = disadv ? Math.min(...r) : r[0], total = nat + ak;
   const crit = nat === 20, hit = crit || (nat !== 1 && total >= d.ac);
@@ -5393,7 +5401,8 @@ async function creatureAttack(c) {
     let dmg = Math.max(1, sum(dice) + m.dmg[2] + easeOf(c).dmg);
     if (hasSt(c, 'weakened')) dmg = Math.max(1, Math.floor(dmg / 2));
     if (hasSt(state.char, 'hexed')) dmg += rollFor(c, 6);
-    heroFlash = 1; shakeCam(m.boss ? 0.2 : 0.08);
+    heroFlash = 1; shakeCam(m.boss ? 0.26 : 0.14); hitStop(crit || m.boss ? 0.14 : 0.08);
+    if (m.ai !== 'ranged') { heroRecoil = 1; heroRecoilDir.copy(v.lungeDir); }
     const victim = state.char;
     hurtHero(dmg, `${foeName(m, true)} ${m.verb}${crit ? ' (critical!)' : ''}`);
     addLog('', rollTxt);
@@ -5754,7 +5763,7 @@ function renderHud() {
   const foes = state.creatures.filter(c => c.alive && c.aware && MONSTERS[c.type].ai !== 'none').length;
   const hc = ui.hover && creatureById(ui.hover);
   $('hudChips').innerHTML = '';
-  if (hc && !hc.alive && hc.loot && !hc.looted) $('hudChips').innerHTML += `<span class="chip">${MONSTERS[hc.type].name} remains · click to search</span>`;
+  if (hc && !hc.alive && hc.loot && !hc.looted) $('hudChips').innerHTML += `<span class="chip">Loot from ${MONSTERS[hc.type].name.replace(/^the /i, 'the ')} · click to open</span>`;
   if (hc && hc.alive) { const m = MONSTERS[hc.type];
     $('hudChips').innerHTML += `<span class="chip target">${m.name} <b>${hc.hp}/${m.hp}</b> HP · Defence ${acOf(hc)} (${m.guard === 'dodge' ? 'nimble' : m.object ? 'solid' : 'armoured'})${hc.restrained ? ' · <b style="color:#a6e07a">Restrained</b>' : ''}</span>`;
     const odds = oddsText(hc); if (odds) $('hudChips').innerHTML += `<span class="chip odds">${odds}</span>`; }
@@ -6126,6 +6135,7 @@ function pick(e) {
   raycaster.setFromCamera(ndc, camera);
   const targets = [hero];
   for (const v of views.values()) if (v.g.visible) targets.push(v.g);
+  for (const b of lootBoxes.values()) if (b.g.visible) targets.push(b.g);
   for (const v of allyViews.values()) targets.push(v.g);
   for (const m of tileMeshes) if (m && m.visible) targets.push(m);
   for (const p of props) if (p.o.visible) targets.push(p.o);
@@ -6288,7 +6298,7 @@ let moteT = 0, torchT = 0, heartT = 0, menuT = 0.6, PACE = 1;
 function tick() {
   const dt = Math.min(clock.getDelta(), 0.05), time = clock.elapsedTime;
   fxTime.value = time;
-  PACE = paceMult(); const pdt = dt * PACE; EMIT.n = 0; perfSample(dt);
+  PACE = paceMult(); const pdt = dt * PACE * (hitStopT > 0 ? 0.06 : 1); hitStopT = Math.max(0, hitStopT - dt); EMIT.n = 0; perfSample(dt);
 
   for (let i = timers.length - 1; i >= 0; i--) { timers[i].t -= pdt; if (timers[i].t <= 0) { const f = timers[i].fn; timers.splice(i, 1); f(); } }
   for (let i = fxList.length - 1; i >= 0; i--) if (fxList[i].update(pdt) === false) fxList.splice(i, 1);
@@ -6337,18 +6347,21 @@ function tick() {
     }
     const base = worldOf(state.pos.x, state.pos.z);
     hero.position.copy(base);
-    if (lunge > 0) { lunge = Math.max(0, lunge - dt * 4); hero.position.addScaledVector(lungeDir, Math.sin(Math.PI * lunge) * 0.2); }
+    if (lunge > 0) lunge = Math.max(0, lunge - dt * 4);
+    hero.position.addScaledVector(lungeDir, HS.off); hero.position.y += HS.lift;
+    if (heroRecoil > 0) { heroRecoil = Math.max(0, heroRecoil - dt * 3.5); hero.position.addScaledVector(heroRecoilDir, Math.sin(Math.PI * heroRecoil) * 0.13); }
   }
   heroFlash = Math.max(0, heroFlash - dt * 3);
   for (const m of heroFlashMats) m.emissive.copy(RED).multiplyScalar(heroFlash * 0.8);
   castT = Math.max(0, castT - dt);
   animateHuman(dt, time); allyTick(dt);
   if (playing()) { statusFx(dt); weaponFx(dt); }
-  { const lay = state.char.hp <= 0 && playing() ? -1.35 : 0; for (const o of [human?.root, heroModel]) if (o) o.rotation.x += (lay - o.rotation.x) * Math.min(1, dt * 6); }
+  { const lay = state.char.hp <= 0 && playing() ? -1.35 : 0, lean = HS.tilt - Math.sin(Math.PI * heroRecoil) * 0.25; for (const o of [human?.root, heroModel]) if (o) { const b = o.userData.baseX ?? 0; o.userData.baseX = b + (lay - b) * Math.min(1, dt * 6); o.rotation.x = o.userData.baseX + lean; } }
   heroRing.material.opacity = 0.55 + Math.sin(time * 3) * 0.3;
   heroLight.position.copy(hero.position).add(tmp.set(0, 1.6, 0));
   immersionTick(dt, time);
 
+  lootBoxTick(dt, time);
   // creatures
   const r = stage.getBoundingClientRect();
   for (const c of state.creatures) {
@@ -6367,21 +6380,23 @@ function tick() {
         v.g.position.lerpVectors(p0, p1, a.t); v.g.position.y += Math.sin(Math.PI * a.t) * 0.1;
         v.g.rotation.y = Math.atan2(p1.x - p0.x, p1.z - p0.z);
         const lit = !!vis[a.path[a.i + 1].z * W + a.path[a.i + 1].x] || !!vis[a.path[a.i].z * W + a.path[a.i].x];
-        v.g.visible = lit;
+        v.g.visible = lit && !v.broken;
       }
     } else {
       v.g.position.copy(worldOf(c.x, c.z));
       if (v.lunge > 0) { v.lunge = Math.max(0, v.lunge - dt * 4); v.g.position.addScaledVector(v.lungeDir, Math.sin(Math.PI * v.lunge) * 0.22); }
+      if (v.strike) { v.g.position.addScaledVector(v.lungeDir, v.strike.off); v.g.position.y += v.strike.lift; }
+      if (v.recoil > 0) { v.recoil = Math.max(0, v.recoil - dt * 3.5); v.g.position.addScaledVector(v.recoilDir, Math.sin(Math.PI * v.recoil) * 0.14); }
       if (c.alive && (c.aware || c.type === 'dummy')) {
         const face = Math.atan2(hero.position.x - v.g.position.x, hero.position.z - v.g.position.z);
         let diff = face - v.g.rotation.y; diff = Math.atan2(Math.sin(diff), Math.cos(diff));
         v.g.rotation.y += diff * Math.min(1, dt * 6);
       }
     }
-    if (!c.alive && c.loot && !c.looted && v.g.visible) { const gp = v.g.position; stream(glow, .3, dt, () => ({ p: [gp.x + rnd(-.3, .3), gp.y + rnd(.05, .3), gp.z + rnd(-.3, .3)], v: [0, rnd(.1, .3), 0],
+    if (false) { const gp = v.g.position; stream(glow, .3, dt, () => ({ p: [gp.x + rnd(-.3, .3), gp.y + rnd(.05, .3), gp.z + rnd(-.3, .3)], v: [0, rnd(.1, .3), 0],
       life: rnd(.4, .8), s: [0, .08], c0: hdr('#fff3c0', 6), c1: hdr('#ffc04a', 2), a: 1, fi: .5 })); }
     v.pivot.rotation.z = Math.sin(time * 40) * v.shake * 0.12; v.shake = Math.max(0, v.shake - dt * 2.5);
-    if (!MONSTERS[c.type].object) v.pivot.rotation.x += ((c.alive && !c.dormant ? 0 : -1.35) - v.pivot.rotation.x) * Math.min(1, dt * 6);
+    if (!MONSTERS[c.type].object) { if (c.alive && !c.dormant) v.pivot.rotation.x = (v.strike?.tilt || 0) - Math.sin(Math.PI * (v.recoil || 0)) * 0.3; else v.pivot.rotation.x += (-1.35 - v.pivot.rotation.x) * Math.min(1, dt * 6); }
     if (v.flash > 0) { v.flash = Math.max(0, v.flash - dt * 3); for (const m of v.mats) m.emissive.copy(RED).multiplyScalar(v.flash); }
     const attackable = c.alive && canAttack(c);
     v.ring.visible = c.alive && v.g.visible && (c.aware || c.type === 'dummy' || ui.hover === c.id);
@@ -8539,6 +8554,127 @@ function frameForCard() {
 
 
 
+
+/* --- cinematic blows: a staggered two-hop wind-up, a fast smack, then the follow-through. Resolves at the moment of impact. --- */
+function runStrike(S, weight = 1) {
+  const k = reduceMotion ? 0.3 : 1, w = 0.36 * k * weight, h = 0.09 * k, b = 0.26 * k * weight;
+  const ease = x => 1 - (1 - x) * (1 - x);
+  return new Promise(res => {
+    let t = 0, hit = false;
+    fxList.push({ update(dt) {
+      t += dt;
+      if (t < w) {   // two little steps back, rocking up off the board each time
+        const p = t / w, step = p < 0.5 ? ease(p * 2) * 0.5 : 0.5 + ease((p - 0.5) * 2) * 0.5;
+        S.off = -0.15 * step; S.lift = 0.05 * Math.abs(Math.sin(p * Math.PI * 2)); S.tilt = -0.3 * step; S.wind = step;
+      } else if (t < w + h) {   // the smack
+        const p = (t - w) / h;
+        S.off = -0.15 + 0.5 * p * p; S.lift = 0; S.tilt = -0.3 + 0.7 * p; S.wind = 1 - p;
+      } else {
+        if (!hit) { hit = true; S.wind = 0; res(); }
+        const p = Math.min(1, (t - w - h) / b);
+        S.off = 0.35 * (1 - ease(p)); S.tilt = 0.4 * (1 - ease(p)); S.lift = 0;
+        if (p >= 1) { S.off = S.tilt = S.lift = S.wind = 0; return false; }
+      }
+      return true;
+    } });
+  });
+}
+
+/* --- a dead piece crumbles to rubble or blows apart, then it is gone --- */
+function breakCreature(c, explode) {
+  const v = views.get(c.id); if (!v || v.broken) return;
+  v.broken = true; v.g.updateMatrixWorld(true);
+  const center = v.g.position.clone(), h = (v.height || 1) * (v.g.scale.y || 1), floorY = worldOf(c.x, c.z).y;
+  center.y += h * 0.45;
+  const pieces = [], pos = new THREE.Vector3(), quat = new THREE.Quaternion(), scl = new THREE.Vector3();
+  v.g.traverse(o => {
+    if (!o.isMesh || o === v.ring || !o.visible) return;
+    const m = o.clone(false);
+    m.material = Array.isArray(o.material) ? o.material.map(x => { const y = x.clone(); y.transparent = true; return y; }) : (() => { const y = o.material.clone(); y.transparent = true; return y; })();
+    o.matrixWorld.decompose(pos, quat, scl); m.position.copy(pos); m.quaternion.copy(quat); m.scale.copy(scl);
+    m.userData = {}; scene.add(m);
+    const out = pos.clone().sub(center); out.y = 0; if (out.lengthSq() < 1e-4) out.set(rnd(-1, 1), 0, rnd(-1, 1)); out.normalize();
+    const rel = clamp01((pos.y - floorY) / Math.max(0.3, h));
+    const vel = explode ? out.multiplyScalar(rnd(2.5, 5.5)).setY(rnd(2, 5)) : out.multiplyScalar(rnd(0.2, 0.8)).setY(rnd(0, 0.6));
+    const spin = new THREE.Vector3(rnd(-1, 1), rnd(-1, 1), rnd(-1, 1)).multiplyScalar(explode ? rnd(6, 14) : rnd(1, 4));
+    pieces.push({ m, vel, spin, delay: explode ? 0 : (1 - rel) * 0.05 + rel * 0.25 + rnd(0, 0.1), rest: false });
+  });
+  v.g.visible = false; v.bar.hidden = true;
+  // dust, sparks and light
+  if (explode) {
+    const owner = {}, l = takeLight(owner, '#ffb060'); let lt = 0;
+    if (l) fxList.push({ update(dt) { lt += dt; l.position.copy(center); l.intensity = 22 * Math.max(0, 1 - lt / 0.4); l.distance = 6; if (lt > 0.4) { freeLight(owner); return false; } return true; } });
+    burst(glow, 90, () => { const d = rndDir().multiplyScalar(rnd(1.5, 5)); return { p: [center.x, center.y, center.z], v: [d.x, d.y, d.z], life: rnd(.25, .6), s: [.12, .01], c0: hdr('#fff0c0', 7), c1: hdr('#ff6a20', 1.5), a: 1, drag: 2 }; });
+    burst(smoke, 30, () => ({ p: [center.x + rnd(-.3, .3), center.y + rnd(-.2, .3), center.z + rnd(-.3, .3)], v: [rnd(-.8, .8), rnd(.3, 1.2), rnd(-.8, .8)], life: rnd(1, 1.8), s: [.3, 1.1], c0: hdr('#4a3f36'), c1: hdr('#161210'), a: .5, turb: 1 }));
+    shakeCam(0.2); SFX.hit();
+  } else {
+    let dt0 = 0;
+    fxList.push({ update(dt) { dt0 += dt; if (dt0 < 0.6) stream(smoke, 30, dt, () => ({ p: [center.x + rnd(-.35, .35), floorY + rnd(.05, h * 0.8), center.z + rnd(-.35, .35)], v: [rnd(-.3, .3), rnd(.05, .4), rnd(-.3, .3)], life: rnd(1, 1.8), s: [.2, .7], c0: hdr('#8a7c6a', .8), c1: hdr('#3a332c', .5), a: .45, turb: .8 })); return dt0 < 0.6; } });
+    burst(smoke, 40, () => { const d = rndDir(); return { p: [center.x, floorY + .1, center.z], v: [d.x * 1.5, Math.abs(d.y) * 1.5, d.z * 1.5], life: rnd(.6, 1.1), s: [.06, .05], c0: hdr('#6a5c4a', .9), c1: hdr('#3a302a', .6), a: 1, g: -9, bounce: true }; });
+    SFX.rattle?.(0.7, 0.4);
+  }
+  let t = 0; const life = explode ? 1.7 : 2.4, fadeAt = explode ? 0.9 : 1.4;
+  fxList.push({ update(dt) {
+    t += dt;
+    for (const p of pieces) {
+      if (t < p.delay) continue;
+      if (!p.rest) {
+        p.vel.y -= 9.8 * dt; p.m.position.addScaledVector(p.vel, dt);
+        p.m.rotation.x += p.spin.x * dt; p.m.rotation.y += p.spin.y * dt; p.m.rotation.z += p.spin.z * dt;
+        if (p.m.position.y < floorY + 0.02) {
+          p.m.position.y = floorY + 0.02;
+          if (Math.abs(p.vel.y) > 0.8) { p.vel.y *= -0.3; p.vel.x *= 0.5; p.vel.z *= 0.5; p.spin.multiplyScalar(0.5); }
+          else p.rest = true;
+        }
+      }
+      if (t > fadeAt) {   // sink and fade
+        const f = 1 - clamp01((t - fadeAt) / (life - fadeAt));
+        p.m.position.y -= dt * (explode ? 0.05 : 0.12);
+        for (const mm of [].concat(p.m.material)) mm.opacity = f;
+      }
+    }
+    if (t >= life) { for (const p of pieces) { p.m.removeFromParent(); for (const mm of [].concat(p.m.material)) mm.dispose?.(); } return false; }
+    return true;
+  } });
+  if (c.loot && !c.looted) after(explode ? 0.45 : 0.9, () => { if (state.creatures.includes(c)) lootBoxFor(c, true); });
+}
+
+/* --- loot boxes: a small chest that floats where the piece fell, turns slowly, and pops when emptied --- */
+function lootBoxFor(c, popIn) {
+  if (lootBoxes.has(c.id) || !c.loot || c.looted) return;
+  const g = new THREE.Group(), wood = mat('#7a5230', { roughness: 0.7 }), gold = new THREE.MeshStandardMaterial({ color: '#e0b050', metalness: 0.85, roughness: 0.3, emissive: '#ffb040', emissiveIntensity: 0.35 });
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.15, 0.18), wood); g.add(body);
+  const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.26, 14, 1, false, 0, Math.PI), wood); lid.rotation.set(Math.PI / 2, 0, Math.PI / 2); lid.position.y = 0.075; g.add(lid);
+  for (const x of [-0.09, 0.09]) { const band = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.16, 0.19), gold); band.position.set(x, 0, 0); g.add(band); const arc = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.012, 5, 14, Math.PI), gold); arc.rotation.y = Math.PI / 2; arc.position.set(x, 0.075, 0); g.add(arc); }
+  const lock = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.05, 0.02), gold); lock.position.set(0, 0.04, 0.095); g.add(lock);
+  const halo = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.3, 32), new THREE.MeshBasicMaterial({ color: hdrColor('#ffd36a', 2), transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false, toneMapped: false, blending: THREE.AdditiveBlending }));
+  halo.rotation.x = -Math.PI / 2; halo.userData.noShadow = true;
+  const p = worldOf(c.x, c.z); halo.position.set(p.x, p.y + 0.02, p.z); scene.add(halo);
+  g.position.set(p.x, p.y + 0.5, p.z); g.scale.setScalar(popIn ? 0.01 : 1);
+  tagAll(g, 'creature', { cid: c.id }); paintRim(g, 0.2);
+  scene.add(g);
+  lootBoxes.set(c.id, { g, halo, c, t: popIn ? 0 : 1, base: p.y + 0.5, out: 0 });
+  if (popIn) { burst(glow, 40, () => { const d = rndDir().multiplyScalar(rnd(.5, 2)); return { p: [p.x, p.y + .5, p.z], v: [d.x, d.y, d.z], life: rnd(.3, .7), s: [.08, .01], c0: hdr('#fff3c0', 7), c1: hdr('#ffc04a', 2), a: 1 }; }); SFX.coins(); }
+}
+function lootBoxTick(dt, time) {
+  for (const [id, b] of lootBoxes) {
+    const c = b.c, lit = !!state.explored?.[c.z * W + c.x] && (!MAP.fog || !!vis[c.z * W + c.x] || !MAP.dark);
+    if (c.looted || !c.loot || !state.creatures.includes(c)) {   // emptied: a quick pop of sparkles and it is gone
+      b.out += dt * 4;
+      if (!b.popped) { b.popped = true; const p = b.g.position; burst(glow, 50, () => { const d = rndDir().multiplyScalar(rnd(.8, 2.5)); return { p: [p.x, p.y, p.z], v: [d.x, d.y, d.z], life: rnd(.3, .6), s: [.09, .01], c0: hdr('#fff3c0', 8), c1: hdr('#ffc04a', 2), a: 1 }; }); }
+      b.g.scale.setScalar(Math.max(0.001, 1 - b.out) * (1 + b.out * 0.5)); b.halo.material.opacity = 0.35 * Math.max(0, 1 - b.out);
+      if (b.out >= 1) { b.g.removeFromParent(); b.halo.removeFromParent(); lootBoxes.delete(id); }
+      continue;
+    }
+    b.t = Math.min(1, b.t + dt * 2.5);
+    const s = b.t < 1 ? 1 + Math.sin(b.t * Math.PI) * 0.3 * (1 - b.t) : 1;
+    b.g.scale.setScalar(Math.max(0.01, b.t) * s);
+    b.g.rotation.y += dt * 1.1; b.g.position.y = b.base + Math.sin(time * 2.2 + id) * 0.05;
+    b.g.visible = b.halo.visible = lit;
+    b.halo.material.opacity = 0.25 + Math.sin(time * 3 + id) * 0.1;
+    if (lit) { const gp = b.g.position; stream(glow, .5, dt, () => ({ p: [gp.x + rnd(-.2, .2), gp.y + rnd(-.1, .15), gp.z + rnd(-.2, .2)], v: [0, rnd(.1, .35), 0], life: rnd(.4, .8), s: [0, .07], c0: hdr('#fff3c0', 6), c1: hdr('#ffc04a', 2), a: 1, fi: .5 })); }
+  }
+}
 /* --- Steel Cyclone, Tri-Shot, and the hell hound from the Hellpit --- */
 // enemies a technique can reach right now
 function techFoes(k) {
@@ -9982,7 +10118,7 @@ window.battleBoard = {
     applyKit: (c, k) => applyKit(c, k), newCharacter: () => newCharacter(), preparedSpells: () => preparedSpells(), togglePrepared: k => togglePrepared(k), openMerchant: () => openMerchant(() => {}),
     openSettings: () => openSettings(), reachProblems: m => reachProblems(m), oddsText: id => oddsText(creatureById(id)), bossPhase: id => bossPhase(creatureById(id)), damage: (id, n) => damageCreature(creatureById(id), n, 'dmg'),
     passiveOf: c => passiveOf(c), respec: () => respec(state.char), undoGrowth: () => undoGrowth(), spendPoint: k => spendPoint(k), lightTorch: () => lightTorch(), giveItem: (k, i) => giveItem(k, i),
-    exploreStatusTick: () => exploreStatusTick(), knownTechs: () => knownTechs(), useTech: k => useTech(k), attack: id => attack(creatureById(id)), derived: () => { const d = derived(); return { atk: d.atk, dmgMod: d.dmgMod, ac: d.ac, guard: d.guard, trained: d.trained }; }, hitChance: id => hitChance(derived().atk, acOf(creatureById(id))), hotbar: () => hotbarOf(), openHotbar: () => openHotbar(), hand: () => handIds(), foeAtk: id => atkOf(creatureById(id)), selectSpell: k => selectSpell(k), setLevel: n => { state.char.level = n; refresh(); }, knownTechs2: () => knownTechs(), startOptions: k => startOptions(k), ease: () => MAP.ease || null, spawn: (type, x, z, aware) => { const id = Math.max(0, ...state.creatures.map(c => c.id)) + 1; state.creatures.push({ id, type, x, z, hp: MONSTERS[type].hp, alive: true, aware: !!aware, restrained: false }); rebuildCreatures(); computeVisibility(); applyFog(); refresh(); return id; }, cast: (k, x, z) => cast(k, x, z), idle2: () => !busy && !anim, forceHound: on => { ui.forceHound = !!on; }, summons: () => clone(state.summons || []), kits: () => Object.keys(KITS), openMonsterForge: (id, d) => openMonsterForge(id, d), closeMonsterForge: () => closeMonsterForge(), mforge: () => MF, mforgeSet: (p, v) => { mforgeSet(p, v); mforgeRefresh(); renderMonsterForge(); }, mforgeSave: () => mforgeSave(), mforgeFight: () => mforgeFight(), mforgeReset: () => mforgeReset(), forgedMonsters: () => FORGED_MON.map(m => ({ id: m.id, ch: m.ch, name: m.name })), monsters: () => Object.keys(MONSTERS), creatureChars: () => ({ ...CREATURE_CHARS }), tools: () => TOOLS.filter(t => t.g === 'Your monsters').map(t => ({ id: t.id, ch: t.ch, label: t.label })), openBuilder: o => openBuilder(o), closeBuilder: k => closeBuilder(k), builderSet: (f, v) => { builderSet(f, v); renderBuilder(); }, builderRandom: () => { builderRandom(); renderBuilder(); }, builderCam: w => builderCam(w), look: () => clone(state.char.look || null), openForge: id => openForge(id), closeForge: () => closeForge(), forge: () => FORGE, forgeSet: (p, v) => { forgeSet(p, v); renderForge(); }, forgeCast: () => forgeCast(), fxLibrary: () => Object.keys(FX_LIBRARY), idle: () => !busy && !anim, showGuide: () => showGuide(), forgeSave: () => forgeSave(), forged: () => FORGED.map(f => f.id), knownSpells: () => knownSpells(), pixelsChanged: () => pixelsChanged(), showCard: id => { const i = cardInfo(id, state.char, { ex: true, t: { action: true, move: 6 }, actOk: true, heroTurn: true, n: -1 }); i.off = false; i.armed = false; const z = $('cardZoom'); z.innerHTML = `<div class="card k-${i.kind} big" style="--c:${i.color}">${cardHtml({ ...i, key: '' })}</div>`; z.hidden = false; return { name: i.name, type: i.type }; }, allIds: () => ({ spells: Object.keys(SPELLS).map(k => 's:' + k), techs: Object.keys(TECHS).map(k => 't:' + k), acts: Object.keys(HOT_ACTIONS) }), stand: (x, z, lookId) => { state.pos.x = x; state.pos.z = z; placeHero(); computeVisibility(); applyFog(); const c = creatureById(lookId); CAM.hold = 0; camShot(hero, worldOf(c.x, c.z), 0.01); refresh(); }, screenOf: id => { const c = creatureById(id), v = worldOf(c.x, c.z).setY(0.45).project(camera), r = canvas.getBoundingClientRect(); return { x: r.left + (v.x + 1) / 2 * r.width, y: r.top + (1 - v.y) / 2 * r.height }; }, playCard: id => playCard(id), inspectCard: id => inspectCard(id), armAttack: on => armAttack(on), lens: () => ({ ...LENS, prof: camProfile(), framed: !!CAM.framed, fov: camera.fov, view: camera.view && { ...camera.view } }), camDist: () => camera.position.distanceTo(controls.target), setFp: on => setFp(on), fp: () => ({ on: fpOn(), yaw: FP.yaw, look: (y, p) => { FP.yaw = y ?? FP.yaw; FP.pitch = p ?? FP.pitch; }, fov: camera.fov, ceiling: !!ceiling?.visible, rig: FP.rig.visible }), stepKey: (f, r) => stepKey(f, r), turnKey: d => turnKey(d),
+    exploreStatusTick: () => exploreStatusTick(), knownTechs: () => knownTechs(), useTech: k => useTech(k), attack: id => attack(creatureById(id)), derived: () => { const d = derived(); return { atk: d.atk, dmgMod: d.dmgMod, ac: d.ac, guard: d.guard, trained: d.trained }; }, hitChance: id => hitChance(derived().atk, acOf(creatureById(id))), hotbar: () => hotbarOf(), openHotbar: () => openHotbar(), hand: () => handIds(), hs: () => ({ ...HS }), vstrike: id => ({ ...(views.get(id)?.strike || {}) }), lootBoxFor: id => lootBoxFor(creatureById(id), true), openLoot: id => openLoot(creatureById(id)), endTurn: () => endTurn(), lootBoxes: () => [...lootBoxes.keys()], broken: id => !!views.get(id)?.broken, attack2: id => attack(creatureById(id)), killNow: (id, boom) => { const c = creatureById(id); c.lastHit = boom ? 'crit' : 'dmg'; c.lastDmg = 1; damageCreature(c, c.hp, boom ? 'crit' : 'dmg'); }, foeAtk: id => atkOf(creatureById(id)), selectSpell: k => selectSpell(k), setLevel: n => { state.char.level = n; refresh(); }, knownTechs2: () => knownTechs(), startOptions: k => startOptions(k), ease: () => MAP.ease || null, spawn: (type, x, z, aware) => { const id = Math.max(0, ...state.creatures.map(c => c.id)) + 1; state.creatures.push({ id, type, x, z, hp: MONSTERS[type].hp, alive: true, aware: !!aware, restrained: false }); rebuildCreatures(); computeVisibility(); applyFog(); refresh(); return id; }, cast: (k, x, z) => cast(k, x, z), idle2: () => !busy && !anim, forceHound: on => { ui.forceHound = !!on; }, summons: () => clone(state.summons || []), kits: () => Object.keys(KITS), openMonsterForge: (id, d) => openMonsterForge(id, d), closeMonsterForge: () => closeMonsterForge(), mforge: () => MF, mforgeSet: (p, v) => { mforgeSet(p, v); mforgeRefresh(); renderMonsterForge(); }, mforgeSave: () => mforgeSave(), mforgeFight: () => mforgeFight(), mforgeReset: () => mforgeReset(), forgedMonsters: () => FORGED_MON.map(m => ({ id: m.id, ch: m.ch, name: m.name })), monsters: () => Object.keys(MONSTERS), creatureChars: () => ({ ...CREATURE_CHARS }), tools: () => TOOLS.filter(t => t.g === 'Your monsters').map(t => ({ id: t.id, ch: t.ch, label: t.label })), openBuilder: o => openBuilder(o), closeBuilder: k => closeBuilder(k), builderSet: (f, v) => { builderSet(f, v); renderBuilder(); }, builderRandom: () => { builderRandom(); renderBuilder(); }, builderCam: w => builderCam(w), look: () => clone(state.char.look || null), openForge: id => openForge(id), closeForge: () => closeForge(), forge: () => FORGE, forgeSet: (p, v) => { forgeSet(p, v); renderForge(); }, forgeCast: () => forgeCast(), fxLibrary: () => Object.keys(FX_LIBRARY), idle: () => !busy && !anim, showGuide: () => showGuide(), forgeSave: () => forgeSave(), forged: () => FORGED.map(f => f.id), knownSpells: () => knownSpells(), pixelsChanged: () => pixelsChanged(), showCard: id => { const i = cardInfo(id, state.char, { ex: true, t: { action: true, move: 6 }, actOk: true, heroTurn: true, n: -1 }); i.off = false; i.armed = false; const z = $('cardZoom'); z.innerHTML = `<div class="card k-${i.kind} big" style="--c:${i.color}">${cardHtml({ ...i, key: '' })}</div>`; z.hidden = false; return { name: i.name, type: i.type }; }, allIds: () => ({ spells: Object.keys(SPELLS).map(k => 's:' + k), techs: Object.keys(TECHS).map(k => 't:' + k), acts: Object.keys(HOT_ACTIONS) }), stand: (x, z, lookId) => { state.pos.x = x; state.pos.z = z; placeHero(); computeVisibility(); applyFog(); const c = creatureById(lookId); CAM.hold = 0; camShot(hero, worldOf(c.x, c.z), 0.01); refresh(); }, screenOf: id => { const c = creatureById(id), v = worldOf(c.x, c.z).setY(0.45).project(camera), r = canvas.getBoundingClientRect(); return { x: r.left + (v.x + 1) / 2 * r.width, y: r.top + (1 - v.y) / 2 * r.height }; }, playCard: id => playCard(id), inspectCard: id => inspectCard(id), armAttack: on => armAttack(on), lens: () => ({ ...LENS, prof: camProfile(), framed: !!CAM.framed, fov: camera.fov, view: camera.view && { ...camera.view } }), camDist: () => camera.position.distanceTo(controls.target), setFp: on => setFp(on), fp: () => ({ on: fpOn(), yaw: FP.yaw, look: (y, p) => { FP.yaw = y ?? FP.yaw; FP.pitch = p ?? FP.pitch; }, fov: camera.fov, ceiling: !!ceiling?.visible, rig: FP.rig.visible }), stepKey: (f, r) => stepKey(f, r), turnKey: d => turnKey(d),
     mood: () => ({ ...MOOD, music: SFX.musicWant }), musicMood: () => musicMood(), film: () => filmPass.enabled, setSneak: on => setSneak(on), remapKey: k => remapKey(k), prefs: () => prefs, toastCount: () => document.getElementById('toast').children.length,
     freshState: (k, chars, map) => freshState(k, chars, map), enterPlay: st => enterPlay(st, 'play', true), refresh: () => refresh(), heroes: () => heroes, toast: m => toast(m), itemModelOk: () => Object.keys(ITEMS).every(k => !!itemModel(k)) },
   wanderers() { const m = spawnWanderers(6, 13); if (m && exploring() === false) startCombat(); refresh(); return m && m.map(c => c.type); },
