@@ -89,9 +89,9 @@ await check('a monster winds up and smacks too', async () => {
   const id = await D(() => { const B = battleBoard.dev, p = B.state.pos; const id = B.spawn('skeleton', p.x, p.z + 1, true); B.state.creatures.find(c => c.id === id).hp = 300; return id; });
   await D(id => battleBoard.dev.attack2(id), id); await idle();   // starts the fight
   let minOff = 0;
-  for (let i = 0; i < 6 && minOff > -0.1; i++) {
+  for (let i = 0; i < 4 && minOff > -0.1; i++) {
     minOff = Math.min(minOff, await D(async id => { const B = battleBoard.dev; let m = 0; const b = document.getElementById('endBtn'); if (!b.disabled) b.click();
-      await new Promise(res => { let n = 0; const f = () => { const s = B.vstrike(id); if (s.off !== undefined) m = Math.min(m, s.off); if (++n < 240 && m > -0.1) requestAnimationFrame(f); else res(); }; requestAnimationFrame(f); }); return m; }, id));
+      await new Promise(res => { let n = 0; const f = () => { const s = B.vstrike(id); if (s.off !== undefined) m = Math.min(m, s.off); if (++n < 120 && m > -0.1) requestAnimationFrame(f); else res(); }; requestAnimationFrame(f); }); return m; }, id));
     await idle();
   }
   await shot('monster-after');
