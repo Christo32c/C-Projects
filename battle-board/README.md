@@ -55,6 +55,12 @@ Cones point wherever you aim: pick the card, then any square in the direction yo
 
 Heroes made as a Spellblade become Sorcerers, and Wardens become Warriors; they keep their gear and scores. Hired companions get a random class.
 
+### Blows, deaths and loot
+
+Every melee blow is a little cinematic, like pieces on a magic chessboard. The attacker takes two staggered steps back, raising its weapon, then smacks forward. The game holds still for a beat on the hit (longer on a critical), the camera jolts, and the piece that was hit reels back. Monsters strike the same way, and bosses wind up more slowly.
+
+When a piece dies it **crumbles** into rubble and dust, or **explodes** into flying pieces with a flash: always on a critical, a crushing blow or a boss, and sometimes otherwise. Then it is gone from the board. If it carried loot, a small chest floats where it fell, turning slowly in a ring of light. Walk up and click it to open it; once it is empty it pops in a shower of sparks and disappears.
+
 ### Hitting and missing
 
 Every monster defends in one of two ways: **armour** (skeletons, goblins with shields, spiders, the Grave Warden) or **dodging** (rats, wolves, archers, wraiths). A miss says which: *Blocked* or *Dodged*. Your own Defence works the same way, from whichever is better of your armour and shield or your Dexterity.

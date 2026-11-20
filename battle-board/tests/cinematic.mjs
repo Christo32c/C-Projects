@@ -86,7 +86,7 @@ await check('your blow: two steps back, then a fast smack, and the hit lands at 
 await check('a monster winds up and smacks too', async () => {
   const e0 = errCount();
   await hero('warrior', 'crypt'); await settle(); await wait(0.5);
-  const id = await D(() => { const B = battleBoard.dev, p = B.state.pos; const id = B.spawn('skeleton', p.x, p.z + 1, true); B.state.creatures.find(c => c.id === id).hp = 300; return id; });
+  const id = await D(() => { const B = battleBoard.dev, p = B.state.pos; const id = B.spawn('skeleton', p.x, p.z + 1, false); B.state.creatures.find(c => c.id === id).hp = 300; return id; });
   await D(id => battleBoard.dev.attack2(id), id); await idle();   // starts the fight
   let minOff = 0;
   for (let i = 0; i < 4 && minOff > -0.1; i++) {
