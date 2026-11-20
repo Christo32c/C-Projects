@@ -73,9 +73,9 @@ await check('your blow: two steps back, then a fast smack, and the hit lands at 
   await hero('warrior'); await settle(); await wait(0.5);
   const id = await D(() => { const B = battleBoard.dev, p = B.state.pos, id = B.spawn('zombie', p.x, p.z + 1, true); B.state.creatures.find(c => c.id === id).hp = 300; B.state.turn.action = true; return id; });
   await wait(0.4);
-  await D(id => battleBoard.dev.attack2(id), id);
-  const trace = [];
-  for (let i = 0; i < 18; i++) { await wait(0.05); trace.push(await D(id => ({ off: battleBoard.dev.hs().off, hp: battleBoard.dev.state.creatures.find(c => c.id === id).hp }), id)); if (i === 4) await shot('blow-windup'); if (i === 8) await shot('blow-impact'); }
+  // record every frame of the swing in the page itself
+  const trace = await D(async id => { const B = battleBoard.dev, tr = []; B.attack2(id); await new Promise(res => { let n = 0; const f = () => { tr.push({ off: B.hs().off, hp: B.state.creatures.find(c => c.id === id).hp }); if (++n < 60) requestAnimationFrame(f); else res(); }; requestAnimationFrame(f); }); return tr; }, id);
+  await shot('blow-after');
   const minOff = Math.min(...trace.map(t => t.off)), maxOff = Math.max(...trace.map(t => t.off)), firstHit = trace.findIndex(t => t.hp < 300), firstFwd = trace.findIndex(t => t.off > 0.1);
   assert(minOff < -0.1 && maxOff > 0.2, JSON.stringify({ minOff, maxOff }));
   assert(firstHit < 0 || firstHit >= firstFwd - 1, 'damage landed before the swing: ' + JSON.stringify({ firstHit, firstFwd }));
@@ -90,10 +90,11 @@ await check('a monster winds up and smacks too', async () => {
   await D(id => battleBoard.dev.attack2(id), id); await idle();   // starts the fight
   let minOff = 0;
   for (let i = 0; i < 6 && minOff > -0.1; i++) {
-    await D(() => { const b = document.getElementById('endBtn'); if (!b.disabled) b.click(); });
-    for (let k = 0; k < 40; k++) { await wait(0.05); const s = await D(id => battleBoard.dev.vstrike(id), id); if (s.off !== undefined) minOff = Math.min(minOff, s.off); if (s.off < -0.1 && k < 40) { await shot('monster-windup'); break; } }
+    minOff = Math.min(minOff, await D(async id => { const B = battleBoard.dev; let m = 0; const b = document.getElementById('endBtn'); if (!b.disabled) b.click();
+      await new Promise(res => { let n = 0; const f = () => { const s = B.vstrike(id); if (s.off !== undefined) m = Math.min(m, s.off); if (++n < 240 && m > -0.1) requestAnimationFrame(f); else res(); }; requestAnimationFrame(f); }); return m; }, id));
     await idle();
   }
+  await shot('monster-after');
   assert(minOff < -0.1, 'no wind-up seen: ' + minOff);
   noNewErrors(e0); return `back ${minOff.toFixed(2)}`;
 });
